@@ -4,8 +4,8 @@
 #include "core/zmalloc.h"
 #include "net/networking.h"
 #include "script/planet.h"
-#include "planet/db.h"
-#include "planet/net.h"
+#include "script/db.h"
+#include "script/net.h"
 
 #include "lua.h"
 #include "lauxlib.h"

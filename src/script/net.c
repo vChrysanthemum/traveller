@@ -1,7 +1,7 @@
 #include "core/util.h"
 #include "core/zmalloc.h"
 #include "script/planet.h"
-#include "planet/net.h"
+#include "script/net.h"
 
 #include "lua.h"
 

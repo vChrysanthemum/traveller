@@ -47,7 +47,7 @@ typedef struct {
     int snumber_len;
 } Cursor;
 
-enum WinMode mode = {};
+//enum WinMode mode = {};
 
 typedef struct {
     int height;         /* 行数 */
@@ -55,7 +55,7 @@ typedef struct {
     int startx;
     int starty;
     int ch;
-    enum WinMode mode;
+    //enum WinMode mode;
     WINDOW *window;
 } Win;
 

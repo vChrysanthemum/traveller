@@ -14,8 +14,8 @@ travellerobjects = ./core/traveller.o \
 				   ./netcmd/test.o \
 				   ./netcmd/planet.o \
 				   ./script/planet.o \
-				   ./planet/db.o \
-				   ./planet/net.o \
+				   ./script/db.o \
+				   ./script/net.o \
 				   ./ui/ui.o \
 				   ./ui/map.o 
 
@@ -43,4 +43,4 @@ clean:
 	rm -f ./net/*.o ./net/*.a
 	rm -f ./ui/*.o ./ui/*.a
 	rm -f ./netcmd/*.o ./netcmd/*.a
-	rm -f ./planet/*.o ./planet/*.a
+	rm -f ./script/*.o ./script/*.a
