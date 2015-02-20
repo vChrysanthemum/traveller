@@ -4,6 +4,6 @@
 #include "lua.h"
 
 void initPlannetDB();
-int plannetDBQuery(lua_State *L);
+int planetDBQuery(lua_State *L);
 
 #endif

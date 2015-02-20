@@ -1,32 +1,32 @@
 #include "core/util.h"
 #include "core/zmalloc.h"
-#include "plannet/plannet.h"
-#include "plannet/db.h"
+#include "planet/planet.h"
+#include "planet/db.h"
 
 #include "lua.h"
 
 #include "sqlite3.h"
 
-extern char g_plannetdir[];
-extern lua_State *g_plannetLuaSt;
-extern sqlite3 *g_plannetDB;
+extern char g_planetdir[];
+extern lua_State *g_planetLuaSt;
+extern sqlite3 *g_planetDB;
 
 void initPlannetDB() {
     int errno;
     char *filepath = zmalloc(ALLOW_PATH_SIZE);
     memset(filepath, 0, ALLOW_PATH_SIZE);
 
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/sqlite.db", g_plannetdir);
-    errno = sqlite3_open(filepath, &g_plannetDB);
+    snprintf(filepath, ALLOW_PATH_SIZE, "%s/sqlite.db", g_planetdir);
+    errno = sqlite3_open(filepath, &g_planetDB);
     if (errno) {
-        sqlite3_close(g_plannetDB);
+        sqlite3_close(g_planetDB);
         trvExit(0, "打开数据库失败，%s", filepath);
     }
 
     zfree(filepath);
 }
 
-int plannetDBQuery(lua_State *L) {
+int planetDBQuery(lua_State *L) {
     const char *sql = lua_tostring(L, 1);
     char **dbresult;
     char *errmsg;
@@ -35,7 +35,7 @@ int plannetDBQuery(lua_State *L) {
     if (NULL == sql) return 0;
 
     errno = sqlite3_get_table(
-            g_plannetDB,
+            g_planetDB,
             sql,
             &dbresult,
             &nrow,
@@ -43,31 +43,31 @@ int plannetDBQuery(lua_State *L) {
             &errmsg);
 
     if (SQLITE_OK != errno) {
-        trvLogW("plannetDBQuery Error: %s", errmsg);
+        trvLogW("planetDBQuery Error: %s", errmsg);
         sqlite3_free(errmsg);
 
-        lua_pushnil(g_plannetLuaSt);
+        lua_pushnil(g_planetLuaSt);
         return 1;
     }
 
 
-    lua_newtable(g_plannetLuaSt);
+    lua_newtable(g_planetLuaSt);
 
     index = ncolumn;
     for (loopI = 0; loopI < nrow; loopI++) {
-        lua_pushnumber(g_plannetLuaSt, loopI);
+        lua_pushnumber(g_planetLuaSt, loopI);
 
-        lua_newtable(g_plannetLuaSt);
+        lua_newtable(g_planetLuaSt);
 
         for (loopJ = 0; loopJ < ncolumn; loopJ++) {
-            lua_pushstring(g_plannetLuaSt, dbresult[loopJ]);
-            lua_pushstring(g_plannetLuaSt, dbresult[index]);
-            lua_settable(g_plannetLuaSt, -3);
+            lua_pushstring(g_planetLuaSt, dbresult[loopJ]);
+            lua_pushstring(g_planetLuaSt, dbresult[index]);
+            lua_settable(g_planetLuaSt, -3);
 
             index++;
         }
 
-        lua_settable(g_plannetLuaSt, -3);
+        lua_settable(g_planetLuaSt, -3);
     }
 
     sqlite3_free_table(dbresult);

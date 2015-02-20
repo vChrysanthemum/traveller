@@ -15,7 +15,7 @@ dictType commandTableDictType = {
 };
 
 struct trvCommand trvCommandTable[] = {
-    {"pla", plannetCommand, 0},
+    {"pla", planetCommand, 0},
     {"test", testCommand, 0},
     {"close", closeCommand, 0}
 };

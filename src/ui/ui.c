@@ -10,7 +10,7 @@
 
 extern Win *g_rootWin;
 extern Cursor *g_cursor;
-extern char g_plannetdir[ALLOW_PATH_SIZE];
+extern char g_planetdir[ALLOW_PATH_SIZE];
 
 static void initRootWin() {
     g_rootWin = (Win*)zmalloc(sizeof(Win));
@@ -65,7 +65,7 @@ void initUI() {
             );
     //box(win->window, 0, 0);
 
-    sprintf(dir, "%s/arctic.map.json", g_plannetdir);
+    sprintf(dir, "%s/arctic.map.json", g_planetdir);
     mapJSON = fileGetContent(dir);
     map = parseMap(mapJSON);
 

@@ -10,7 +10,7 @@
 #include "core/util.h"
 #include "net/networking.h"
 #include "net/ae.h"
-#include "plannet/plannet.h"
+#include "planet/planet.h"
 #include "ui/ui.h"
 
 #define TMPSTR_SIZE ALLOW_PATH_SIZE
@@ -19,9 +19,9 @@
  */
 struct Server g_server;
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
-char g_plannetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星球路径 */
-lua_State *g_plannetLuaSt;
-sqlite3 *g_plannetDB;
+char g_planetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星球路径 */
+lua_State *g_planetLuaSt;
+sqlite3 *g_planetDB;
 Win *g_rootWin;
 Cursor g_cursor;
 
@@ -81,7 +81,7 @@ static void _initPlannet(struct config *conf) {
     struct configOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
 
-    confOpt = configGet(conf, "plannet", "relative_path");
+    confOpt = configGet(conf, "planet", "relative_path");
     if (NULL == confOpt) {
         trvExit(0, "请选择星球文件路径");
     }
@@ -90,7 +90,7 @@ static void _initPlannet(struct config *conf) {
     }
     memcpy(tmpstr, confOpt->value, confOpt->valueLen);
     tmpstr[confOpt->valueLen] = 0;
-    snprintf(g_plannetdir, ALLOW_PATH_SIZE, "%s/../plannet/%s", g_basedir, tmpstr);
+    snprintf(g_planetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
     
     initPlannet();
 }

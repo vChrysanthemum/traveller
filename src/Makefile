@@ -12,10 +12,10 @@ travellerobjects = ./core/traveller.o \
 				   ./net/networking.o \
 				   ./netcmd/netcmd.o \
 				   ./netcmd/test.o \
-				   ./netcmd/plannet.o \
-				   ./plannet/plannet.o \
-				   ./plannet/db.o \
-				   ./plannet/net.o \
+				   ./netcmd/planet.o \
+				   ./planet/planet.o \
+				   ./planet/db.o \
+				   ./planet/net.o \
 				   ./ui/ui.o \
 				   ./ui/map.o 
 
@@ -43,4 +43,4 @@ clean:
 	rm -f ./net/*.o ./net/*.a
 	rm -f ./ui/*.o ./ui/*.a
 	rm -f ./netcmd/*.o ./netcmd/*.a
-	rm -f ./plannet/*.o ./plannet/*.a
+	rm -f ./planet/*.o ./planet/*.a
