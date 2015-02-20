@@ -20,7 +20,7 @@ extern lua_State *g_planetLuaSt;
  * lua中函数只返回一个字符串
  * argv 为 sn->argv[1:]，既忽略 sn的procName
  */
-int callPlannet(Snode *sn) {
+int STCallPlanetFunc(NTSnode *sn) {
     char **argv = &(sn->argv[1]);
     char *funcName = *argv;
     int argc = sn->argc - 1;
@@ -62,12 +62,12 @@ int callPlannet(Snode *sn) {
 }
 
 
-void initPlannet() {
+void STInitPlanet() {
     int errno;
     char *filepath = zmalloc(ALLOW_PATH_SIZE);
     memset(filepath, 0, ALLOW_PATH_SIZE);
 
-    initPlannetDB();
+    STInitDB();
 
     g_planetLuaSt = luaL_newstate();
     luaL_openlibs(g_planetLuaSt);
@@ -88,11 +88,11 @@ void initPlannet() {
         trvExit(0, "%s", lua_tostring(g_planetLuaSt, -1));
     }
 
-    lua_register(g_planetLuaSt, "NTConnectSnode", planetConnectSnode);
-    lua_register(g_planetLuaSt, "NTAddReplyString", planetAddReplyString);
-    lua_register(g_planetLuaSt, "NTAddReplyRawString", planetAddReplyRawString);
-    lua_register(g_planetLuaSt, "NTAddReplyMultiString", planetAddReplyMultiString);
-    lua_register(g_planetLuaSt, "DBQuery", planetDBQuery);
+    lua_register(g_planetLuaSt, "NTConnectNTSnode", STConnectNTSnode);
+    lua_register(g_planetLuaSt, "NTAddReplyString", STAddReplyString);
+    lua_register(g_planetLuaSt, "NTAddReplyRawString", STAddReplyRawString);
+    lua_register(g_planetLuaSt, "NTAddReplyMultiString", STAddReplyMultiString);
+    lua_register(g_planetLuaSt, "DBQuery", STDBQuery);
 
     //初始化
     errno = lua_pcall(g_planetLuaSt, 0, 0, 0);

@@ -7,8 +7,8 @@
 #include "ui/ui.h"
 #include "ui/map.h"
 
-extern Win *g_rootWin;
-Map *m_curMap;
+extern UIWin *g_rootUIWin;
+UIMap *m_curUIMap;
 
 /* 地图json格式：
  * {
@@ -31,12 +31,12 @@ Map *m_curMap;
  * 
  */
 
-Map *parseMap(char *mapJSON) {
+UIMap *UIParseUIMap(char *mapJSON) {
     const struct json_token *tok, *tok2;
     char tmpchar[64];
     int loopJ, x, y, poi, _m;
 
-    Map *map = zmalloc(sizeof(map));;
+    UIMap *map = zmalloc(sizeof(map));;
     map->root_json_content = mapJSON;
     map->root_json_tok = parse_json2(mapJSON, strlen(mapJSON));
 
@@ -49,7 +49,7 @@ Map *parseMap(char *mapJSON) {
     jsonTokToNumber(map->resourses_len, tok, tmpchar);
 
     tok = find_json_token(map->root_json_tok, "resourses");
-    map->resourses = (MapResourse*)zmalloc(sizeof(MapResourse) * map->resourses_len);
+    map->resourses = (UIMapResourse*)zmalloc(sizeof(UIMapResourse) * map->resourses_len);
     for (loopJ = 0; loopJ < map->resourses_len; loopJ++) {
         sprintf(tmpchar, "resourses[%d].v", loopJ);
         tok2 = find_json_token(map->root_json_tok, tmpchar);
@@ -60,7 +60,7 @@ Map *parseMap(char *mapJSON) {
     jsonTokToNumber(map->nodes_len, tok, tmpchar);
 
     tok = find_json_token(map->root_json_tok, "nodes");
-    map->nodes = (MapNode*)zmalloc(sizeof(MapNode) * map->width * map->height);
+    map->nodes = (UIMapNode*)zmalloc(sizeof(UIMapNode) * map->width * map->height);
     memset(map->nodes, 0x00, map->width * map->height);
     for (loopJ = 0; loopJ < map->nodes_len; loopJ++) {
         sprintf(tmpchar, "nodes[%d][0]", loopJ);
@@ -81,34 +81,34 @@ Map *parseMap(char *mapJSON) {
     map->addr_lt_x = 0;
     map->addr_lt_y = 0;
 
-    if (map->width > g_rootWin->width) {
+    if (map->width > g_rootUIWin->width) {
         map->win_lt_x = 0;
-        map->win_rb_x = g_rootWin->width;
-        map->addr_rb_x = g_rootWin->width;
+        map->win_rb_x = g_rootUIWin->width;
+        map->addr_rb_x = g_rootUIWin->width;
     }
     else {
-        map->win_lt_x = g_rootWin->width / 2 - map->width / 2;
-        map->win_rb_x = g_rootWin->width / 2 + map->width / 2;
+        map->win_lt_x = g_rootUIWin->width / 2 - map->width / 2;
+        map->win_rb_x = g_rootUIWin->width / 2 + map->width / 2;
         map->addr_rb_x = map->width;
     }
 
 
-    if (map->height > g_rootWin->height) {
+    if (map->height > g_rootUIWin->height) {
         map->win_lt_y = 0;
-        map->win_rb_y = g_rootWin->height;
-        map->addr_rb_y = g_rootWin->height;
+        map->win_rb_y = g_rootUIWin->height;
+        map->addr_rb_y = g_rootUIWin->height;
     }
     else {
-        map->win_lt_y = g_rootWin->height / 2 - map->height / 2;
-        map->win_rb_y = g_rootWin->height / 2 + map->height / 2;
+        map->win_lt_y = g_rootUIWin->height / 2 - map->height / 2;
+        map->win_rb_y = g_rootUIWin->height / 2 + map->height / 2;
         map->addr_rb_y = map->height;
     }
 
     return map;
 }
 
-void drawMap(Map *map) {
-    m_curMap = map;
+void UIDrawUIMap(UIMap *map) {
+    m_curUIMap = map;
     int x, y; //屏幕上的坐标
     int poi, _x, _y; //地图坐标
     for (x = map->win_lt_x; x < map->win_rb_x; x++) {
@@ -125,41 +125,43 @@ void drawMap(Map *map) {
             }
         }
     }
-    mvprintw(0, 0, "addr_lt_x: %d", m_curMap->addr_lt_x);
-    mvprintw(1, 0, "addr_rb_x: %d", m_curMap->addr_rb_x);
-    mvprintw(2, 0, "addr_lt_y: %d", m_curMap->addr_lt_y);
-    mvprintw(3, 0, "addr_rb_y: %d", m_curMap->addr_rb_y);
+    /*
+    mvprintw(0, 0, "addr_lt_x: %d", m_curUIMap->addr_lt_x);
+    mvprintw(1, 0, "addr_rb_x: %d", m_curUIMap->addr_rb_x);
+    mvprintw(2, 0, "addr_lt_y: %d", m_curUIMap->addr_lt_y);
+    mvprintw(3, 0, "addr_rb_y: %d", m_curUIMap->addr_rb_y);
+    */
 
     refresh();
 }
 
-void moveCurMapX(int x) {
+void UIMoveCurUIMapX(int x) {
     int _x = x;
-    if (m_curMap->addr_lt_x + x < 0) {
-        _x = -1 * m_curMap->addr_lt_x;
+    if (m_curUIMap->addr_lt_x + x < 0) {
+        _x = -1 * m_curUIMap->addr_lt_x;
     }
-    else if (m_curMap->addr_rb_x + x > m_curMap->width) {
-        _x = m_curMap->width - m_curMap->addr_rb_x;
+    else if (m_curUIMap->addr_rb_x + x > m_curUIMap->width) {
+        _x = m_curUIMap->width - m_curUIMap->addr_rb_x;
     }
     if (0 == _x) return;
-    m_curMap->addr_lt_x += _x;
-    m_curMap->addr_rb_x += _x;
-    drawMap(m_curMap);
+    m_curUIMap->addr_lt_x += _x;
+    m_curUIMap->addr_rb_x += _x;
+    UIDrawUIMap(m_curUIMap);
 }
 
-void moveCurMapY(int y) {
+void UIMoveCurUIMapY(int y) {
     int _y = y;
-    if (m_curMap->addr_lt_y + y < 0) {
-        _y = -1 * m_curMap->addr_lt_y;
+    if (m_curUIMap->addr_lt_y + y < 0) {
+        _y = -1 * m_curUIMap->addr_lt_y;
     }
-    else if (m_curMap->addr_rb_y + y > m_curMap->height) {
-        _y = m_curMap->height - m_curMap->addr_rb_y;
+    else if (m_curUIMap->addr_rb_y + y > m_curUIMap->height) {
+        _y = m_curUIMap->height - m_curUIMap->addr_rb_y;
     }
     if (0 == _y) return;
-    m_curMap->addr_lt_y += _y;
-    m_curMap->addr_rb_y += _y;
-    drawMap(m_curMap);
+    m_curUIMap->addr_lt_y += _y;
+    m_curUIMap->addr_rb_y += _y;
+    UIDrawUIMap(m_curUIMap);
 }
 
-void freeMap(Map *map) {
+void UIFreeUIMap(UIMap *map) {
 }

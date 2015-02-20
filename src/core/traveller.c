@@ -17,13 +17,13 @@
 
 /* 全局变量
  */
-struct Server g_server;
+struct NTServer g_server;
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char g_planetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星球路径 */
 lua_State *g_planetLuaSt;
 sqlite3 *g_planetDB;
-Win *g_rootWin;
-Cursor g_cursor;
+UIWin *g_rootUIWin;
+UICursor g_cursor;
 
 
 void beforeSleep(struct aeEventLoop *eventLoop) {
@@ -39,7 +39,7 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 
 /* 启动监听服务器
 */
-static void _initServer(struct config *conf) {
+static void _NTInitNTServer(struct config *conf) {
     int listenPort;
     struct configOption *confOpt;
     char tmpstr[TMPSTR_SIZE] = {""};
@@ -59,7 +59,7 @@ static void _initServer(struct config *conf) {
     else listenPort = TRV_NET_LISTEN_PORT;
 
 
-    if (ERRNO_ERR == initServer(listenPort)) {
+    if (ERRNO_ERR == NTInitNTServer(listenPort)) {
         trvExit(0, "初始化网络失败");
     }
 
@@ -77,7 +77,7 @@ static void _initServer(struct config *conf) {
 
 /* 启动星球运行支持
 */
-static void _initPlannet(struct config *conf) {
+static void _STInitPlanet(struct config *conf) {
     struct configOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
 
@@ -92,7 +92,7 @@ static void _initPlannet(struct config *conf) {
     tmpstr[confOpt->valueLen] = 0;
     snprintf(g_planetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
     
-    initPlannet();
+    STInitPlanet();
 }
 
 
@@ -119,9 +119,9 @@ int main(int argc, char *argv[]) {
         trvExit(0, "请选择配置文件");
     }
 
-    _initPlannet(conf);
-    //_initServer(conf);
-    initUI();
+    _STInitPlanet(conf);
+    //_NTInitNTServer(conf);
+    UIinit();
 
     return 0;
 }

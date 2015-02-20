@@ -7,20 +7,20 @@
 
 extern lua_State *g_planetLuaSt;
 
-int planetAddReplyString(lua_State *L) {
-    planetAddReplyHeader();
+int STAddReplyString(lua_State *L) {
+    STAddReplyHeader();
     char *replyStr;
     
     replyStr = (char *)lua_tostring(g_planetLuaSt, 2);
-    addReplyString(sn, replyStr);
+    NTAddReplyString(sn, replyStr);
 
     lua_pushnumber(g_planetLuaSt, 0);
     return 1;
 }
 
 
-int planetAddReplyMultiString(lua_State *L) {
-    planetAddReplyHeader();
+int STAddReplyMultiString(lua_State *L) {
+    STAddReplyHeader();
 
     char **replyArr;
     int loopJ;
@@ -33,7 +33,7 @@ int planetAddReplyMultiString(lua_State *L) {
         replyArr[loopJ-2] = (char *)lua_tostring(g_planetLuaSt, loopJ);
     }
 
-    addReplyStringArgv(sn, (argc-1), replyArr);
+    NTAddReplyStringArgv(sn, (argc-1), replyArr);
 
     lua_pushnumber(g_planetLuaSt, 0);
 
@@ -43,27 +43,27 @@ int planetAddReplyMultiString(lua_State *L) {
 }
 
 
-int planetAddReplyRawString(lua_State *L) {
-    planetAddReplyHeader();
+int STAddReplyRawString(lua_State *L) {
+    STAddReplyHeader();
     char *replyStr;
      
     replyStr = (char *)lua_tostring(g_planetLuaSt, 2);
-    addReplyRawString(sn, replyStr);
+    NTAddReplyRawString(sn, replyStr);
 
     lua_pushnumber(g_planetLuaSt, 0);
     return 1;
 }
 
 
-int planetConnectSnode(lua_State *L) {
+int STConnectNTSnode(lua_State *L) {
     char *host;
     int port;
-    Snode *sn;
+    NTSnode *sn;
     
     host = (char *)lua_tostring(g_planetLuaSt, 1);
     port = (int)lua_tonumber(g_planetLuaSt, 2);
 
-    sn = connectSnode(host, port);
+    sn = NTConnectNTSnode(host, port);
 
     if (NULL == sn) {
         lua_pushnil(g_planetLuaSt);

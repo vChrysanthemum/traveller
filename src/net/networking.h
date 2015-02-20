@@ -18,7 +18,7 @@
 #define TRV_NET_IOBUF_LEN (1024)  /* Generic I/O buffer size */
 
 /* 基于RESP通信协议，不过有点不一样
- * 通信Snode接受信息各个状态如下：
+ * 通信NTSnode接受信息各个状态如下：
  */
 #define SNODE_RECV_STAT_ACCEPT   0  /* 客户端首次连接，socket accept后 */
 #define SNODE_RECV_STAT_PREPARE  1  /* 准备就绪，等待数据中 */
@@ -26,7 +26,7 @@
 #define SNODE_RECV_STAT_PARSED   4  /* 数据完成 */
 #define SNODE_RECV_STAT_EXCUTING 5  /* 正在执行中 */
 #define SNODE_RECV_STAT_EXCUTED  6  /* 命令执行完成 */
-#define setSnodeExcuteCommandFinished(sn) sn->recv_stat = SNODE_RECV_STAT_EXCUTED;
+#define setNTSnodeExcuteCommandFinished(sn) sn->recv_stat = SNODE_RECV_STAT_EXCUTED;
 
 /* 各个类型解析状态
  */
@@ -37,13 +37,13 @@
 #define SNODE_RECV_STAT_PARSING_FINISHED    4
 
 
-/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 Snode (socket node)，
+/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 NTSnode (socket node)，
  * 包括连接traveller的client，或traveller主动连接的g_server
  */
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) /* 1GB max query buffer. */
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  /* 发送完信息后，断开连接 */
 
-typedef struct Snode_s {
+typedef struct NTSnode_s {
     int flags;              /* SNODE_CLOSE_AFTER_REPLY | ... */
     int fd;
     char fds[16];           /* 字符串类型的fd */
@@ -62,9 +62,9 @@ typedef struct Snode_s {
     int argv_remaining;     /* 正在解析中的参数还有多少字符未获取 -1 为还没开始解析*/
     time_t lastinteraction; /* time of the last interaction, used for timeout */
 
-    void (*proc)(struct Snode_s *sn);
+    void (*proc)(struct NTSnode_s *sn);
     int is_write_mod;
-} Snode;
+} NTSnode;
 
 #define SNODE_RECV_TYPE_ERR    -1 /* -:ERR */
 #define SNODE_RECV_TYPE_OK     1  /* +:OK */
@@ -73,11 +73,11 @@ typedef struct Snode_s {
 
 struct trvCommand {
     char *key;
-    void (*proc)(struct Snode_s *sn);
+    void (*proc)(struct NTSnode_s *sn);
     int argc;
 };
 
-struct Server {
+struct NTServer {
     time_t unixtime;        /* Unix time sampled every cron cycle. */
 
     int max_snodes;
@@ -96,23 +96,23 @@ struct Server {
 
     int tcpkeepalive;
 
-    Snode* current_snode;
+    NTSnode* current_snode;
 
     dict* commands;
 };
 
-int initServer(int port);
-sds catSnodeInfoString(sds s, Snode *sn);
-Snode* connectSnode(char *addr, int port);
-void addReplyError(Snode *sn, char *err);
-void addReplyStringArgv(Snode *sn, int argc, char **argv);
-void addReplyMultiString(Snode *sn, int count, ...);
-void addReplyMultiSds(Snode *sn, int count, ...);
-void addReplySds(Snode *sn, sds data);
-void addReplyRawSds(Snode *sn, sds data);
-void addReplyString(Snode *sn, char *data);
-void addReplyRawString(Snode *sn, char *data);
-void freeSnode(Snode *sn);  /* dangerous */
-Snode* getSnodeByFDS(const char *fds);
+int NTInitNTServer(int port);
+sds NTCatNTSnodeInfoString(sds s, NTSnode *sn);
+NTSnode* NTConnectNTSnode(char *addr, int port);
+void NTAddReplyError(NTSnode *sn, char *err);
+void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv);
+void NTAddReplyMultiString(NTSnode *sn, int count, ...);
+void NTAddReplyMultiSds(NTSnode *sn, int count, ...);
+void NTAddReplySds(NTSnode *sn, sds data);
+void NTAddReplyRawSds(NTSnode *sn, sds data);
+void NTAddReplyString(NTSnode *sn, char *data);
+void NTAddReplyRawString(NTSnode *sn, char *data);
+void NTFreeNTSnode(NTSnode *sn);  /* dangerous */
+NTSnode* NTGetNTSnodeByFDS(const char *fds);
 
 #endif

@@ -3,38 +3,38 @@
 
 #include <ncurses.h>
 
-#define moveCursorLeft(count) do {\
+#define UIMoveUICursorLeft(count) do {\
     g_cursor->x -= count;\
     if (g_cursor->x < 0) {\
-        moveCurMapX(g_cursor->x);\
+        UIMoveCurUIMapX(g_cursor->x);\
         g_cursor->x = 0;\
     }\
     move(g_cursor->y, g_cursor->x);\
 } while(0);
 
-#define moveCursorRight(count) do {\
+#define UIMoveUICursorRight(count) do {\
     g_cursor->x += count;\
-    if (g_cursor->x > g_rootWin->width) {\
-        moveCurMapX(g_cursor->x - g_rootWin->width);\
-        g_cursor->x = g_rootWin->width;\
+    if (g_cursor->x > g_rootUIWin->width) {\
+        UIMoveCurUIMapX(g_cursor->x - g_rootUIWin->width);\
+        g_cursor->x = g_rootUIWin->width;\
     }\
     move(g_cursor->y, g_cursor->x);\
 } while(0);
 
-#define moveCursorUp(count) do {\
+#define UIMoveUICursorUp(count) do {\
     g_cursor->y -= count;\
     if (g_cursor->y < 0) {\
-        moveCurMapY(g_cursor->y);\
+        UIMoveCurUIMapY(g_cursor->y);\
         g_cursor->y = 0;\
     }\
     move(g_cursor->y, g_cursor->x);\
 } while(0);
 
-#define moveCursorDown(count) do {\
+#define UIMoveUICursorDown(count) do {\
     g_cursor->y += count;\
-    if (g_cursor->y > g_rootWin->height) {\
-        moveCurMapY(g_cursor->y - g_rootWin->height);\
-        g_cursor->y = g_rootWin->height;\
+    if (g_cursor->y > g_rootUIWin->height) {\
+        UIMoveCurUIMapY(g_cursor->y - g_rootUIWin->height);\
+        g_cursor->y = g_rootUIWin->height;\
     }\
     move(g_cursor->y, g_cursor->x);\
 } while(0);
@@ -45,9 +45,9 @@ typedef struct {
     int number;
     char snumber[8];     /* 已输入的数字 */
     int snumber_len;
-} Cursor;
+} UICursor;
 
-//enum WinMode mode = {};
+//enum UIWinMode mode = {};
 
 typedef struct {
     int height;         /* 行数 */
@@ -55,11 +55,10 @@ typedef struct {
     int startx;
     int starty;
     int ch;
-    //enum WinMode mode;
+    //enum UIWinMode mode;
     WINDOW *window;
-} Win;
+} UIWin;
 
-void initUI();
-void winAddCh(Win *win, int y, int x, char ch);
+void UIinit();
 
 #endif

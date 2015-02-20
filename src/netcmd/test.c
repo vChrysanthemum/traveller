@@ -4,24 +4,24 @@
 #include "net/networking.h"
 #include "netcmd/netcmd.h"
 
-void testCommand(struct Snode_s *sn) {
+void testCommand(struct NTSnode_s *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
-    addReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
-    setSnodeExcuteCommandFinished(sn);
+    NTAddReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
+    setNTSnodeExcuteCommandFinished(sn);
  
     /*   
-    Snode *new_sn = connectSnode("127.0.0.1", 1091);
+    NTSnode *new_sn = NTConnectNTSnode("127.0.0.1", 1091);
     if (NULL != new_sn) {
-        addReplyMultiString(new_sn, 2, "close", "so;iafnonaioient");
+        NTAddReplyMultiString(new_sn, 2, "close", "so;iafnonaioient");
     }
     */
 }
 
-void closeCommand(struct Snode_s *sn) {
+void closeCommand(struct NTSnode_s *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
-    freeSnode(sn);
+    NTFreeNTSnode(sn);
     trvLogI("closed by other people");
     exit(-1);
 }

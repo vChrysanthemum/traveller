@@ -14,18 +14,18 @@ typedef struct {
     char *introduction;
     int introduction_len;
     int flag;
-} MapResourse;
+} UIMapResourse;
 
 typedef struct {
-    MapResourse *resourse;
+    UIMapResourse *resourse;
     int position_x;
     int position_y;
-} MapNode;
+} UIMapNode;
 
 typedef struct {
-    MapResourse *resourses;
+    UIMapResourse *resourses;
     int resourses_len;
-    MapNode *nodes;
+    UIMapNode *nodes;
     int nodes_len;
     struct json_token *root_json_tok;
     char *root_json_content;
@@ -47,12 +47,12 @@ typedef struct {
     /* 窗口右下角，相对应地图上的坐标 */
     int addr_rb_x; /*  */
     int addr_rb_y; /*  */
-} Map;
+} UIMap;
 
-Map *parseMap(char *mapJSON);
-void drawMap(Map *map);
-void moveCurMapX(int x);
-void moveCurMapY(int y);
-void freeMap(Map *map);
+UIMap *UIParseUIMap(char *mapJSON);
+void UIDrawUIMap(UIMap *map);
+void UIMoveCurUIMapX(int x);
+void UIMoveCurUIMapY(int y);
+void UIFreeUIMap(UIMap *map);
 
 #endif

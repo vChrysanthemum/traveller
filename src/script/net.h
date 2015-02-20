@@ -3,10 +3,10 @@
 
 #include "lua.h"
 
-#define planetAddReplyHeader() \
+#define STAddReplyHeader() \
     const char *fds;\
     int argc;\
-    Snode *sn;\
+    NTSnode *sn;\
 \
     argc = lua_gettop(g_planetLuaSt);\
     if (argc < 2) {\
@@ -15,14 +15,14 @@
     }\
 \
     fds = lua_tostring(g_planetLuaSt, 1);\
-    sn = getSnodeByFDS(fds);\
+    sn = NTGetNTSnodeByFDS(fds);\
     if (NULL == sn) {\
         lua_pushnumber(g_planetLuaSt, -2);\
     }
 
-int planetAddReplyString(lua_State *L);
-int planetAddReplyMultiString(lua_State *L);
-int planetAddReplyRawString(lua_State *L);
-int planetConnectSnode(lua_State *L);
+int STAddReplyString(lua_State *L);
+int STAddReplyMultiString(lua_State *L);
+int STAddReplyRawString(lua_State *L);
+int STConnectNTSnode(lua_State *L);
 
 #endif

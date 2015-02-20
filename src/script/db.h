@@ -3,7 +3,7 @@
 
 #include "lua.h"
 
-void initPlannetDB();
-int planetDBQuery(lua_State *L);
+void STInitDB();
+int STDBQuery(lua_State *L);
 
 #endif

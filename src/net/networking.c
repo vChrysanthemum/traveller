@@ -12,30 +12,30 @@
 #include "net/anet.h"
 #include "netcmd/netcmd.h"
 
-extern struct Server g_server;
+extern struct NTServer g_server;
 extern dictType stackStringTableDictType;
 
-static void setProtocolError(Snode *sn, int pos);
-static void resetSnodeArgs(Snode *sn);
-static int processInputBufferGetSegment(Snode *sn, sds *target_addr);
-static int processInputBufferGetNum(Snode *sn, sds *target_addr, int *target_num);
-static void processInputBufferStatus(Snode *sn);
-static void processInputBufferString(Snode *sn);
-static void processInputBufferArray(Snode *sn);
-static void processInputBuffer(Snode *sn);
-static void readQueryFromSnode(aeEventLoop *el, int fd, void *privdata, int mask);
-static Snode* createSnode(int fd);
+static void setProtocolError(NTSnode *sn, int pos);
+static void resetNTSnodeArgs(NTSnode *sn);
+static int processInputBufferGetSegment(NTSnode *sn, sds *target_addr);
+static int processInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num);
+static void processInputBufferStatus(NTSnode *sn);
+static void processInputBufferString(NTSnode *sn);
+static void processInputBufferArray(NTSnode *sn);
+static void processInputBuffer(NTSnode *sn);
+static void readQueryFromNTSnode(aeEventLoop *el, int fd, void *privdata, int mask);
+static NTSnode* createNTSnode(int fd);
 static void acceptCommonHandler(int fd, int flags);
 static void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask);
 static int listenToPort(int port, int *fds, int *count);
-static void prepareSnodeToWrite(Snode *sn);
-static void sendReplyToSnode(aeEventLoop *el, int fd, void *privdata, int mask);
-static Snode* snodeArgvMakeRoomFor(Snode *sn, int count);
-static Snode* snodeArgvClear(Snode *sn);
-static Snode* snodeArgvEmpty(Snode *sn);
-static Snode* snodeArgvFree(Snode *sn);
+static void prepareNTSnodeToWrite(NTSnode *sn);
+static void sendReplyToNTSnode(aeEventLoop *el, int fd, void *privdata, int mask);
+static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count);
+static NTSnode* snodeArgvClear(NTSnode *sn);
+static NTSnode* snodeArgvEmpty(NTSnode *sn);
+static NTSnode* snodeArgvFree(NTSnode *sn);
 
-static Snode* snodeArgvFree(Snode *sn) {
+static NTSnode* snodeArgvFree(NTSnode *sn) {
     if (NULL == sn->argv) return sn;
 
     int loopJ;
@@ -47,13 +47,13 @@ static Snode* snodeArgvFree(Snode *sn) {
     return sn;
 }
 
-static Snode* snodeArgvEmpty(Snode *sn) {
+static NTSnode* snodeArgvEmpty(NTSnode *sn) {
     sn->argv = NULL;
     sn->argv_size = 0;
     return sn;
 }
 
-static Snode* snodeArgvMakeRoomFor(Snode *sn, int count) {
+static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count) {
     if (sn->argv_size >= count) return sn;
 
     int loopJ;
@@ -69,7 +69,7 @@ static Snode* snodeArgvMakeRoomFor(Snode *sn, int count) {
     return sn;
 }
 
-static Snode* snodeArgvClear(Snode *sn) {
+static NTSnode* snodeArgvClear(NTSnode *sn) {
     if (0 == sn->argv_size) return sn;
 
     int loopJ;
@@ -80,17 +80,17 @@ static Snode* snodeArgvClear(Snode *sn) {
     return sn;
 }
 
-static void prepareSnodeToWrite(Snode *sn) {
+static void prepareNTSnodeToWrite(NTSnode *sn) {
     if (sn->is_write_mod) return;
 
-    aeCreateFileEvent(g_server.el, sn->fd, AE_WRITABLE, sendReplyToSnode, sn);
+    aeCreateFileEvent(g_server.el, sn->fd, AE_WRITABLE, sendReplyToNTSnode, sn);
     sn->is_write_mod = 1;
 }
 
-static void sendReplyToSnode(aeEventLoop *el, int fd, void *privdata, int mask) {
+static void sendReplyToNTSnode(aeEventLoop *el, int fd, void *privdata, int mask) {
     int nwritten = 0;
     int bufpos = 0;
-    Snode *sn = privdata;
+    NTSnode *sn = privdata;
     int tmpsize = sdslen(sn->writebuf);
 
     while(bufpos < tmpsize) {
@@ -105,32 +105,32 @@ static void sendReplyToSnode(aeEventLoop *el, int fd, void *privdata, int mask) 
         aeDeleteFileEvent(g_server.el, sn->fd, AE_WRITABLE);
         sn->is_write_mod = 0;
 
-        if (sn->flags & SNODE_CLOSE_AFTER_REPLY) freeSnode(sn);
+        if (sn->flags & SNODE_CLOSE_AFTER_REPLY) NTFreeNTSnode(sn);
     }
 }
 
-void addReplySds(Snode *sn, sds data) {
-    prepareSnodeToWrite(sn);
+void NTAddReplySds(NTSnode *sn, sds data) {
+    prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)sdslen(data), data);
 }
 
-void addReplyRawSds(Snode *sn, sds data) {
-    prepareSnodeToWrite(sn);
+void NTAddReplyRawSds(NTSnode *sn, sds data) {
+    prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatsds(sn->writebuf, data);
 }
 
-void addReplyString(Snode *sn, char *data) {
-    prepareSnodeToWrite(sn);
+void NTAddReplyString(NTSnode *sn, char *data) {
+    prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)strlen(data), data);
 }
 
-void addReplyRawString(Snode *sn, char *data) {
-    prepareSnodeToWrite(sn);
+void NTAddReplyRawString(NTSnode *sn, char *data) {
+    prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscat(sn->writebuf, data);
 }
 
-void addReplyMultiSds(Snode *sn, int count, ...) {
-    prepareSnodeToWrite(sn);
+void NTAddReplyMultiSds(NTSnode *sn, int count, ...) {
+    prepareNTSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
     int loopJ;
@@ -145,8 +145,8 @@ void addReplyMultiSds(Snode *sn, int count, ...) {
 }
 
 
-void addReplyStringArgv(Snode *sn, int argc, char **argv) {
-    prepareSnodeToWrite(sn);
+void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv) {
+    prepareNTSnodeToWrite(sn);
     int loopJ;
     sn->writebuf = sdscatfmt(sn->writebuf, "*%i\r\n", argc);
     for (loopJ = 0; loopJ < argc; loopJ++) {
@@ -155,8 +155,8 @@ void addReplyStringArgv(Snode *sn, int argc, char **argv) {
 }
 
 
-void addReplyMultiString(Snode *sn, int count, ...) {
-    prepareSnodeToWrite(sn);
+void NTAddReplyMultiString(NTSnode *sn, int count, ...) {
+    prepareNTSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
     int loopJ;
@@ -170,26 +170,26 @@ void addReplyMultiString(Snode *sn, int count, ...) {
     va_end(ap); 
 }
 
-void addReplyError(Snode *sn, char *err) {
-    prepareSnodeToWrite(sn);
+void NTAddReplyError(NTSnode *sn, char *err) {
+    prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatlen(sn->writebuf, "-", 1);
     sn->writebuf = sdscat(sn->writebuf, err);
     sn->writebuf = sdscatlen(sn->writebuf, "\r\n", 2);
 }
 
 
-sds catSnodeInfoString(sds s, Snode *sn) {
-    return sdscatfmt(s, "Snode");
+sds NTCatNTSnodeInfoString(sds s, NTSnode *sn) {
+    return sdscatfmt(s, "NTSnode");
 }
 
 
-static void setProtocolError(Snode *sn, int pos) {
+static void setProtocolError(NTSnode *sn, int pos) {
     sn->flags |= SNODE_CLOSE_AFTER_REPLY;
     sdsrange(sn->querybuf,pos,-1);
 }
 
 
-static void prepareSnodeToReadQuery(Snode *sn) {
+static void prepareNTSnodeToReadQuery(NTSnode *sn) {
     sn->recv_stat = SNODE_RECV_STAT_PREPARE;
     sn->recv_type = ERRNO_NULL;
     sn->recv_parsing_stat = ERRNO_NULL;
@@ -205,7 +205,7 @@ static void prepareSnodeToReadQuery(Snode *sn) {
     sn->proc = NULL;
 }
 
-static void resetSnodeArgs(Snode *sn) {
+static void resetNTSnodeArgs(NTSnode *sn) {
     sn->flags = ERRNO_NULL;
     sn->recv_stat = ERRNO_NULL;
     sn->recv_type = ERRNO_NULL;
@@ -226,7 +226,7 @@ static void resetSnodeArgs(Snode *sn) {
 /* 移动 querybuf 到 target_addr 一直到遇到 \r\n，或者最后一个\n，
  * 如果一直没遇到，则直接读取所有
  */
-static int processInputBufferGetSegment(Snode *sn, sds *target_addr) {
+static int processInputBufferGetSegment(NTSnode *sn, sds *target_addr) {
     char *newline;
     int offset;
     int readlen = 0;
@@ -259,7 +259,7 @@ static int processInputBufferGetSegment(Snode *sn, sds *target_addr) {
 
 /* 从querybuf中读取数字，并使用tmp_querybuf
  */
-static int processInputBufferGetNum(Snode *sn, sds *target_addr, int *target_num) {
+static int processInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num) {
     int readlen = 1;
     readlen = processInputBufferGetSegment(sn, target_addr);
 
@@ -280,7 +280,7 @@ static int processInputBufferGetNum(Snode *sn, sds *target_addr, int *target_num
 }
 
 
-static void processInputBufferStatus(Snode *sn) {
+static void processInputBufferStatus(NTSnode *sn) {
     int readlen = 0;
 
     trvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
@@ -306,7 +306,7 @@ static void processInputBufferStatus(Snode *sn) {
 }
 
 
-static void processInputBufferString(Snode *sn) {
+static void processInputBufferString(NTSnode *sn) {
     int readlen = 0, len;
 
     trvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
@@ -365,7 +365,7 @@ static void processInputBufferString(Snode *sn) {
 }
 
 
-static void processInputBufferArray(Snode *sn) {
+static void processInputBufferArray(NTSnode *sn) {
     int readlen = 0, len, argJ;
 
     trvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
@@ -461,7 +461,7 @@ PARSING_ARGV_START:
 }
 
 
-static void processInputBuffer(Snode *sn) {
+static void processInputBuffer(NTSnode *sn) {
     if (SNODE_RECV_STAT_ACCEPT == sn->recv_stat || SNODE_RECV_STAT_PREPARE == sn->recv_stat) {
         switch(sn->querybuf[0]) {
             case '+' :
@@ -481,7 +481,7 @@ static void processInputBuffer(Snode *sn) {
                 break;
 
             default :
-                addReplyError(sn, "Protocol error: Unrecognized type");
+                NTAddReplyError(sn, "Protocol error: Unrecognized type");
                 setProtocolError(sn, 0);
                 return;
         }
@@ -505,7 +505,7 @@ static void processInputBuffer(Snode *sn) {
 
             de = dictFind(g_server.commands, sn->argv[0]);
             if (NULL == de) {
-                addReplyError(sn, "command unrecognized");
+                NTAddReplyError(sn, "command unrecognized");
                 setProtocolError(sn, 0);
                 return;
             }
@@ -514,28 +514,28 @@ static void processInputBuffer(Snode *sn) {
         }
     }
     else {
-        addReplyError(sn, "Protocol error: Unrecognized");
+        NTAddReplyError(sn, "Protocol error: Unrecognized");
         setProtocolError(sn, 0);
         return;
     }
 
     if (NULL == sn->proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recv_stat) {
-            prepareSnodeToReadQuery(sn);
+            prepareNTSnodeToReadQuery(sn);
         }
     }
     else {
         sn->proc(sn);
 
         if (SNODE_RECV_STAT_EXCUTED == sn->recv_stat) {
-            prepareSnodeToReadQuery(sn);
+            prepareNTSnodeToReadQuery(sn);
         }
     }
 }
 
 
-static void readQueryFromSnode(aeEventLoop *el, int fd, void *privdata, int mask) {
-    Snode *sn = (Snode*) privdata;
+static void readQueryFromNTSnode(aeEventLoop *el, int fd, void *privdata, int mask) {
+    NTSnode *sn = (NTSnode*) privdata;
     int nread;
     NOTUSED(el);
     NOTUSED(mask);
@@ -562,20 +562,20 @@ static void readQueryFromSnode(aeEventLoop *el, int fd, void *privdata, int mask
         } 
         else {
             trvLogD("Reading from client: %s",strerror(errno));
-            freeSnode(sn);
+            NTFreeNTSnode(sn);
         }
         return;
     } 
     else if (0 == nread) {
-        freeSnode(sn);
+        NTFreeNTSnode(sn);
         return;
     }
     processInputBuffer(sn);
 }
 
 
-static Snode* createSnode(int fd) {
-    Snode *sn = zmalloc(sizeof(Snode));
+static NTSnode* createNTSnode(int fd) {
+    NTSnode *sn = zmalloc(sizeof(NTSnode));
 
     if (-1 == fd) {
         return NULL;
@@ -586,7 +586,7 @@ static Snode* createSnode(int fd) {
     if (g_server.tcpkeepalive)
         anetKeepAlive(NULL,fd,g_server.tcpkeepalive);
     if (aeCreateFileEvent(g_server.el,fd,AE_READABLE,
-                readQueryFromSnode, sn) == AE_ERR)
+                readQueryFromNTSnode, sn) == AE_ERR)
     {
         close(fd);
         zfree(sn);
@@ -600,7 +600,7 @@ static Snode* createSnode(int fd) {
     sn->writebuf = sdsempty();
     sn = snodeArgvEmpty(sn);
     sn->is_write_mod = 0;
-    resetSnodeArgs(sn);
+    resetNTSnodeArgs(sn);
 
     sn->recv_stat = SNODE_RECV_STAT_ACCEPT;
 
@@ -614,7 +614,7 @@ static Snode* createSnode(int fd) {
 
 
 
-void freeSnode(Snode *sn) {
+void NTFreeNTSnode(NTSnode *sn) {
     if (-1 != sn->fd) {
         aeDeleteFileEvent(g_server.el, sn->fd, AE_READABLE);
         aeDeleteFileEvent(g_server.el, sn->fd, AE_WRITABLE);
@@ -631,12 +631,12 @@ void freeSnode(Snode *sn) {
     zfree(sn);
 
     g_server.stat_numconnections--;
-    trvLogI("Free Snode");
+    trvLogI("Free NTSnode");
 }
 
-Snode *connectSnode(char *addr, int port) {
+NTSnode *NTConnectNTSnode(char *addr, int port) {
     int fd;
-    Snode *sn;
+    NTSnode *sn;
 
     fd = anetTcpNonBlockConnect(NULL, addr, port);
     if (-1 == fd) {
@@ -644,13 +644,13 @@ Snode *connectSnode(char *addr, int port) {
         return NULL;
     }
     
-    sn = createSnode(fd);
+    sn = createNTSnode(fd);
     return sn;
 }
 
 static void acceptCommonHandler(int fd, int flags) {
-    Snode *sn;
-    if (NULL == (sn = createSnode(fd))) {
+    NTSnode *sn;
+    if (NULL == (sn = createNTSnode(fd))) {
         trvLogW("Error registering fd event for the new snode: %s (fd=%d)",
                 strerror(errno),fd);
         close(fd); /* May be already closed, just ignore errors */
@@ -665,7 +665,7 @@ static void acceptCommonHandler(int fd, int flags) {
             /* Nothing to do, Just to avoid the warning... */
         }
         g_server.stat_rejected_conn++;
-        freeSnode(sn);
+        NTFreeNTSnode(sn);
         return;
     }
     sn->flags |= flags;
@@ -717,7 +717,7 @@ static int listenToPort(int port, int *fds, int *count) {
     return ERRNO_OK;
 }
 
-Snode* getSnodeByFDS(const char *fds) {
+NTSnode* NTGetNTSnodeByFDS(const char *fds) {
     dictEntry *de;
 
     de = dictFind(g_server.snodes, fds);
@@ -728,7 +728,7 @@ Snode* getSnodeByFDS(const char *fds) {
     return dictGetVal(de);
 }
 
-int initServer(int listenPort) {
+int NTInitNTServer(int listenPort) {
     int loopJ; 
 
     g_server.unixtime = -1;

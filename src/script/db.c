@@ -11,7 +11,7 @@ extern char g_planetdir[];
 extern lua_State *g_planetLuaSt;
 extern sqlite3 *g_planetDB;
 
-void initPlannetDB() {
+void STInitDB() {
     int errno;
     char *filepath = zmalloc(ALLOW_PATH_SIZE);
     memset(filepath, 0, ALLOW_PATH_SIZE);
@@ -26,7 +26,7 @@ void initPlannetDB() {
     zfree(filepath);
 }
 
-int planetDBQuery(lua_State *L) {
+int STDBQuery(lua_State *L) {
     const char *sql = lua_tostring(L, 1);
     char **dbresult;
     char *errmsg;
@@ -43,7 +43,7 @@ int planetDBQuery(lua_State *L) {
             &errmsg);
 
     if (SQLITE_OK != errno) {
-        trvLogW("planetDBQuery Error: %s", errmsg);
+        trvLogW("STDBQuery Error: %s", errmsg);
         sqlite3_free(errmsg);
 
         lua_pushnil(g_planetLuaSt);

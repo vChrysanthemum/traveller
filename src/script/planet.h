@@ -8,8 +8,7 @@
 
 #include "net/networking.h"
 
-void initPlannet();
-int callPlannet(Snode *sn);
-void afterCallPlannet();
+void STInitPlanet();
+int STCallPlanetFunc(NTSnode *sn);
 
 #endif
