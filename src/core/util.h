@@ -9,6 +9,9 @@
 #include <sys/time.h>
 #include <locale.h>
 
+#include "core/sds.h"
+#include "core/frozen.h"
+
 /* Anti-warning macro... */
 #define NOTUSED(V) ((void) V)
 
@@ -64,5 +67,12 @@ int dictStringCompare(void *privdata, const void *key1,
     exit(ERRNO); \
 } while(0);
 
+sds fileGetContent(char *path);
+
+#define jsonTokToNumber(result, tok, tmpchar) do { \
+    memcpy(tmpchar, tok->ptr, tok->len);\
+    tmpchar[tok->len] = 0x00;\
+    result = atoi(tmpchar);\
+} while(0);
 
 #endif

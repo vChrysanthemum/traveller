@@ -5,6 +5,8 @@ travellerobjects = ./core/traveller.o \
 				   ./core/util.o \
 				   ./core/adlist.o \
 				   ./core/dict.o \
+				   ./core/frozen.o \
+				   ../deps/sqlite/sqlite3.o \
 				   ./net/anet.o \
 				   ./net/ae.o \
 				   ./net/networking.o \
@@ -14,7 +16,8 @@ travellerobjects = ./core/traveller.o \
 				   ./plannet/plannet.o \
 				   ./plannet/db.o \
 				   ./plannet/net.o \
-				   ../deps/sqlite/sqlite3.o 
+				   ./ui/ui.o \
+				   ./ui/map.o 
 
 
 ALL_INCS= -I ./ \
@@ -38,5 +41,6 @@ clean:
 	rm ./traveller
 	rm -f ./core/*.o ./core/*.a
 	rm -f ./net/*.o ./net/*.a
+	rm -f ./ui/*.o ./ui/*.a
 	rm -f ./netcmd/*.o ./netcmd/*.a
 	rm -f ./plannet/*.o ./plannet/*.a

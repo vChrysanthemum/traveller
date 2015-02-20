@@ -4,29 +4,26 @@
 #include <unistd.h> 
 
 #include "lua.h"
+#include "sqlite3.h"
 #include "core/config.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
 #include "net/networking.h"
 #include "net/ae.h"
 #include "plannet/plannet.h"
-#include "sqlite3.h"
+#include "ui/ui.h"
 
 #define TMPSTR_SIZE ALLOW_PATH_SIZE
 
 /* 全局变量
  */
 struct Server g_server;
-/* 绝对路径为 $(traveller)/src
- */
-char g_basedir[ALLOW_PATH_SIZE] = {""};
-/* 需要加载的星球路径
- */
-char g_plannetdir[ALLOW_PATH_SIZE] = {""};
+char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
+char g_plannetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星球路径 */
 lua_State *g_plannetLuaSt;
 sqlite3 *g_plannetDB;
-
-
+Win *g_rootWin;
+Cursor g_cursor;
 
 
 void beforeSleep(struct aeEventLoop *eventLoop) {
@@ -82,18 +79,18 @@ static void _initServer(struct config *conf) {
 */
 static void _initPlannet(struct config *conf) {
     struct configOption *confOpt;
-    char tmpstr[TMPSTR_SIZE] = {""};
+    char tmpstr[ALLOW_PATH_SIZE] = {""};
 
     confOpt = configGet(conf, "plannet", "relative_path");
     if (NULL == confOpt) {
         trvExit(0, "请选择星球文件路径");
     }
-    if (confOpt->valueLen > TMPSTR_SIZE) {
+    if (confOpt->valueLen > ALLOW_PATH_SIZE) {
         trvExit(0, "星球文件地址太长");
     }
     memcpy(tmpstr, confOpt->value, confOpt->valueLen);
     tmpstr[confOpt->valueLen] = 0;
-    snprintf(g_plannetdir, TMPSTR_SIZE, "%s/../plannet/%s", g_basedir, tmpstr);
+    snprintf(g_plannetdir, ALLOW_PATH_SIZE, "%s/../plannet/%s", g_basedir, tmpstr);
     
     initPlannet();
 }
@@ -102,18 +99,18 @@ static void _initPlannet(struct config *conf) {
 
 int main(int argc, char *argv[]) {
     struct config *conf;
-    char tmpstr[TMPSTR_SIZE] = {""};
+    char tmpstr[ALLOW_PATH_SIZE] = {""};
 
     zmalloc_enable_thread_safeness();
 
-    snprintf(tmpstr, TMPSTR_SIZE, "%s/../", argv[0]);
+    snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../", argv[0]);
     if (NULL == realpath(tmpstr, g_basedir)) {
         trvExit(0, "获取当前路径失败");
     }
 
     conf = initConfig();
 
-    snprintf(tmpstr, TMPSTR_SIZE, "%s/../conf/default.conf", g_basedir);
+    snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../conf/default.conf", g_basedir);
     configRead(conf, tmpstr);
 
     if (argc > 1) configRead(conf, argv[1]); /* argv[1] 是配置文件路径 */
@@ -123,7 +120,8 @@ int main(int argc, char *argv[]) {
     }
 
     _initPlannet(conf);
-    _initServer(conf);
+    //_initServer(conf);
+    initUI();
 
     return 0;
 }

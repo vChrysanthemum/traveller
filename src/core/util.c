@@ -36,3 +36,26 @@ int dictStringCompare(void *privdata, const void *key1,
     NOTUSED(privdata);
     return strcmp(key1, key2) == 0;
 }
+
+sds fileGetContent(char *path) {
+    FILE* fp; 
+    long len;
+    sds content;
+
+    fp = fopen(path, "r");
+    if (fp == NULL) {
+        return NULL;
+    }   
+
+    fseek(fp, 0, SEEK_END);
+    len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    if (len <= 0) {
+        return NULL;
+    }
+    content = sdsMakeRoomFor(sdsempty(), len);
+    fread(content, len, 1, fp);
+    sdsupdatelen(content);
+    return content;
+}

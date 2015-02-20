@@ -116,7 +116,7 @@ void configRead(struct config *conf, char *path) {
     len = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    if (len < 0) {
+    if (len <= 0) {
         return;
     }
 
