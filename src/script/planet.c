@@ -3,7 +3,7 @@
 #include "core/util.h"
 #include "core/zmalloc.h"
 #include "net/networking.h"
-#include "planet/planet.h"
+#include "script/planet.h"
 #include "planet/db.h"
 #include "planet/net.h"
 

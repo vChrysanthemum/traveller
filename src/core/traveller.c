@@ -10,7 +10,7 @@
 #include "core/util.h"
 #include "net/networking.h"
 #include "net/ae.h"
-#include "planet/planet.h"
+#include "script/planet.h"
 #include "ui/ui.h"
 
 #define TMPSTR_SIZE ALLOW_PATH_SIZE

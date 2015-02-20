@@ -1,6 +1,6 @@
 #include "core/util.h"
 #include "core/zmalloc.h"
-#include "planet/planet.h"
+#include "script/planet.h"
 #include "planet/db.h"
 
 #include "lua.h"

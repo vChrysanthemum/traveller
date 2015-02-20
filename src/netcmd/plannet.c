@@ -3,7 +3,7 @@
 #include "core/util.h"
 #include "net/networking.h"
 #include "netcmd/netcmd.h"
-#include "planet/planet.h"
+#include "script/planet.h"
 
 /* 向星球发送命令请求
  * argv[0]
