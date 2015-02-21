@@ -1,0 +1,32 @@
+{
+    "map_width" : 30,
+    "map_height" : 10,
+    "resourses_len" : 2,
+    "resourses" : [
+        {
+            "v" : "&",
+            "name" : "岩石",
+            "introduction" : "可收集用于建筑",
+            "is_overlay" : 0,
+            "is_collectible" : 1
+        },
+        {
+            "v" : "#",
+            "name" : "仙人掌",
+            "introduction" : "可以补充体力",
+            "is_overlay" : 0,
+            "is_collectible" : 1
+        }
+    ],
+    "nodes_len" : 7,
+    "nodes" : [
+        [12, 7, 0],
+        [0, 9, 0],
+        [22, 0, 1],
+        [13, 7, 1],
+        [3, 3, 0],
+        [9, 8, 0],
+        [20, 3, 0],
+        [10, 8, 0]
+    ]
+}

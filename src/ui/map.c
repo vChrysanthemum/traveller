@@ -135,7 +135,7 @@ void UIDrawUIMap(UIMap *map) {
     refresh();
 }
 
-void UIMoveCurUIMapX(int x) {
+void UIMoveCurMapX(int x) {
     int _x = x;
     if (m_curUIMap->addr_lt_x + x < 0) {
         _x = -1 * m_curUIMap->addr_lt_x;
@@ -164,4 +164,10 @@ void UIMoveCurUIMapY(int y) {
 }
 
 void UIFreeUIMap(UIMap *map) {
+    zfree(map->root_json_content);
+    zfree(map->root_json_tok);
+
+    zfree(map->resourses);
+    zfree(map->nodes);
+    zfree(map);
 }

@@ -40,19 +40,19 @@ typedef struct {
     int win_rb_x;
     int win_rb_y;
 
-    /* 窗口左上角，相对应地图上的坐标 */
-    int addr_lt_x; /*  */
-    int addr_lt_y; /*  */
+    /* 窗口上地图左上角，相对应地图上的坐标 */
+    int addr_lt_x;
+    int addr_lt_y;
 
-    /* 窗口右下角，相对应地图上的坐标 */
-    int addr_rb_x; /*  */
-    int addr_rb_y; /*  */
+    /* 窗口上地图右下角，相对应地图上的坐标 */
+    int addr_rb_x;
+    int addr_rb_y;
 } UIMap;
 
-UIMap *UIParseUIMap(char *mapJSON);
-void UIDrawUIMap(UIMap *map);
-void UIMoveCurUIMapX(int x);
-void UIMoveCurUIMapY(int y);
-void UIFreeUIMap(UIMap *map);
-
+UIMap *UIParseUIMap(char *mapJSON);         /* 将字符串转换成地图 */
+void UIDrawUIMap(UIMap *map);               /* 画地图 */
+void UIMoveCurMapX(int x);                  /* 在x轴上移动地图 */
+void UIMoveCurUIMapY(int y);                /* 在y轴上移动地图 */
+void UIFreeUIMap(UIMap *map);               /* 释放地图 */
+UIMapNode* UIGetMapNodeByXY(int x, int y); /* 根据窗口x、y，获取相对应的地图节点 */
 #endif

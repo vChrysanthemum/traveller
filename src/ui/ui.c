@@ -39,40 +39,7 @@ static UIWin* createUIWin(int height, int width, int starty, int startx) {
     return win;
 }
 
-void UIinit() {
-    sds mapJSON;
-    UIMap *map;
-    char dir[ALLOW_PATH_SIZE] = {""};
-
-    initscr();                   /* start the curses mode */
-    //raw();
-    cbreak();
-    keypad(stdscr, TRUE);
-    noecho();
-
-    initRootUIWin();
-
-    refresh();
-    UIWin *win = createUIWin(
-            (int)(g_rootUIWin->height * 0.9),
-            (int)(g_rootUIWin->width * 0.9),
-            (int)(g_rootUIWin->height * 0.05),
-            (int)(g_rootUIWin->width * 0.05)
-            );
-    //box(win->window, 0, 0);
-
-    sprintf(dir, "%s/arctic.map.json", g_planetdir);
-    mapJSON = fileGetContent(dir);
-    map = UIParseUIMap(mapJSON);
-
-    UIDrawUIMap(map);
-    wrefresh(win->window);
-
-
-    g_cursor->x = g_rootUIWin->width / 2;
-    g_cursor->y = g_rootUIWin->height / 2;
-    move(g_cursor->y, g_cursor->x);
-
+static void moveCursor() {
 
     while(1) {
         g_rootUIWin->ch = getch();
@@ -115,6 +82,38 @@ void UIinit() {
         if (KEY_F(1) == g_rootUIWin->ch) break; /* ESC */ 
         refresh();
     }
+
+}
+
+void UIInit() {
+    sds mapJSON;
+    UIMap *map;
+    char dir[ALLOW_PATH_SIZE] = {""};
+
+    initscr();                   /* start the curses mode */
+    //raw();
+    cbreak();
+    keypad(stdscr, TRUE);
+    noecho();
+
+    initRootUIWin();
+    refresh();
+
+
+    /* 画首幅地图 */
+    sprintf(dir, "%s/arctic.map.json", g_planetdir);
+    mapJSON = fileGetContent(dir);
+    map = UIParseUIMap(mapJSON);
+
+    UIDrawUIMap(map);
+
+
+    /* 光标置中 */
+    g_cursor->x = g_rootUIWin->width / 2;
+    g_cursor->y = g_rootUIWin->height / 2;
+    move(g_cursor->y, g_cursor->x);
+
+    moveCursor();
 
 
     getch();

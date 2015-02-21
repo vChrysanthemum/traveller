@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h> 
+#include <pthread.h> 
 
 #include "lua.h"
 #include "sqlite3.h"
@@ -39,7 +40,8 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 
 /* 启动监听服务器
 */
-static void _NTInitNTServer(struct config *conf) {
+static void* _NTInitNTServer(void *conf) {
+    conf = (struct config *)conf;
     int listenPort;
     struct configOption *confOpt;
     char tmpstr[TMPSTR_SIZE] = {""};
@@ -69,9 +71,12 @@ static void _NTInitNTServer(struct config *conf) {
         exit(1);
     }
     */
+
     aeSetBeforeSleepProc(g_server.el, beforeSleep);
     aeMain(g_server.el);
     aeDeleteEventLoop(g_server.el);
+
+    return NULL;
 }
 
 
@@ -81,18 +86,43 @@ static void _STInitPlanet(struct config *conf) {
     struct configOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
 
-    confOpt = configGet(conf, "planet", "relative_path");
-    if (NULL == confOpt) {
-        trvExit(0, "请选择星球文件路径");
+    /* 游戏服务端初始化 */
+    confOpt = configGet(conf, "planet_server", "relative_path");
+    if (confOpt) {
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            trvExit(0, "星球文件地址太长");
+        }
+        memcpy(tmpstr, confOpt->value, confOpt->valueLen);
+        tmpstr[confOpt->valueLen] = 0;
+        snprintf(g_planetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
+        STInitPlanet();
+
+        _NTInitNTServer(conf);
+
+        return;
     }
-    if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-        trvExit(0, "星球文件地址太长");
+
+    /* 游戏客户端初始化 */
+    confOpt = configGet(conf, "planet_client", "relative_path");
+    if (confOpt) {
+        pthread_t ntid;
+
+        pthread_create(&ntid, NULL, _NTInitNTServer, conf);
+
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            trvExit(0, "星球文件地址太长");
+        }
+        memcpy(tmpstr, confOpt->value, confOpt->valueLen);
+        tmpstr[confOpt->valueLen] = 0;
+        snprintf(g_planetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
+        STInitPlanet();
+        UIInit();
+        return;
     }
-    memcpy(tmpstr, confOpt->value, confOpt->valueLen);
-    tmpstr[confOpt->valueLen] = 0;
-    snprintf(g_planetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
-    
-    STInitPlanet();
+
+
+    /* 游戏服务端与客户端都初始化失败 */
+    trvExit(0, "请选择星球文件路径");
 }
 
 
@@ -120,8 +150,6 @@ int main(int argc, char *argv[]) {
     }
 
     _STInitPlanet(conf);
-    _NTInitNTServer(conf);
-    UIinit();
 
     return 0;
 }

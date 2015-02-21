@@ -6,7 +6,7 @@
 #define UIMoveUICursorLeft(count) do {\
     g_cursor->x -= count;\
     if (g_cursor->x < 0) {\
-        UIMoveCurUIMapX(g_cursor->x);\
+        UIMoveCurMapX(g_cursor->x);\
         g_cursor->x = 0;\
     }\
     move(g_cursor->y, g_cursor->x);\
@@ -15,7 +15,7 @@
 #define UIMoveUICursorRight(count) do {\
     g_cursor->x += count;\
     if (g_cursor->x > g_rootUIWin->width) {\
-        UIMoveCurUIMapX(g_cursor->x - g_rootUIWin->width);\
+        UIMoveCurMapX(g_cursor->x - g_rootUIWin->width);\
         g_cursor->x = g_rootUIWin->width;\
     }\
     move(g_cursor->y, g_cursor->x);\
@@ -47,7 +47,7 @@ typedef struct {
     int snumber_len;
 } UICursor;
 
-//enum UIWinMode mode = {};
+enum UIWinMode {gamer_mode, pick_mode};
 
 typedef struct {
     int height;         /* 行数 */
@@ -55,10 +55,10 @@ typedef struct {
     int startx;
     int starty;
     int ch;
-    //enum UIWinMode mode;
+    enum UIWinMode mode;
     WINDOW *window;
 } UIWin;
 
-void UIinit();
+void UIInit();
 
 #endif

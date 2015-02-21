@@ -1,4 +1,5 @@
 *.o
+*.swp
 *.a
 *src/traveller
 *.DS_Store
