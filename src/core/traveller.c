@@ -56,7 +56,7 @@ static void _NTInitNTServer(struct config *conf) {
         tmpstr[confOpt->valueLen] = 0;
         listenPort = atoi(tmpstr);
     }
-    else listenPort = TRV_NET_LISTEN_PORT;
+    else listenPort = -1; /* 输入一个不正常的监听端口，意味着不监听 */
 
 
     if (ERRNO_ERR == NTInitNTServer(listenPort)) {
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
     }
 
     _STInitPlanet(conf);
-    //_NTInitNTServer(conf);
+    _NTInitNTServer(conf);
     UIinit();
 
     return 0;

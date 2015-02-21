@@ -10,7 +10,6 @@
 /* networking，分装了所有的网络操作
  */
 
-#define TRV_NET_LISTEN_PORT 1092
 #define TRV_NET_TCP_BACKLOG 1024
 #define TRV_NET_MAX_SNODE 1024 * 24
 #define TRV_NET_TCPKEEPALIVE 0 

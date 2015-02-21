@@ -694,6 +694,8 @@ static void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) 
 
 
 static int listenToPort(int port, int *fds, int *count) {
+    int loopJ; 
+
     *count = 0;
 
     fds[*count] = anetTcp6Server(g_server.neterr, port, NULL,
@@ -712,6 +714,13 @@ static int listenToPort(int port, int *fds, int *count) {
 
     if (0 == *count) return ERRNO_ERR;
 
+    for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
+        if (aeCreateFileEvent(g_server.el, g_server.ipfd[loopJ], AE_READABLE,
+                    acceptTcpHandler,NULL) == AE_ERR) {
+            trvLogE("Unrecoverable error creating g_server.ipfd file event.");
+        }
+    }
+
     trvLogI("监听端口: %d", port);
 
     return ERRNO_OK;
@@ -729,8 +738,6 @@ NTSnode* NTGetNTSnodeByFDS(const char *fds) {
 }
 
 int NTInitNTServer(int listenPort) {
-    int loopJ; 
-
     g_server.unixtime = -1;
     g_server.max_snodes = TRV_NET_MAX_SNODE;
     g_server.el = aeCreateEventLoop(g_server.max_snodes);
@@ -746,15 +753,10 @@ int NTInitNTServer(int listenPort) {
 
     g_server.tcpkeepalive = TRV_NET_TCPKEEPALIVE;
 
-    if (ERRNO_ERR == listenToPort(g_server.port, g_server.ipfd, &g_server.ipfd_count)) {
-        trvLogE("Listen to port err");
-        return ERRNO_ERR;
-    }
-
-    for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
-        if (aeCreateFileEvent(g_server.el, g_server.ipfd[loopJ], AE_READABLE,
-                    acceptTcpHandler,NULL) == AE_ERR) {
-            trvLogE("Unrecoverable error creating g_server.ipfd file event.");
+    if (listenPort > 0) {
+        if (ERRNO_ERR == listenToPort(g_server.port, g_server.ipfd, &g_server.ipfd_count)) {
+            trvLogE("Listen to port err");
+            return ERRNO_ERR;
         }
     }
 
