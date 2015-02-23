@@ -132,7 +132,7 @@ void UIDrawMap(UIMap *map) {
     /* 到达左边界 */
     ch = ' ';
     if (0 == map->addr_lt_x) {
-        ch = ACS_BLOCK;
+        ch = ACS_VLINE;
     }
     x = map->win_lt_x - 1;
     y = map->win_rb_y + 1;
@@ -143,7 +143,7 @@ void UIDrawMap(UIMap *map) {
     /* 到达右边界 */
     ch = ' ';
     if (map->addr_rb_x == map->width-1) {
-        ch = ACS_BLOCK;
+        ch = ACS_VLINE;
     }
     x = map->win_rb_x + 1;
     y = map->win_rb_y + 1;
@@ -154,7 +154,7 @@ void UIDrawMap(UIMap *map) {
     /* 到达上边界 */
     ch = ' ';
     if (0 == map->addr_lt_y) {
-        ch = ACS_BLOCK;
+        ch = ACS_HLINE;
     }
     x = map->win_rb_x + 1;
     y = map->win_lt_y - 1;
@@ -165,7 +165,7 @@ void UIDrawMap(UIMap *map) {
     /* 到达下边界 */
     ch = ' ';
     if (map->addr_rb_y == map->height-1) {
-        ch = ACS_BLOCK;
+        ch = ACS_HLINE;
     }
     x = map->win_rb_x + 1;
     y = map->win_rb_y + 1;
@@ -176,19 +176,19 @@ void UIDrawMap(UIMap *map) {
     /* 四个角处理 */
     /* 左上角 */
     if (0 == map->addr_lt_x || 0 == map->addr_lt_y) {
-        mvaddch(map->win_lt_y-1, map->win_lt_x-1, ACS_BLOCK);
+        mvaddch(map->win_lt_y-1, map->win_lt_x-1, ACS_ULCORNER);
     }
     /* 左下角 */
     if (0 == map->addr_lt_x || map->addr_rb_y == map->height-1) {
-        mvaddch(map->win_rb_y+1, map->win_lt_x-1, ACS_BLOCK);
+        mvaddch(map->win_rb_y+1, map->win_lt_x-1, ACS_LLCORNER);
     }
     /* 右上角 */
     if (map->addr_rb_x == map->width-1 || 0 == map->addr_lt_y) {
-        mvaddch(map->win_lt_y-1, map->win_rb_x+1, ACS_BLOCK);
+        mvaddch(map->win_lt_y-1, map->win_rb_x+1, ACS_URCORNER);
     }
     /* 右下角 */
     if (map->addr_rb_x == map->width-1 || map->addr_rb_y == map->height-1) {
-        mvaddch(map->win_rb_y+1, map->win_rb_x+1, ACS_BLOCK);
+        mvaddch(map->win_rb_y+1, map->win_rb_x+1, ACS_LRCORNER);
     }
 
 
