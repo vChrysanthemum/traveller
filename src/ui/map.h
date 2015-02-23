@@ -49,11 +49,11 @@ typedef struct {
     int width;
     int height;
 
-    /* 地图在窗口上显示左上角位置 */
+    /* 地图在窗口上显示左上角位置，一次生成，不再修改 */
     int win_lt_x;
     int win_lt_y;
 
-    /* 地图在窗口上显示右上角位置 */
+    /* 地图在窗口上显示右上角位置，一次生成，不再修改 */
     int win_rb_x;
     int win_rb_y;
 

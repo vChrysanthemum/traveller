@@ -9,6 +9,7 @@
 
 extern UIWin *g_rootUIWin;
 UIMap *m_curUIMap;
+extern UICursor *g_cursor;
 
 /* 地图json格式：
  * {
@@ -81,30 +82,40 @@ UIMap *UIParseMap(char *mapJSON) {
         map->nodes[poi].resourse = &(map->resourses[_m]);
     }
 
+
+    /* 画地图需知:
+     *  地图左边界、上各留一格空白
+     *  地图长或宽小于窗口时，将会居中显示
+     */
+
     map->addr_lt_x = 0;
     map->addr_lt_y = 0;
 
-    if (map->width > g_rootUIWin->width) {
-        map->win_lt_x = 0;
-        map->win_rb_x = g_rootUIWin->width;
-        map->addr_rb_x = g_rootUIWin->width;
+    /* 如果窗口无法一次性显示地图 */
+    if (map->width > g_rootUIWin->width-1) {
+        map->win_lt_x = 1;
+        map->win_rb_x = g_rootUIWin->width - 1;
+        map->addr_rb_x = (g_rootUIWin->width - 1) - 1;
     }
+    /* 可以一次性显示，则居中显示 */
     else {
-        map->win_lt_x = g_rootUIWin->width / 2 - map->width / 2;
-        map->win_rb_x = g_rootUIWin->width / 2 + map->width / 2;
-        map->addr_rb_x = map->width;
+        map->win_lt_x = (g_rootUIWin->width - 1) / 2 - map->width / 2 + 1;
+        map->win_rb_x = map->win_lt_x + map->width - 1;
+        map->addr_rb_x = map->width - 1;
     }
 
 
-    if (map->height > g_rootUIWin->height) {
-        map->win_lt_y = 0;
-        map->win_rb_y = g_rootUIWin->height;
-        map->addr_rb_y = g_rootUIWin->height;
+    /* 如果窗口无法一次性显示地图 */
+    if (map->height > g_rootUIWin->height-1) {
+        map->win_lt_y = 1;
+        map->win_rb_y = g_rootUIWin->height - 1;
+        map->addr_rb_y = (g_rootUIWin->height - 1) - 1;
     }
+    /* 可以一次性显示，则居中显示 */
     else {
-        map->win_lt_y = g_rootUIWin->height / 2 - map->height / 2;
-        map->win_rb_y = g_rootUIWin->height / 2 + map->height / 2;
-        map->addr_rb_y = map->height;
+        map->win_lt_y = (g_rootUIWin->height - 1) / 2 - map->height / 2 + 1;
+        map->win_rb_y = map->win_lt_y + map->height - 1;
+        map->addr_rb_y = map->height - 1;
     }
 
     return map;
@@ -113,12 +124,80 @@ UIMap *UIParseMap(char *mapJSON) {
 /* 画地图 */
 void UIDrawMap(UIMap *map) {
     m_curUIMap = map;
-    int x, y; //屏幕上的坐标
-    int poi, _x, _y; //地图坐标
-    for (x = map->win_lt_x; x < map->win_rb_x; x++) {
-        _x = x - map->win_lt_x + map->addr_lt_x;
-        for (y = map->win_lt_y; y < map->win_rb_y; y++) {
-            _y = y - map->win_lt_y + map->addr_lt_y;
+    int x, y;
+    int poi, _x, _y;
+    int loopJ;
+    int ch;
+
+    /* 到达左边界 */
+    ch = ' ';
+    if (0 == map->addr_lt_x) {
+        ch = ACS_BLOCK;
+    }
+    x = map->win_lt_x - 1;
+    y = map->win_rb_y + 1;
+    for (loopJ = map->win_lt_y-1; loopJ <= y; loopJ++) {
+        mvaddch(loopJ, x, ch);
+    }
+
+    /* 到达右边界 */
+    ch = ' ';
+    if (map->addr_rb_x == map->width-1) {
+        ch = ACS_BLOCK;
+    }
+    x = map->win_rb_x + 1;
+    y = map->win_rb_y + 1;
+    for (loopJ = map->win_lt_y-1; loopJ <= y; loopJ++) {
+        mvaddch(loopJ, x, ch);
+    }
+
+    /* 到达上边界 */
+    ch = ' ';
+    if (0 == map->addr_lt_y) {
+        ch = ACS_BLOCK;
+    }
+    x = map->win_rb_x + 1;
+    y = map->win_lt_y - 1;
+    for (loopJ = map->win_lt_x-1; loopJ <= x; loopJ++) {
+        mvaddch(y, loopJ, ch);
+    }
+
+    /* 到达下边界 */
+    ch = ' ';
+    if (map->addr_rb_y == map->height-1) {
+        ch = ACS_BLOCK;
+    }
+    x = map->win_rb_x + 1;
+    y = map->win_rb_y + 1;
+    for (loopJ = map->win_lt_x-1; loopJ <= x; loopJ++) {
+        mvaddch(y, loopJ, ch);
+    }
+
+    /* 四个角处理 */
+    /* 左上角 */
+    if (0 == map->addr_lt_x || 0 == map->addr_lt_y) {
+        mvaddch(map->win_lt_y-1, map->win_lt_x-1, ACS_BLOCK);
+    }
+    /* 左下角 */
+    if (0 == map->addr_lt_x || map->addr_rb_y == map->height-1) {
+        mvaddch(map->win_rb_y+1, map->win_lt_x-1, ACS_BLOCK);
+    }
+    /* 右上角 */
+    if (map->addr_rb_x == map->width-1 || 0 == map->addr_lt_y) {
+        mvaddch(map->win_lt_y-1, map->win_rb_x+1, ACS_BLOCK);
+    }
+    /* 右下角 */
+    if (map->addr_rb_x == map->width-1 || map->addr_rb_y == map->height-1) {
+        mvaddch(map->win_rb_y+1, map->win_rb_x+1, ACS_BLOCK);
+    }
+
+
+    //int x, y; 屏幕上的坐标
+    //int poi, _x, _y; 地图坐标
+    for (x = map->win_lt_x; x <= map->win_rb_x; x++) {
+        _x = map->addr_lt_x + (x - map->win_lt_x);
+        for (y = map->win_lt_y; y <= map->win_rb_y; y++) {
+            _y = map->addr_lt_y + (y - map->win_lt_y);
             poi = MAP_ADDR(_x, _y, map->width);
 
             if (NULL == map->nodes[poi].resourse) {
@@ -129,13 +208,8 @@ void UIDrawMap(UIMap *map) {
             }
         }
     }
-    /*
-    mvprintw(0, 0, "addr_lt_x: %d", m_curUIMap->addr_lt_x);
-    mvprintw(1, 0, "addr_rb_x: %d", m_curUIMap->addr_rb_x);
-    mvprintw(2, 0, "addr_lt_y: %d", m_curUIMap->addr_lt_y);
-    mvprintw(3, 0, "addr_rb_y: %d", m_curUIMap->addr_rb_y);
-    */
 
+    move(g_cursor->y, g_cursor->x);
     refresh();
 }
 
@@ -145,10 +219,10 @@ void UIMoveCurMapX(int x) {
     if (m_curUIMap->addr_lt_x + x < 0) {
         _x = -1 * m_curUIMap->addr_lt_x;
     }
-    else if (m_curUIMap->addr_rb_x + x > m_curUIMap->width) {
-        _x = m_curUIMap->width - m_curUIMap->addr_rb_x;
+    else if (m_curUIMap->addr_rb_x + x >= m_curUIMap->width-1) {
+        _x = m_curUIMap->width - m_curUIMap->addr_rb_x - 1;
     }
-    if (0 == _x) return;
+    //if (0 == _x) return;
     m_curUIMap->addr_lt_x += _x;
     m_curUIMap->addr_rb_x += _x;
     UIDrawMap(m_curUIMap);
@@ -157,13 +231,15 @@ void UIMoveCurMapX(int x) {
 /* 在y轴上移动地图 */
 void UIMoveCurMapY(int y) {
     int _y = y;
+    /* 到达上边界 */
     if (m_curUIMap->addr_lt_y + y < 0) {
         _y = -1 * m_curUIMap->addr_lt_y;
     }
-    else if (m_curUIMap->addr_rb_y + y > m_curUIMap->height) {
-        _y = m_curUIMap->height - m_curUIMap->addr_rb_y;
+    /* 到达下边界 */
+    else if (m_curUIMap->addr_rb_y + y >= m_curUIMap->height-1) {
+        _y = m_curUIMap->height - m_curUIMap->addr_rb_y - 1;
     }
-    if (0 == _y) return;
+    //if (0 == _y) return;
     m_curUIMap->addr_lt_y += _y;
     m_curUIMap->addr_rb_y += _y;
     UIDrawMap(m_curUIMap);

@@ -24,8 +24,8 @@ static void initRootUIWin() {
     g_cursor->snumber_len = 0;
 
     getmaxyx(stdscr, g_rootUIWin->height, g_rootUIWin->width);
-    g_rootUIWin->height--; /* 最后一列不可写 */
-    g_rootUIWin->width--; /* 最后一行不可写 */
+    g_rootUIWin->height-=2; /* 最后一行不可写 */
+    g_rootUIWin->width--; /* 最后一列不可写 */
 }
 
 static UIWin* createUIWin(int height, int width, int starty, int startx) {
