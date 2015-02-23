@@ -2,7 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h> 
-#include <pthread.h> 
+#include <pthread.h>
+#include <locale.h>
 
 #include "lua.h"
 #include "sqlite3.h"
@@ -130,6 +131,8 @@ static void _STInitPlanet(struct config *conf) {
 int main(int argc, char *argv[]) {
     struct config *conf;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
+
+    setlocale(LC_ALL,"");
 
     zmalloc_enable_thread_safeness();
 
