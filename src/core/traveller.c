@@ -95,7 +95,7 @@ static void _STInitPlanet(struct config *conf) {
         memcpy(tmpstr, confOpt->value, confOpt->valueLen);
         tmpstr[confOpt->valueLen] = 0;
         snprintf(g_planetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
-        STInitPlanet();
+        STInit();
 
         _NTInitNTServer(conf);
 
@@ -115,7 +115,7 @@ static void _STInitPlanet(struct config *conf) {
         memcpy(tmpstr, confOpt->value, confOpt->valueLen);
         tmpstr[confOpt->valueLen] = 0;
         snprintf(g_planetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
-        STInitPlanet();
+        STInit();
         UIInit();
         return;
     }

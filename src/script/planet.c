@@ -27,7 +27,7 @@ int STCallPlanetFunc(NTSnode *sn) {
     int _m;
 
     if ('P' != *funcName && 'U' != *funcName && 'B' != *funcName) {
-        return PLANNET_LUA_CALL_ERRNO_FUNC403;
+        return PLANET_LUA_CALL_ERRNO_FUNC403;
     }
 
     _m = lua_gettop(g_planetLuaSt);
@@ -36,7 +36,7 @@ int STCallPlanetFunc(NTSnode *sn) {
     lua_getglobal(g_planetLuaSt, funcName);
     if (!lua_isfunction(g_planetLuaSt, -1)) {
         trvLogW("%s not exists", funcName);
-        return PLANNET_LUA_CALL_ERRNO_FUNC404;
+        return PLANET_LUA_CALL_ERRNO_FUNC404;
     }
 
     lua_pushinteger(g_planetLuaSt, sn->fd);
@@ -53,60 +53,10 @@ int STCallPlanetFunc(NTSnode *sn) {
     if (errno) {
         trvLogW("%s", lua_tostring(g_planetLuaSt, -1));
         lua_pop(g_planetLuaSt, _m);
-        return PLANNET_LUA_CALL_ERRNO_FUNC502;
+        return PLANET_LUA_CALL_ERRNO_FUNC502;
     }
 
     lua_pop(g_planetLuaSt, lua_gettop(g_planetLuaSt));
 
-    return PLANNET_LUA_CALL_ERRNO_OK;
-}
-
-
-void STInitPlanet() {
-    int errno;
-    char *filepath = zmalloc(ALLOW_PATH_SIZE);
-    memset(filepath, 0, ALLOW_PATH_SIZE);
-
-    STInitDB();
-
-    g_planetLuaSt = luaL_newstate();
-    luaL_openlibs(g_planetLuaSt);
-    /*
-    luaopen_base(g_planetLuaSt);
-    luaopen_table(g_planetLuaSt);
-    luaopen_string(g_planetLuaSt);
-    luaopen_math(g_planetLuaSt);
-    */
-
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", g_planetdir);
-
-    lua_pushstring(g_planetLuaSt, g_planetdir);
-    lua_setglobal(g_planetLuaSt, "basedir");
-
-    errno = luaL_loadfile(g_planetLuaSt, filepath);
-    if (errno) {
-        trvExit(0, "%s", lua_tostring(g_planetLuaSt, -1));
-    }
-
-    lua_register(g_planetLuaSt, "NTConnectNTSnode", STConnectNTSnode);
-    lua_register(g_planetLuaSt, "NTAddReplyString", STAddReplyString);
-    lua_register(g_planetLuaSt, "NTAddReplyRawString", STAddReplyRawString);
-    lua_register(g_planetLuaSt, "NTAddReplyMultiString", STAddReplyMultiString);
-    lua_register(g_planetLuaSt, "DBQuery", STDBQuery);
-
-    //初始化
-    errno = lua_pcall(g_planetLuaSt, 0, 0, 0);
-    if (errno) {
-        trvExit(0, "%s", lua_tostring(g_planetLuaSt, -1));
-    }
-
-    //调用init函数  
-    lua_getglobal(g_planetLuaSt, "init");
-    if (!lua_isfunction(g_planetLuaSt, -1)) {
-        trvExit(0, "lua: 找不到init函数");
-    }
-    lua_pcall(g_planetLuaSt, 0, 0, 0);
-
-    zfree(filepath);
-
+    return PLANET_LUA_CALL_ERRNO_OK;
 }

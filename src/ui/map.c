@@ -31,7 +31,10 @@ UIMap *m_curUIMap;
  * 
  */
 
-UIMap *UIParseUIMap(char *mapJSON) {
+
+/* 将字符串转换成地图 
+ */
+UIMap *UIParseMap(char *mapJSON) {
     const struct json_token *tok, *tok2;
     char tmpchar[64];
     int loopJ, x, y, poi, _m;
@@ -107,7 +110,8 @@ UIMap *UIParseUIMap(char *mapJSON) {
     return map;
 }
 
-void UIDrawUIMap(UIMap *map) {
+/* 画地图 */
+void UIDrawMap(UIMap *map) {
     m_curUIMap = map;
     int x, y; //屏幕上的坐标
     int poi, _x, _y; //地图坐标
@@ -135,6 +139,7 @@ void UIDrawUIMap(UIMap *map) {
     refresh();
 }
 
+/* 在x轴上移动地图 */
 void UIMoveCurMapX(int x) {
     int _x = x;
     if (m_curUIMap->addr_lt_x + x < 0) {
@@ -146,10 +151,11 @@ void UIMoveCurMapX(int x) {
     if (0 == _x) return;
     m_curUIMap->addr_lt_x += _x;
     m_curUIMap->addr_rb_x += _x;
-    UIDrawUIMap(m_curUIMap);
+    UIDrawMap(m_curUIMap);
 }
 
-void UIMoveCurUIMapY(int y) {
+/* 在y轴上移动地图 */
+void UIMoveCurMapY(int y) {
     int _y = y;
     if (m_curUIMap->addr_lt_y + y < 0) {
         _y = -1 * m_curUIMap->addr_lt_y;
@@ -160,9 +166,10 @@ void UIMoveCurUIMapY(int y) {
     if (0 == _y) return;
     m_curUIMap->addr_lt_y += _y;
     m_curUIMap->addr_rb_y += _y;
-    UIDrawUIMap(m_curUIMap);
+    UIDrawMap(m_curUIMap);
 }
 
+/* 释放地图 */
 void UIFreeUIMap(UIMap *map) {
     zfree(map->root_json_content);
     zfree(map->root_json_tok);
@@ -171,3 +178,14 @@ void UIFreeUIMap(UIMap *map) {
     zfree(map->nodes);
     zfree(map);
 }
+
+/* 移动地图上可移动的物体
+ */
+void UIMoveStuff(UIMapStuff *stuff) {
+
+}
+
+/* 根据窗口x、y，获取相对应的地图节点 */
+UIMapNode* UIGetMapNodeByXY(int x, int y) {
+    return NULL;
+} 

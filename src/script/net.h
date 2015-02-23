@@ -1,5 +1,5 @@
-#ifndef __PLANNET_NET_H
-#define __PLANNET_NET_H
+#ifndef __SCRIPT_NET_H
+#define __SCRIPT_NET_H
 
 #include "lua.h"
 

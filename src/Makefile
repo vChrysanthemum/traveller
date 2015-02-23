@@ -13,6 +13,8 @@ travellerobjects = ./core/traveller.o \
 				   ./netcmd/netcmd.o \
 				   ./netcmd/test.o \
 				   ./netcmd/planet.o \
+				   ./script/script.o \
+				   ./script/citizen.o \
 				   ./script/planet.o \
 				   ./script/db.o \
 				   ./script/net.o \

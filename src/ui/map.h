@@ -7,6 +7,23 @@
 #define MAP_ADDR(x, y, width) (y * width + x)
 
 
+/* 地图上的物体 */
+typedef struct {
+    char v;                 /* 显示出来的字符 */
+} UIMapStuff;
+
+
+/* 继承以下结构：
+ *  UIMapStuff
+ */
+typedef struct {
+    char v;                 /* 显示出来的字符 */
+} UIGamer;
+
+
+/* 继承以下结构：
+ *  UIMapStuff
+ */
 typedef struct {
     char v;                 /* 显示出来的字符 */
     char *name;
@@ -49,10 +66,10 @@ typedef struct {
     int addr_rb_y;
 } UIMap;
 
-UIMap *UIParseUIMap(char *mapJSON);         /* 将字符串转换成地图 */
-void UIDrawUIMap(UIMap *map);               /* 画地图 */
-void UIMoveCurMapX(int x);                  /* 在x轴上移动地图 */
-void UIMoveCurUIMapY(int y);                /* 在y轴上移动地图 */
-void UIFreeUIMap(UIMap *map);               /* 释放地图 */
-UIMapNode* UIGetMapNodeByXY(int x, int y); /* 根据窗口x、y，获取相对应的地图节点 */
+UIMap *UIParseMap(char *mapJSON);
+void UIDrawMap(UIMap *map);
+void UIMoveCurMapX(int x);
+void UIMoveCurMapY(int y);
+void UIFreeUIMap(UIMap *map);
+UIMapNode* UIGetMapNodeByXY(int x, int y);
 #endif

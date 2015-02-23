@@ -103,9 +103,9 @@ void UIInit() {
     /* 画首幅地图 */
     sprintf(dir, "%s/arctic.map.json", g_planetdir);
     mapJSON = fileGetContent(dir);
-    map = UIParseUIMap(mapJSON);
+    map = UIParseMap(mapJSON);
 
-    UIDrawUIMap(map);
+    UIDrawMap(map);
 
 
     /* 光标置中 */
@@ -118,7 +118,4 @@ void UIInit() {
 
     getch();
     endwin();
-}
-
-void UIalert(char *str) {
 }

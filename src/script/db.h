@@ -1,5 +1,5 @@
-#ifndef __PLANNET_DB_H
-#define __PLANNET_DB_H
+#ifndef __SCRIPT_DB_H
+#define __SCRIPT_DB_H
 
 #include "lua.h"
 

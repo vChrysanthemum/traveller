@@ -24,7 +24,7 @@
 #define UIMoveUICursorUp(count) do {\
     g_cursor->y -= count;\
     if (g_cursor->y < 0) {\
-        UIMoveCurUIMapY(g_cursor->y);\
+        UIMoveCurMapY(g_cursor->y);\
         g_cursor->y = 0;\
     }\
     move(g_cursor->y, g_cursor->x);\
@@ -33,7 +33,7 @@
 #define UIMoveUICursorDown(count) do {\
     g_cursor->y += count;\
     if (g_cursor->y > g_rootUIWin->height) {\
-        UIMoveCurUIMapY(g_cursor->y - g_rootUIWin->height);\
+        UIMoveCurMapY(g_cursor->y - g_rootUIWin->height);\
         g_cursor->y = g_rootUIWin->height;\
     }\
     move(g_cursor->y, g_cursor->x);\

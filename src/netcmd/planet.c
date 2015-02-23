@@ -14,7 +14,7 @@ void planetCommand(struct NTSnode_s *sn) {
     int errno;
     errno = STCallPlanetFunc(sn);
 
-    if(PLANNET_LUA_CALL_ERRNO_OK != errno) {
+    if(PLANET_LUA_CALL_ERRNO_OK != errno) {
         NTAddReplyError(sn, "planet command error");
         sn->flags = SNODE_CLOSE_AFTER_REPLY;
         setNTSnodeExcuteCommandFinished(sn);
