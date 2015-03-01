@@ -64,5 +64,8 @@ int anetTcpKeepAlive(char *err, int fd);
 int anetPeerToString(int fd, char *ip, size_t ip_len, int *port);
 int anetKeepAlive(char *err, int fd, int interval);
 int anetSockName(int fd, char *ip, size_t ip_len, int *port);
+int anetPeerSocket(char *err, int port, char *bindaddr, int af);
+int anetPeerConnect(int fd, char *err, char *addr, int port);
+int anetPeerListen(int fd, char *err, int backlog);
 
 #endif

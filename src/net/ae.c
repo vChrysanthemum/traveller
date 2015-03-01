@@ -41,6 +41,7 @@
 #include <errno.h>
 
 #include "core/zmalloc.h"
+#include "core/util.h"
 #include "net/ae.h"
 
 /* Include the best multiplexing layer supported by this system.

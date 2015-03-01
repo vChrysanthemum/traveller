@@ -4,26 +4,21 @@
 #include "script/db.h"
 
 #include "lua.h"
-
 #include "sqlite3.h"
 
-extern char g_planetdir[];
-extern lua_State *g_planetLuaSt;
-extern sqlite3 *g_planetDB;
+extern sqlite3 *g_srvDB;
 
-void STInitDB() {
+sqlite3* STInitDB(char *filepath) {
     int errno;
-    char *filepath = zmalloc(ALLOW_PATH_SIZE);
-    memset(filepath, 0, ALLOW_PATH_SIZE);
+    sqlite3 *db;
 
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/sqlite.db", g_planetdir);
-    errno = sqlite3_open(filepath, &g_planetDB);
+    errno = sqlite3_open(filepath, &db);
     if (errno) {
-        sqlite3_close(g_planetDB);
+        sqlite3_close(db);
         trvExit(0, "打开数据库失败，%s", filepath);
     }
 
-    zfree(filepath);
+    return db;
 }
 
 int STDBQuery(lua_State *L) {
@@ -35,7 +30,7 @@ int STDBQuery(lua_State *L) {
     if (NULL == sql) return 0;
 
     errno = sqlite3_get_table(
-            g_planetDB,
+            g_srvDB,
             sql,
             &dbresult,
             &nrow,
@@ -46,28 +41,28 @@ int STDBQuery(lua_State *L) {
         trvLogW("STDBQuery Error: %s", errmsg);
         sqlite3_free(errmsg);
 
-        lua_pushnil(g_planetLuaSt);
+        lua_pushnil(L);
         return 1;
     }
 
 
-    lua_newtable(g_planetLuaSt);
+    lua_newtable(L);
 
     index = ncolumn;
     for (loopI = 0; loopI < nrow; loopI++) {
-        lua_pushnumber(g_planetLuaSt, loopI);
+        lua_pushnumber(L, loopI);
 
-        lua_newtable(g_planetLuaSt);
+        lua_newtable(L);
 
         for (loopJ = 0; loopJ < ncolumn; loopJ++) {
-            lua_pushstring(g_planetLuaSt, dbresult[loopJ]);
-            lua_pushstring(g_planetLuaSt, dbresult[index]);
-            lua_settable(g_planetLuaSt, -3);
+            lua_pushstring(L, dbresult[loopJ]);
+            lua_pushstring(L, dbresult[index]);
+            lua_settable(L, -3);
 
             index++;
         }
 
-        lua_settable(g_planetLuaSt, -3);
+        lua_settable(L, -3);
     }
 
     sqlite3_free_table(dbresult);

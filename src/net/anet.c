@@ -44,6 +44,7 @@
 #include <stdio.h>
 
 #include "net/anet.h"
+#include "core/util.h"
 
 static void anetSetError(char *err, const char *fmt, ...)
 {
@@ -561,4 +562,114 @@ int anetSockName(int fd, char *ip, size_t ip_len, int *port) {
         if (port) *port = ntohs(s->sin6_port);
     }
     return 0;
+}
+
+/* 新建一个Socket，可用于 listen/connect */
+int anetPeerSocket(char *err, int port, char *bindaddr, int af) {
+    int s, rv;
+    char _port[6];  /* strlen("65535") */
+    if (port > 0) snprintf(_port,6,"%d",port);
+    else memset(_port, 0x00, 6);
+
+    struct addrinfo hints, *servinfo, *p;
+
+    memset(&hints,0,sizeof(hints));
+    hints.ai_family = af;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != NULL */
+    struct sockaddr_in *addrin;
+
+    if ((rv = getaddrinfo(bindaddr,_port,&hints,&servinfo)) != 0) {
+        anetSetError(err, "%s", gai_strerror(rv));
+        goto error;
+    }
+    addrin = (struct sockaddr_in*)(servinfo->ai_addr);
+    for (p = servinfo; p != NULL; p = p->ai_next) {
+        if ((s = socket(p->ai_family,p->ai_socktype,p->ai_protocol)) == -1)
+            continue;
+
+        if (af == AF_INET6 && anetV6Only(err,s) == ANET_ERR) goto error;
+        if (anetSetReuseAddr(err,s) == ANET_ERR) goto error;
+        if (anetNonBlock(err,s) != ANET_OK) goto error;
+        if (bind(s,p->ai_addr,p->ai_addrlen) == -1) {
+            trvLogW("bind fail");
+            close(s);
+            goto error;
+        }
+        goto end;
+    }
+    if (p == NULL) {
+        anetSetError(err, "unable to bind socket");
+        goto error;
+    }
+
+error:
+    s = ANET_ERR;
+end:
+    freeaddrinfo(servinfo);
+    return s;
+}
+
+int anetPeerConnect(int fd, char *err, char *addr, int port) {
+    int rv;
+    char portstr[6];  /* strlen("65535") + 1; */
+    struct addrinfo hints, *servinfo, *p;
+
+    snprintf(portstr,sizeof(portstr),"%d",port);
+    memset(&hints,0,sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((rv = getaddrinfo(addr,portstr,&hints,&servinfo)) != 0) {
+        anetSetError(err, "%s", gai_strerror(rv));
+        goto error;
+    }
+    for (p = servinfo; p != NULL; p = p->ai_next) {
+        if (connect(fd,p->ai_addr,p->ai_addrlen) == -1) {
+            if (EINPROGRESS == errno || EOPNOTSUPP == errno)
+                goto end;
+            trvLogI("%d", errno);
+            goto error;
+        }
+        goto end;
+    }
+error:
+    fd = ANET_ERR;
+end:
+    return fd;
+}
+
+int anetPeerListen(int fd, char *err, int backlog) {
+    int rv;
+    char _port[6];  /* strlen("65535") */
+    struct addrinfo hints, *servinfo, *p;
+    struct sockaddr_in sin;
+    socklen_t len = sizeof(sin);
+    char *bindaddr;
+    
+    if (getsockname(fd, (struct sockaddr *)&sin, &len) == -1) {
+        goto error;
+    }
+
+    snprintf(_port,6,"%d", sin.sin_port);
+    memset(&hints,0,sizeof(hints));
+    hints.ai_family = sin.sin_family;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != NULL */
+    bindaddr = inet_ntoa(sin.sin_addr);
+
+    if ((rv = getaddrinfo(bindaddr,_port,&hints,&servinfo)) != 0) {
+        anetSetError(err, "%s", gai_strerror(rv));
+        goto error;
+    }
+    for (p = servinfo; p != NULL; p = p->ai_next) {
+        if (listen(fd, backlog) == -1) {
+            goto error;
+        }
+        goto end;
+    }
+error:
+    fd = ANET_ERR;
+end:
+    return fd;
 }

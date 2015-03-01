@@ -5,16 +5,14 @@
 
 #include "lua.h"
 
-extern lua_State *g_planetLuaSt;
-
 int STAddReplyString(lua_State *L) {
     STAddReplyHeader();
     char *replyStr;
     
-    replyStr = (char *)lua_tostring(g_planetLuaSt, 2);
+    replyStr = (char *)lua_tostring(L, 2);
     NTAddReplyString(sn, replyStr);
 
-    lua_pushnumber(g_planetLuaSt, 0);
+    lua_pushnumber(L, 0);
     return 1;
 }
 
@@ -30,12 +28,12 @@ int STAddReplyMultiString(lua_State *L) {
     replyArr = (char **)zmalloc(sizeof(char **) * (argc-1));
 
     for (loopJ = 2; loopJ <= argc; loopJ++) {
-        replyArr[loopJ-2] = (char *)lua_tostring(g_planetLuaSt, loopJ);
+        replyArr[loopJ-2] = (char *)lua_tostring(L, loopJ);
     }
 
     NTAddReplyStringArgv(sn, (argc-1), replyArr);
 
-    lua_pushnumber(g_planetLuaSt, 0);
+    lua_pushnumber(L, 0);
 
     zfree(replyArr);
 
@@ -47,10 +45,10 @@ int STAddReplyRawString(lua_State *L) {
     STAddReplyHeader();
     char *replyStr;
      
-    replyStr = (char *)lua_tostring(g_planetLuaSt, 2);
+    replyStr = (char *)lua_tostring(L, 2);
     NTAddReplyRawString(sn, replyStr);
 
-    lua_pushnumber(g_planetLuaSt, 0);
+    lua_pushnumber(L, 0);
     return 1;
 }
 
@@ -60,16 +58,16 @@ int STConnectNTSnode(lua_State *L) {
     int port;
     NTSnode *sn;
     
-    host = (char *)lua_tostring(g_planetLuaSt, 1);
-    port = (int)lua_tonumber(g_planetLuaSt, 2);
+    host = (char *)lua_tostring(L, 1);
+    port = (int)lua_tonumber(L, 2);
 
     sn = NTConnectNTSnode(host, port);
 
     if (NULL == sn) {
-        lua_pushnil(g_planetLuaSt);
+        lua_pushnil(L);
     }
     else {
-        lua_pushstring(g_planetLuaSt, sn->fds);
+        lua_pushstring(L, sn->fds);
     }
 
     return 1;

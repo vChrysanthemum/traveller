@@ -209,7 +209,6 @@ void UIDrawMap(UIMap *map) {
         }
     }
 
-    move(g_cursor->y, g_cursor->x);
     refresh();
 }
 

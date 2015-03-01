@@ -19,6 +19,8 @@
 #define ERRNO_ERR   -500
 #define ERRNO_NULL  -404
 
+extern FILE* g_logF;
+
 #define trvLog_ERROR 1
 #define trvLog_WARNING 2
 #define trvLog_NOTICE 3
@@ -30,9 +32,10 @@
     struct timeval tv;\
     gettimeofday(&tv,NULL);\
     strftime(timestr,sizeof(timestr),"%d %b %H:%M:%S.",localtime(&tv.tv_sec));\
-    fputc('[', stderr); fputs(timestr, stderr); fputs("]", stderr); \
-    fprintf(stderr, "(%s:%d) ", __FILE__, __LINE__); fprintf(stderr, FMT, ##__VA_ARGS__); \
-    fputc('\n', stderr); \
+    fputc('[', g_logF); fputs(timestr, g_logF); fputs("]", g_logF); \
+    fprintf(g_logF, "(%s:%d) ", __FILE__, __LINE__); fprintf(g_logF, FMT, ##__VA_ARGS__); \
+    fputc('\n', g_logF); \
+    fflush(g_logF);\
 } while(0);
 
 #define trvLogD(FMT, ...) trvLog(trvLog_DEBUG, FMT, ##__VA_ARGS__)

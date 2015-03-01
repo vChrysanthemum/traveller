@@ -2,8 +2,9 @@
 #define __SCRIPT_DB_H
 
 #include "lua.h"
+#include "sqlite3.h"
 
-void STInitDB();
+sqlite3* STInitDB(char *filepath);
 int STDBQuery(lua_State *L);
 
 #endif

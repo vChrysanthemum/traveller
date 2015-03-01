@@ -2,6 +2,7 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include "core/adlist.h"
 #include "core/dict.h"
@@ -14,6 +15,10 @@
 
 extern struct NTServer g_server;
 extern dictType stackStringTableDictType;
+
+extern int g_blockCmdFd;
+extern pthread_mutex_t g_blockNetMtx;
+extern pthread_cond_t g_blockNetCond;
 
 static void setProtocolError(NTSnode *sn, int pos);
 static void resetNTSnodeArgs(NTSnode *sn);
@@ -189,7 +194,15 @@ static void setProtocolError(NTSnode *sn, int pos) {
 }
 
 
-static void prepareNTSnodeToReadQuery(NTSnode *sn) {
+/* 重新使 NTSnode 准备就绪 可以读取新的指令
+ * 该函数在 processInputBuffer 完成时调用
+ */
+static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
+    if (g_blockCmdFd == sn->fd) {
+        trvLogI("g_blockCmdFd %d", sn->fd);
+        NTAwakeBlockCmd(sn);
+    }
+
     sn->recv_stat = SNODE_RECV_STAT_PREPARE;
     sn->recv_type = ERRNO_NULL;
     sn->recv_parsing_stat = ERRNO_NULL;
@@ -203,6 +216,9 @@ static void prepareNTSnodeToReadQuery(NTSnode *sn) {
     sn->argc_remaining = 0;
     sn->argv_remaining = 0;
     sn->proc = NULL;
+
+    trvLogI("unlock %d", sn->fd);
+    pthread_mutex_unlock(&g_blockNetMtx);
 }
 
 static void resetNTSnodeArgs(NTSnode *sn) {
@@ -461,8 +477,17 @@ PARSING_ARGV_START:
 }
 
 
+/* 解析读取数据
+ *
+ * 保证线程安全:
+ *      pthread_mutex_lock(&g_blockNetMtx)
+ *      并在 rePrepareNTSnodeToReadQuery() 时 unlock
+ */
 static void processInputBuffer(NTSnode *sn) {
     if (SNODE_RECV_STAT_ACCEPT == sn->recv_stat || SNODE_RECV_STAT_PREPARE == sn->recv_stat) {
+        trvLogI("lock %d", sn->fd);
+        pthread_mutex_lock(&g_blockNetMtx);
+
         switch(sn->querybuf[0]) {
             case '+' :
                 sn->recv_type = SNODE_RECV_TYPE_OK;
@@ -521,14 +546,14 @@ static void processInputBuffer(NTSnode *sn) {
 
     if (NULL == sn->proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recv_stat) {
-            prepareNTSnodeToReadQuery(sn);
+            rePrepareNTSnodeToReadQuery(sn);
         }
     }
     else {
         sn->proc(sn);
 
         if (SNODE_RECV_STAT_EXCUTED == sn->recv_stat) {
-            prepareNTSnodeToReadQuery(sn);
+            rePrepareNTSnodeToReadQuery(sn);
         }
     }
 }
@@ -575,6 +600,8 @@ static void readQueryFromNTSnode(aeEventLoop *el, int fd, void *privdata, int ma
 
 
 static NTSnode* createNTSnode(int fd) {
+    trvLogD("Create snode %d", fd);
+
     NTSnode *sn = zmalloc(sizeof(NTSnode));
 
     if (-1 == fd) {
@@ -607,14 +634,14 @@ static NTSnode* createNTSnode(int fd) {
     g_server.stat_numconnections++;
     dictAdd(g_server.snodes, sn->fds, sn);
 
-    trvLogI("Create snode");
-
     return sn;
 }
 
 
 
 void NTFreeNTSnode(NTSnode *sn) {
+    trvLogD("Free NTSnode %d", sn->fd);
+
     if (-1 != sn->fd) {
         aeDeleteFileEvent(g_server.el, sn->fd, AE_READABLE);
         aeDeleteFileEvent(g_server.el, sn->fd, AE_WRITABLE);
@@ -631,15 +658,17 @@ void NTFreeNTSnode(NTSnode *sn) {
     zfree(sn);
 
     g_server.stat_numconnections--;
-    trvLogI("Free NTSnode");
 }
 
 NTSnode *NTConnectNTSnode(char *addr, int port) {
     int fd;
     NTSnode *sn;
 
-    fd = anetTcpNonBlockConnect(NULL, addr, port);
-    if (-1 == fd) {
+    memset(g_server.neterr, 0x00, ANET_ERR_LEN);
+    fd = anetPeerSocket(g_server.neterr, 0, "0.0.0.0", AF_INET);
+    fd = anetPeerConnect(fd, g_server.neterr, addr, port);
+    //fd = anetPeerConnect(fd, g_server.neterr, addr, port);
+    if (ANET_ERR == fd) {
         trvLogW("Unable to connect to %s", addr);
         return NULL;
     }
@@ -687,32 +716,32 @@ static void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) 
                 trvLogW("Accepting snode connection: %s", g_server.neterr);
             return;
         }
-        trvLogI("Accepted %s:%d", cip, cport);
+        trvLogD("Accepted %s:%d", cip, cport);
         acceptCommonHandler(cfd,0);
     }
 }
 
 
-static int listenToPort(int port, int *fds, int *count) {
+static int listenToPort() {
     int loopJ; 
 
-    *count = 0;
+    g_server.ipfd_count = 0;
 
-    fds[*count] = anetTcp6Server(g_server.neterr, port, NULL,
-            g_server.tcp_backlog);
-    if (fds[*count] != ANET_ERR) {
-        anetNonBlock(NULL, fds[*count]);
-        (*count)++;
+    for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
+        g_server.ipfd[loopJ] = ANET_ERR;
     }
 
-    fds[*count] = anetTcpServer(g_server.neterr, port, NULL,
-            g_server.tcp_backlog);
-    if (fds[*count] != ANET_ERR) {
-        anetNonBlock(NULL,fds[*count]);
-        (*count)++;
+    if (g_server.ipfd[0] != ANET_ERR) {
+        anetPeerListen(g_server.ipfd[0], g_server.neterr, g_server.tcp_backlog);
+        g_server.ipfd_count++;
     }
 
-    if (0 == *count) return ERRNO_ERR;
+    if (g_server.ipfd[1] != ANET_ERR) {
+        anetPeerListen(g_server.ipfd[1], g_server.neterr, g_server.tcp_backlog);
+        g_server.ipfd_count++;
+    }
+
+    if (0 == g_server.ipfd_count) return ERRNO_ERR;
 
     for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
         if (aeCreateFileEvent(g_server.el, g_server.ipfd[loopJ], AE_READABLE,
@@ -721,7 +750,7 @@ static int listenToPort(int port, int *fds, int *count) {
         }
     }
 
-    trvLogI("监听端口: %d", port);
+    trvLogI("监听端口: %d", g_server.port);
 
     return ERRNO_OK;
 }
@@ -742,6 +771,7 @@ int NTInitNTServer(int listenPort) {
     g_server.max_snodes = TRV_NET_MAX_SNODE;
     g_server.el = aeCreateEventLoop(g_server.max_snodes);
 
+    g_server.bindaddr = "0.0.0.0";
     g_server.port = listenPort;
     g_server.tcp_backlog = TRV_NET_TCP_BACKLOG;
 
@@ -752,6 +782,9 @@ int NTInitNTServer(int listenPort) {
     g_server.snode_max_querybuf_len = SNODE_MAX_QUERYBUF_LEN;
 
     g_server.tcpkeepalive = TRV_NET_TCPKEEPALIVE;
+
+    g_server.ipfd[0] = anetPeerSocket(g_server.neterr, g_server.port, g_server.bindaddr, AF_INET);
+    g_server.ipfd[1] = anetPeerSocket(g_server.neterr, g_server.port, g_server.bindaddr, AF_INET6);
 
     if (listenPort > 0) {
         if (ERRNO_ERR == listenToPort(g_server.port, g_server.ipfd, &g_server.ipfd_count)) {

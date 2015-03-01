@@ -62,7 +62,7 @@ typedef struct NTSnode_s {
     time_t lastinteraction; /* time of the last interaction, used for timeout */
 
     void (*proc)(struct NTSnode_s *sn);
-    int is_write_mod;
+    int is_write_mod;       /* 是否已处于写数据模式，避免重复进入写数据模式 */
 } NTSnode;
 
 #define SNODE_RECV_TYPE_ERR    -1 /* -:ERR */
@@ -81,10 +81,11 @@ struct NTServer {
 
     int max_snodes;
     aeEventLoop *el;
+    char *bindaddr;
     int port;
     int tcp_backlog;
     char neterr[ANET_ERR_LEN];   /* Error buffer for anet.c */
-    int ipfd[2];                 /* 分别对应 ipv4、ipv6 */
+    int ipfd[2];                 /* 默认0:ipv4、1:ipv6 */
     int ipfd_count;              /* 已绑定总量 */
 
     int stat_rejected_conn;

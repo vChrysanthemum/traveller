@@ -10,7 +10,6 @@
 
 extern UIWin *g_rootUIWin;
 extern UICursor *g_cursor;
-extern char g_planetdir[ALLOW_PATH_SIZE];
 
 static void initRootUIWin() {
     g_rootUIWin = (UIWin*)zmalloc(sizeof(UIWin));
@@ -86,6 +85,7 @@ static void moveCursor() {
 }
 
 void UIInit() {
+    return;
     sds mapJSON;
     UIMap *map;
     char dir[ALLOW_PATH_SIZE] = {""};
@@ -101,7 +101,7 @@ void UIInit() {
 
 
     /* 画首幅地图 */
-    sprintf(dir, "%s/arctic.map.json", g_planetdir);
+    //sprintf(dir, "%s/arctic.map.json", m_planetdir);
     mapJSON = fileGetContent(dir);
     map = UIParseMap(mapJSON);
 
