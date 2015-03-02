@@ -17,8 +17,10 @@ extern struct NTServer g_server;
 extern dictType stackStringTableDictType;
 
 extern int g_blockCmdFd;
-extern pthread_mutex_t g_blockNetMtx;
-extern pthread_cond_t g_blockNetCond;
+extern pthread_mutex_t g_blockNetRMtx;
+extern pthread_cond_t g_blockNetRCond;
+extern pthread_mutex_t g_blockNetWMtx;
+extern pthread_cond_t g_blockNetWCond;
 
 static void setProtocolError(NTSnode *sn, int pos);
 static void resetNTSnodeArgs(NTSnode *sn);
@@ -115,26 +117,35 @@ static void sendReplyToNTSnode(aeEventLoop *el, int fd, void *privdata, int mask
 }
 
 void NTAddReplySds(NTSnode *sn, sds data) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)sdslen(data), data);
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyRawSds(NTSnode *sn, sds data) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatsds(sn->writebuf, data);
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyString(NTSnode *sn, char *data) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)strlen(data), data);
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyRawString(NTSnode *sn, char *data) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscat(sn->writebuf, data);
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyMultiSds(NTSnode *sn, int count, ...) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
@@ -147,20 +158,24 @@ void NTAddReplyMultiSds(NTSnode *sn, int count, ...) {
         sn->writebuf = sdscatfmt(sn->writebuf, "$%d\r\n%S\r\n", sdslen(tmpptr), tmpptr);
     }
     va_end(ap); 
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 
 void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     int loopJ;
     sn->writebuf = sdscatfmt(sn->writebuf, "*%i\r\n", argc);
     for (loopJ = 0; loopJ < argc; loopJ++) {
         sn->writebuf = sdscatfmt(sn->writebuf, "$%i\r\n%s\r\n", strlen(argv[loopJ]), argv[loopJ]);
     }
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 
 void NTAddReplyMultiString(NTSnode *sn, int count, ...) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
@@ -173,13 +188,16 @@ void NTAddReplyMultiString(NTSnode *sn, int count, ...) {
         sn->writebuf = sdscatfmt(sn->writebuf, "$%i\r\n%s\r\n", strlen(tmpptr), tmpptr);
     }
     va_end(ap); 
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyError(NTSnode *sn, char *err) {
+    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatlen(sn->writebuf, "-", 1);
     sn->writebuf = sdscat(sn->writebuf, err);
     sn->writebuf = sdscatlen(sn->writebuf, "\r\n", 2);
+    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 
@@ -218,7 +236,7 @@ static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
     sn->proc = NULL;
 
     trvLogI("unlock %d", sn->fd);
-    pthread_mutex_unlock(&g_blockNetMtx);
+    pthread_mutex_unlock(&g_blockNetRMtx);
 }
 
 static void resetNTSnodeArgs(NTSnode *sn) {
@@ -480,13 +498,13 @@ PARSING_ARGV_START:
 /* 解析读取数据
  *
  * 保证线程安全:
- *      pthread_mutex_lock(&g_blockNetMtx)
+ *      pthread_mutex_lock(&g_blockNetRMtx)
  *      并在 rePrepareNTSnodeToReadQuery() 时 unlock
  */
 static void processInputBuffer(NTSnode *sn) {
     if (SNODE_RECV_STAT_ACCEPT == sn->recv_stat || SNODE_RECV_STAT_PREPARE == sn->recv_stat) {
         trvLogI("lock %d", sn->fd);
-        pthread_mutex_lock(&g_blockNetMtx);
+        pthread_mutex_lock(&g_blockNetRMtx);
 
         switch(sn->querybuf[0]) {
             case '+' :

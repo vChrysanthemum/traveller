@@ -10,8 +10,8 @@ extern struct NTServer g_server;
 extern int g_blockCmdFd;
 extern pthread_mutex_t g_blockCmdMtx;
 extern pthread_cond_t g_blockCmdCond;
-extern pthread_mutex_t g_blockNetMtx;
-extern pthread_cond_t g_blockNetCond;
+extern pthread_mutex_t g_blockNetRMtx;
+extern pthread_cond_t g_blockNetRCond;
 
 dictType commandTableDictType = {
     dictSdsCaseHash,           /* hash function */
@@ -80,7 +80,7 @@ int NTPrepareBlockCmd(NTSnode *sn) {
     g_blockCmdFd = sn->fd;
 
     /* Step1 申请阻止网络处理线程 开始解析数据流程 */
-    pthread_mutex_lock(&g_blockNetMtx);
+    pthread_mutex_lock(&g_blockNetRMtx);
 
     /* Step2 保证命令发送者 线程安全 */
     pthread_mutex_lock(&g_blockCmdMtx);
@@ -94,7 +94,7 @@ void NTBlockCmd(NTSnode *sn) {
      * Step3-2 允许网络处理线程 开始解析数据流程 
      */
     trvLogI("sleep %d", sn->fd);
-    pthread_cond_wait(&g_blockCmdCond, &g_blockNetMtx);
+    pthread_cond_wait(&g_blockCmdCond, &g_blockNetRMtx);
     trvLogI("awake %d", sn->fd);
 }
 
@@ -106,13 +106,13 @@ void NTFinishBlockCmd(NTSnode *sn) {
     pthread_mutex_unlock(&g_blockCmdMtx);
 
     /* Step8 唤醒 网络处理模块 */
-    pthread_cond_signal(&g_blockNetCond);
+    pthread_cond_signal(&g_blockNetRCond);
     g_blockCmdFd = 0;
 }
 
 void NTAwakeBlockCmd(NTSnode *sn) {
-    /* Step4 解锁 g_blockNetMtx，Step3-2将会重新上锁 */
-    pthread_mutex_unlock(&g_blockNetMtx);
+    /* Step4 解锁 g_blockNetRMtx，Step3-2将会重新上锁 */
+    pthread_mutex_unlock(&g_blockNetRMtx);
     /* Step5 唤醒发送命令者 */
     pthread_cond_signal(&g_blockCmdCond);
     trvLogI("wake cmd %d", sn->fd);
@@ -122,10 +122,10 @@ void NTAwakeBlockCmd(NTSnode *sn) {
      * Step6-1 睡眠，等待发送命令者 唤醒 
      * Step6-2 解锁g_blockCmdMtx，以便 NTFinishBlockCmd 探知网络处理线程已睡眠
      */
-    pthread_cond_wait(&g_blockNetCond, &g_blockCmdMtx);
+    pthread_cond_wait(&g_blockNetRCond, &g_blockCmdMtx);
 
     /* Step9
-     * 解锁 Step6-2 中锁定的 g_blockNetMtx
+     * 解锁 Step6-2 中锁定的 g_blockNetRMtx
      */
     pthread_mutex_unlock(&g_blockCmdMtx);
 }

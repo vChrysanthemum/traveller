@@ -28,8 +28,8 @@ extern NTSnode *g_planetSrvSnode; /* 星球服务端连接 */
 extern int g_blockCmdFd;
 extern pthread_mutex_t g_blockCmdMtx;
 extern pthread_cond_t g_blockCmdCond;
-extern pthread_mutex_t g_blockNetMtx;
-extern pthread_cond_t g_blockNetCond;
+extern pthread_mutex_t g_blockNetRMtx;
+extern pthread_cond_t g_blockNetRCond;
 
 /* 基础部分初始化 */
 static void STInit(lua_State **L, char *dir) {

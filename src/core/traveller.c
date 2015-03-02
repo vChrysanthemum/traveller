@@ -42,8 +42,10 @@ pthread_mutex_t g_blockCmdMtx = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t g_blockCmdCond = PTHREAD_COND_INITIALIZER;
 
 /* 保证数据解析一致性 */
-pthread_mutex_t g_blockNetMtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t g_blockNetCond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t g_blockNetRMtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t g_blockNetRCond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t g_blockNetWMtx = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t g_blockNetWCond = PTHREAD_COND_INITIALIZER;
 
 
 /* 服务端模式所需变量 */
