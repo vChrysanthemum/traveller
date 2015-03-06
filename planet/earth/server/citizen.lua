@@ -15,12 +15,13 @@ function PUBCitizenLogin(connectId, email, password)
     local citizen = util.db:select(
     'b_citizen', 
     'citizen_id,code,nickname,email', 
-    {email=email, password=md5.sumhexa(password)})
+    {email=email, password=md5.sumhexa(password.."_@traveller")})
 
-    if not citizen then
+    if not citizen[0] then
         NTAddReplyRawString(connectId, "-用户名或密码错误\r\n")
         return
     end
+    citizen = citizen[0]
 
     loggedCitizens[connectId] = citizen
     NTAddReplyRawString(connectId, "+登录成功\r\n")

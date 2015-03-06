@@ -8,6 +8,7 @@
 #include <time.h>
 #include <sys/time.h>
 #include <locale.h>
+#include <pthread.h>
 
 #include "core/sds.h"
 #include "core/frozen.h"
@@ -20,6 +21,7 @@
 #define ERRNO_NULL  -404
 
 extern FILE* g_logF;
+extern pthread_mutex_t g_logMutex;
 
 #define trvLog_ERROR 1
 #define trvLog_WARNING 2
@@ -28,6 +30,7 @@ extern FILE* g_logF;
 #define trvLog_DEBUG 6
 
 #define trvLog(level, FMT, ...) do {\
+    pthread_mutex_lock(&g_logMutex);\
     char timestr[64];\
     struct timeval tv;\
     gettimeofday(&tv,NULL);\
@@ -36,6 +39,7 @@ extern FILE* g_logF;
     fprintf(g_logF, "(%s:%d) ", __FILE__, __LINE__); fprintf(g_logF, FMT, ##__VA_ARGS__); \
     fputc('\n', g_logF); \
     fflush(g_logF);\
+    pthread_mutex_unlock(&g_logMutex);\
 } while(0);
 
 #define trvLogD(FMT, ...) trvLog(trvLog_DEBUG, FMT, ##__VA_ARGS__)

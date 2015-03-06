@@ -27,9 +27,6 @@ extern NTSnode *g_planetSrvSnode; /* 星球服务端连接 */
 
 extern int g_blockCmdFd;
 extern pthread_mutex_t g_blockCmdMtx;
-extern pthread_cond_t g_blockCmdCond;
-extern pthread_mutex_t g_blockNetRMtx;
-extern pthread_cond_t g_blockNetRCond;
 
 /* 基础部分初始化 */
 static void STInit(lua_State **L, char *dir) {
@@ -59,10 +56,11 @@ static void STInit(lua_State **L, char *dir) {
 void STServerInit() {
     STInit(&g_srvLuaSt, g_srvPlanetdir);
 
-    char *filepath = zmalloc(ALLOW_PATH_SIZE);
+    char *filepath = (char *)zmalloc(ALLOW_PATH_SIZE);
     memset(filepath, 0, ALLOW_PATH_SIZE);
 
     snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", g_srvPlanetdir);
+    trvLogI("%s", filepath);
     errno = luaL_loadfile(g_srvLuaSt, filepath);
     if (errno) {
         trvExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
@@ -105,6 +103,7 @@ void STClientInit() {
     int planetSrvPort;
     struct configOption *confOpt;
     pthread_t ntid;
+    char *email = "j@ioctl.cc";
 
     confOpt = configGet(g_conf, "planet_client", "planet_server_host");
     if (NULL == confOpt) {
@@ -124,13 +123,18 @@ void STClientInit() {
     }
     trvLogI("连接星球成功 %d", g_planetSrvSnode->fd);
 
-    if (0 != NTPrepareBlockCmd(g_planetSrvSnode)) {
-        trvExit(0, "登录失败");
-    }
-    STLoginPlanet("test", "test");
+    NTPrepareBlockCmd(g_planetSrvSnode);
+    STLoginPlanet(email, "traveller");
     NTBlockCmd(g_planetSrvSnode);
-    trvLogI("%s", g_planetSrvSnode->argv[0]);
+    if (SNODE_RECV_TYPE_ERR == g_planetSrvSnode->recv_type) {
+        trvExit(0, "%s", g_planetSrvSnode->argv[0]);
+    }
+    if (SNODE_RECV_TYPE_OK == g_planetSrvSnode->recv_type) {
+        trvLogI("%s", g_planetSrvSnode->argv[0]);
+    }
     NTFinishBlockCmd(g_planetSrvSnode);
+    trvLogI("finshed");
+
 
     pthread_create(&ntid, NULL, _UIInit, NULL);
 }

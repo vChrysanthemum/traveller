@@ -2,6 +2,8 @@
 #include "core/dict.h"
 #include "core/sds.h"
 
+#include <execinfo.h>
+
 dictType stackStringTableDictType = {
     dictStringCaseHash,        /* hash function */
     NULL,                      /* key dup */
@@ -58,4 +60,21 @@ sds fileGetContent(char *path) {
     fread(content, len, 1, fp);
     sdsupdatelen(content);
     return content;
+}
+
+void dump(void)
+{
+    int j, nptrs;
+    void *buffer[100];
+    char **strings;
+    nptrs = backtrace(buffer, 3);
+    //printf("backtrace() returned %d addresses\n", nptrs);
+    strings = backtrace_symbols(buffer, nptrs);
+    if (strings == NULL) {
+        perror("backtrace_symbols");
+        exit(EXIT_FAILURE);
+    }   
+    for (j = 0; j < nptrs; j++)
+        trvLogI("[%02d] %s", j, strings[j]);
+    free(strings);
 }

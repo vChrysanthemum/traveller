@@ -10,6 +10,7 @@
 
 extern UIWin *g_rootUIWin;
 extern UICursor *g_cursor;
+extern UIMap *g_curUIMap;
 
 static void initRootUIWin() {
     g_rootUIWin = (UIWin*)zmalloc(sizeof(UIWin));
@@ -85,9 +86,7 @@ static void moveCursor() {
 }
 
 void UIInit() {
-    return;
     sds mapJSON;
-    UIMap *map;
     char dir[ALLOW_PATH_SIZE] = {""};
 
     initscr();                   /* start the curses mode */
@@ -102,10 +101,11 @@ void UIInit() {
 
     /* 画首幅地图 */
     //sprintf(dir, "%s/arctic.map.json", m_planetdir);
+    sprintf(dir, "/Users/j/github/my/traveller/planet/earth/client/arctic.map.json");
     mapJSON = fileGetContent(dir);
-    map = UIParseMap(mapJSON);
+    g_curUIMap = UIParseMap(mapJSON);
 
-    UIDrawMap(map);
+    UIDrawMap();
 
 
     /* 光标置中 */
@@ -114,7 +114,6 @@ void UIInit() {
     move(g_cursor->y, g_cursor->x);
 
     moveCursor();
-
 
     getch();
     endwin();

@@ -8,8 +8,8 @@
 #include "ui/map.h"
 
 extern UIWin *g_rootUIWin;
-UIMap *m_curUIMap;
 extern UICursor *g_cursor;
+extern UIMap *g_curUIMap;
 
 /* 地图json格式：
  * {
@@ -65,7 +65,7 @@ UIMap *UIParseMap(char *mapJSON) {
 
     tok = find_json_token(map->root_json_tok, "nodes");
     map->nodes = (UIMapNode*)zmalloc(sizeof(UIMapNode) * map->width * map->height);
-    memset(map->nodes, 0x00, map->width * map->height);
+    memset(map->nodes, 0x00, sizeof(UIMapNode) * map->width * map->height);
     for (loopJ = 0; loopJ < map->nodes_len; loopJ++) {
         sprintf(tmpchar, "nodes[%d][0]", loopJ);
         tok2 = find_json_token(map->root_json_tok, tmpchar);
@@ -122,8 +122,8 @@ UIMap *UIParseMap(char *mapJSON) {
 }
 
 /* 画地图 */
-void UIDrawMap(UIMap *map) {
-    m_curUIMap = map;
+void UIDrawMap() {
+    UIMap *map = g_curUIMap;
     int x, y;
     int poi, _x, _y;
     int loopJ;
@@ -191,6 +191,10 @@ void UIDrawMap(UIMap *map) {
         mvaddch(map->win_rb_y+1, map->win_rb_x+1, ACS_LRCORNER);
     }
 
+    trvLogI("g_curUIMap fuck");
+    if (0x00 == g_curUIMap->nodes[0].resourse) {
+    }
+    trvLogI("fuck he");
 
     //int x, y; 屏幕上的坐标
     //int poi, _x, _y; 地图坐标
@@ -199,8 +203,7 @@ void UIDrawMap(UIMap *map) {
         for (y = map->win_lt_y; y <= map->win_rb_y; y++) {
             _y = map->addr_lt_y + (y - map->win_lt_y);
             poi = MAP_ADDR(_x, _y, map->width);
-
-            if (NULL == map->nodes[poi].resourse) {
+            if (0x00 == map->nodes[poi].resourse) {
                 mvaddch(y, x, ' ');
             }
             else {
@@ -215,33 +218,33 @@ void UIDrawMap(UIMap *map) {
 /* 在x轴上移动地图 */
 void UIMoveCurMapX(int x) {
     int _x = x;
-    if (m_curUIMap->addr_lt_x + x < 0) {
-        _x = -1 * m_curUIMap->addr_lt_x;
+    if (g_curUIMap->addr_lt_x + x < 0) {
+        _x = -1 * g_curUIMap->addr_lt_x;
     }
-    else if (m_curUIMap->addr_rb_x + x >= m_curUIMap->width-1) {
-        _x = m_curUIMap->width - m_curUIMap->addr_rb_x - 1;
+    else if (g_curUIMap->addr_rb_x + x >= g_curUIMap->width-1) {
+        _x = g_curUIMap->width - g_curUIMap->addr_rb_x - 1;
     }
     //if (0 == _x) return;
-    m_curUIMap->addr_lt_x += _x;
-    m_curUIMap->addr_rb_x += _x;
-    UIDrawMap(m_curUIMap);
+    g_curUIMap->addr_lt_x += _x;
+    g_curUIMap->addr_rb_x += _x;
+    UIDrawMap();
 }
 
 /* 在y轴上移动地图 */
 void UIMoveCurMapY(int y) {
     int _y = y;
     /* 到达上边界 */
-    if (m_curUIMap->addr_lt_y + y < 0) {
-        _y = -1 * m_curUIMap->addr_lt_y;
+    if (g_curUIMap->addr_lt_y + y < 0) {
+        _y = -1 * g_curUIMap->addr_lt_y;
     }
     /* 到达下边界 */
-    else if (m_curUIMap->addr_rb_y + y >= m_curUIMap->height-1) {
-        _y = m_curUIMap->height - m_curUIMap->addr_rb_y - 1;
+    else if (g_curUIMap->addr_rb_y + y >= g_curUIMap->height-1) {
+        _y = g_curUIMap->height - g_curUIMap->addr_rb_y - 1;
     }
     //if (0 == _y) return;
-    m_curUIMap->addr_lt_y += _y;
-    m_curUIMap->addr_rb_y += _y;
-    UIDrawMap(m_curUIMap);
+    g_curUIMap->addr_lt_y += _y;
+    g_curUIMap->addr_rb_y += _y;
+    UIDrawMap();
 }
 
 /* 释放地图 */

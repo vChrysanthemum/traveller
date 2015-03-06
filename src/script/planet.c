@@ -65,7 +65,7 @@ int STCallPlanetFunc(NTSnode *sn) {
 
 /* 玩家登录星球
  */
-int STLoginPlanet(char *username, char *password) {
-    NTAddReplyMultiString(g_planetSrvSnode, 4, "planet", "PUBCitizenLogin", username, password);
+int STLoginPlanet(char *email, char *password) {
+    NTAddReplyMultiString(g_planetSrvSnode, 4, "planet", "PUBCitizenLogin", email, password);
     return 0;
 }

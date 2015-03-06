@@ -43,6 +43,7 @@ void zlibc_free(void *ptr) {
 #include <pthread.h>
 #include "core/platform.h"
 #include "core/zmalloc.h"
+#include "core/util.h"
 
 #ifdef HAVE_MALLOC_SIZE
 #define PREFIX_SIZE (0)

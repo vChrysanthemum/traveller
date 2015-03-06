@@ -67,7 +67,7 @@ typedef struct {
 } UIMap;
 
 UIMap *UIParseMap(char *mapJSON);
-void UIDrawMap(UIMap *map);
+void UIDrawMap();
 void UIMoveCurMapX(int x);
 void UIMoveCurMapY(int y);
 void UIFreeUIMap(UIMap *map);

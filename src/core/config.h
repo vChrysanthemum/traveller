@@ -5,6 +5,8 @@
 #define _CORE_CONFIG_H
 #include <sys/types.h>
 
+#define HAVE_BACKTRACE 1
+
 struct configOption {
     char *section;
     int sectionLen;

@@ -6,6 +6,9 @@ travellerobjects = ./core/traveller.o \
 				   ./core/adlist.o \
 				   ./core/dict.o \
 				   ./core/frozen.o \
+				   ./core/debug.o \
+				   ./core/sha1.o \
+				   ./core/crc64.o \
 				   ../deps/sqlite/sqlite3.o \
 				   ./net/anet.o \
 				   ./net/ae.o \
@@ -34,7 +37,7 @@ CC:=gcc
 all:traveller
 
 traveller:$(travellerobjects)
-	$(CC) -o traveller $(travellerobjects) $(LIBRARY)
+	$(CC) -o traveller $(travellerobjects) $(LIBRARY)  $(CFLAGS)
 
 %.o: %.c 
 	$(CC) -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o

@@ -17,10 +17,7 @@ extern struct NTServer g_server;
 extern dictType stackStringTableDictType;
 
 extern int g_blockCmdFd;
-extern pthread_mutex_t g_blockNetRMtx;
-extern pthread_cond_t g_blockNetRCond;
 extern pthread_mutex_t g_blockNetWMtx;
-extern pthread_cond_t g_blockNetWCond;
 
 static void setProtocolError(NTSnode *sn, int pos);
 static void resetNTSnodeArgs(NTSnode *sn);
@@ -217,7 +214,6 @@ static void setProtocolError(NTSnode *sn, int pos) {
  */
 static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
     if (g_blockCmdFd == sn->fd) {
-        trvLogI("g_blockCmdFd %d", sn->fd);
         NTAwakeBlockCmd(sn);
     }
 
@@ -234,9 +230,6 @@ static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
     sn->argc_remaining = 0;
     sn->argv_remaining = 0;
     sn->proc = NULL;
-
-    trvLogI("unlock %d", sn->fd);
-    pthread_mutex_unlock(&g_blockNetRMtx);
 }
 
 static void resetNTSnodeArgs(NTSnode *sn) {
@@ -496,15 +489,9 @@ PARSING_ARGV_START:
 
 
 /* 解析读取数据
- *
- * 保证线程安全:
- *      pthread_mutex_lock(&g_blockNetRMtx)
- *      并在 rePrepareNTSnodeToReadQuery() 时 unlock
  */
 static void processInputBuffer(NTSnode *sn) {
     if (SNODE_RECV_STAT_ACCEPT == sn->recv_stat || SNODE_RECV_STAT_PREPARE == sn->recv_stat) {
-        trvLogI("lock %d", sn->fd);
-        pthread_mutex_lock(&g_blockNetRMtx);
 
         switch(sn->querybuf[0]) {
             case '+' :

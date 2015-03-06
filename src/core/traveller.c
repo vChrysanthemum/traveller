@@ -8,11 +8,13 @@
 #include "core/config.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
+#include "core/debug.h"
 #include "net/networking.h"
 #include "net/ae.h"
 #include "script/script.h"
 #include "script/planet.h"
 #include "ui/ui.h"
+#include "ui/map.h"
 
 #include "lua.h"
 #include "sqlite3.h"
@@ -24,28 +26,27 @@ struct NTServer g_server;
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char *g_logdir;
 FILE* g_logF;
+int g_logFInt;
 struct config *g_conf;
 
 /* UI部分 */
 UIWin *g_rootUIWin;
 UICursor g_cursor;
+UIMap *g_curUIMap;
 
 /* 主线程同步 */
 pthread_mutex_t g_rootThreadMutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t g_rootThreadCond = PTHREAD_COND_INITIALIZER;
+pthread_mutex_t g_logMutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 /* 协助阻塞模式发送命令 同步 */
 /* 命令发送者使用 */
 int g_blockCmdFd;   /* 标识哪一 NTSnode 正在使用阻塞模式发送命令 */
 pthread_mutex_t g_blockCmdMtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t g_blockCmdCond = PTHREAD_COND_INITIALIZER;
 
 /* 保证数据解析一致性 */
-pthread_mutex_t g_blockNetRMtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t g_blockNetRCond = PTHREAD_COND_INITIALIZER;
 pthread_mutex_t g_blockNetWMtx = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t g_blockNetWCond = PTHREAD_COND_INITIALIZER;
 
 
 /* 服务端模式所需变量 */
@@ -128,6 +129,7 @@ static void* _STInitPlanet(void* _v) {
     struct configOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
 
+
     /* 游戏服务端初始化 */
     confOpt = configGet(g_conf, "planet_server", "relative_path");
     if (confOpt) {
@@ -139,6 +141,7 @@ static void* _STInitPlanet(void* _v) {
         snprintf(g_srvPlanetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
         STServerInit();
     }
+
 
     /* 游戏客户端初始化 */
     confOpt = configGet(g_conf, "planet_client", "relative_path");
@@ -164,6 +167,7 @@ int main(int argc, char *argv[]) {
 
     g_logdir = NULL;
     g_logF = stderr;
+    g_logFInt = STDERR_FILENO;
 
     setlocale(LC_ALL,"");
 
@@ -191,7 +195,12 @@ int main(int argc, char *argv[]) {
         memcpy(g_logdir, confOpt->value, confOpt->valueLen);
         g_logdir[confOpt->valueLen] = 0x00;
         g_logF = fopen(g_logdir, "a+");
+        g_logFInt = fileno(g_logF);
     }
+
+    signal(SIGHUP, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
+    setupSignalHandlers();
 
 
     /* 主线程睡眠，等待网络就绪
