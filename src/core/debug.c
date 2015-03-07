@@ -319,7 +319,6 @@ int memtest_test_linux_anonymous_maps(void) {
 
 static void sigsegvHandler(int sig, siginfo_t *info, void *secret) {
     ucontext_t *uc = (ucontext_t*) secret;
-    sds infostring, clients;
     struct sigaction act;
     NOTUSED(info);
 

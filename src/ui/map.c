@@ -128,6 +128,7 @@ void UIDrawMap() {
     int poi, _x, _y;
     int loopJ;
     int ch;
+    int ret;
 
     /* 到达左边界 */
     ch = ' ';
@@ -191,10 +192,6 @@ void UIDrawMap() {
         mvaddch(map->win_rb_y+1, map->win_rb_x+1, ACS_LRCORNER);
     }
 
-    trvLogI("g_curUIMap fuck");
-    if (0x00 == g_curUIMap->nodes[0].resourse) {
-    }
-    trvLogI("fuck he");
 
     //int x, y; 屏幕上的坐标
     //int poi, _x, _y; 地图坐标
@@ -212,7 +209,8 @@ void UIDrawMap() {
         }
     }
 
-    refresh();
+    ret = wrefresh(g_rootUIWin->window);
+    return;
 }
 
 /* 在x轴上移动地图 */

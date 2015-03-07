@@ -12,22 +12,6 @@ extern UIWin *g_rootUIWin;
 extern UICursor *g_cursor;
 extern UIMap *g_curUIMap;
 
-static void initRootUIWin() {
-    g_rootUIWin = (UIWin*)zmalloc(sizeof(UIWin));
-    g_rootUIWin->window = stdscr;
-    g_rootUIWin->startx = 0;
-    g_rootUIWin->starty = 0;
-
-    g_cursor = (UICursor*)zmalloc(sizeof(UICursor));
-    g_cursor->number = 1;
-    g_cursor->snumber[0] = 0x00;
-    g_cursor->snumber_len = 0;
-
-    getmaxyx(stdscr, g_rootUIWin->height, g_rootUIWin->width);
-    g_rootUIWin->height-=2; /* 最后一行不可写 */
-    g_rootUIWin->width--; /* 最后一列不可写 */
-}
-
 static UIWin* createUIWin(int height, int width, int starty, int startx) {
     UIWin *win = (UIWin*)zmalloc(sizeof(UIWin));
     win->startx = startx;
@@ -37,6 +21,21 @@ static UIWin* createUIWin(int height, int width, int starty, int startx) {
     win->window = newwin(height, width, starty, startx);
     wrefresh(win->window);
     return win;
+}
+
+static void initRootUIWin() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
+    g_rootUIWin = createUIWin(height, width, 0, 0);
+
+    g_cursor = (UICursor*)zmalloc(sizeof(UICursor));
+    g_cursor->number = 1;
+    g_cursor->snumber[0] = 0x00;
+    g_cursor->snumber_len = 0;
+
+    getmaxyx(stdscr, g_rootUIWin->height, g_rootUIWin->width);
+    g_rootUIWin->height-=2; /* 最后一行不可写 */
+    g_rootUIWin->width--; /* 最后一列不可写 */
 }
 
 static void moveCursor() {
@@ -80,7 +79,7 @@ static void moveCursor() {
         g_cursor->number = 1;
 
         if (KEY_F(1) == g_rootUIWin->ch) break; /* ESC */ 
-        refresh();
+        wrefresh(g_rootUIWin->window);
     }
 
 }
@@ -96,7 +95,7 @@ void UIInit() {
     noecho();
 
     initRootUIWin();
-    refresh();
+    wrefresh(g_rootUIWin->window);
 
 
     /* 画首幅地图 */
