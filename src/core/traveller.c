@@ -28,6 +28,7 @@ char *g_logdir;
 FILE* g_logF;
 int g_logFInt;
 struct config *g_conf;
+void *g_tmpPtr;
 
 /* UI部分 */
 UIWin *g_rootUIWin;

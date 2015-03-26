@@ -122,6 +122,7 @@ void STClientInit() {
         trvExit(0, "连接星球失败");
     }
     trvLogI("连接星球成功 %d", g_planetSrvSnode->fd);
+    /*
 
     NTPrepareBlockCmd(g_planetSrvSnode);
     STLoginPlanet(email, "traveller");
@@ -133,6 +134,8 @@ void STClientInit() {
         trvLogI("%s", g_planetSrvSnode->argv[0]);
     }
     NTFinishBlockCmd(g_planetSrvSnode);
+    */
+
     trvLogI("finshed");
 
 

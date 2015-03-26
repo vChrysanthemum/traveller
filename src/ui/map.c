@@ -10,6 +10,7 @@
 extern UIWin *g_rootUIWin;
 extern UICursor *g_cursor;
 extern UIMap *g_curUIMap;
+extern void *g_tmpPtr;
 
 /* 地图json格式：
  * {
@@ -64,7 +65,8 @@ UIMap *UIParseMap(char *mapJSON) {
     jsonTokToNumber(map->nodes_len, tok, tmpchar);
 
     tok = find_json_token(map->root_json_tok, "nodes");
-    map->nodes = (UIMapNode*)zmalloc(sizeof(UIMapNode) * map->width * map->height);
+    g_tmpPtr = zmalloc(sizeof(UIMapNode) * map->width * map->height);
+    map->nodes = (UIMapNode*)g_tmpPtr;
     memset(map->nodes, 0x00, sizeof(UIMapNode) * map->width * map->height);
     for (loopJ = 0; loopJ < map->nodes_len; loopJ++) {
         sprintf(tmpchar, "nodes[%d][0]", loopJ);
@@ -123,93 +125,91 @@ UIMap *UIParseMap(char *mapJSON) {
 
 /* 画地图 */
 void UIDrawMap() {
-    UIMap *map = g_curUIMap;
+    g_curUIMap->nodes = g_tmpPtr;
     int x, y;
     int poi, _x, _y;
     int loopJ;
     int ch;
-    int ret;
 
     /* 到达左边界 */
     ch = ' ';
-    if (0 == map->addr_lt_x) {
+    if (0 == g_curUIMap->addr_lt_x) {
         ch = ACS_VLINE;
     }
-    x = map->win_lt_x - 1;
-    y = map->win_rb_y + 1;
-    for (loopJ = map->win_lt_y-1; loopJ <= y; loopJ++) {
-        mvaddch(loopJ, x, ch);
+    x = g_curUIMap->win_lt_x - 1;
+    y = g_curUIMap->win_rb_y + 1;
+    for (loopJ = g_curUIMap->win_lt_y-1; loopJ <= y; loopJ++) {
+        mvwaddch(g_rootUIWin->window, loopJ, x, ch);
     }
 
     /* 到达右边界 */
     ch = ' ';
-    if (map->addr_rb_x == map->width-1) {
+    if (g_curUIMap->addr_rb_x == g_curUIMap->width-1) {
         ch = ACS_VLINE;
     }
-    x = map->win_rb_x + 1;
-    y = map->win_rb_y + 1;
-    for (loopJ = map->win_lt_y-1; loopJ <= y; loopJ++) {
-        mvaddch(loopJ, x, ch);
+    x = g_curUIMap->win_rb_x + 1;
+    y = g_curUIMap->win_rb_y + 1;
+    for (loopJ = g_curUIMap->win_lt_y-1; loopJ <= y; loopJ++) {
+        mvwaddch(g_rootUIWin->window, loopJ, x, ch);
     }
 
     /* 到达上边界 */
     ch = ' ';
-    if (0 == map->addr_lt_y) {
+    if (0 == g_curUIMap->addr_lt_y) {
         ch = ACS_HLINE;
     }
-    x = map->win_rb_x + 1;
-    y = map->win_lt_y - 1;
-    for (loopJ = map->win_lt_x-1; loopJ <= x; loopJ++) {
-        mvaddch(y, loopJ, ch);
+    x = g_curUIMap->win_rb_x + 1;
+    y = g_curUIMap->win_lt_y - 1;
+    for (loopJ = g_curUIMap->win_lt_x-1; loopJ <= x; loopJ++) {
+        mvwaddch(g_rootUIWin->window, y, loopJ, ch);
     }
 
     /* 到达下边界 */
     ch = ' ';
-    if (map->addr_rb_y == map->height-1) {
+    if (g_curUIMap->addr_rb_y == g_curUIMap->height-1) {
         ch = ACS_HLINE;
     }
-    x = map->win_rb_x + 1;
-    y = map->win_rb_y + 1;
-    for (loopJ = map->win_lt_x-1; loopJ <= x; loopJ++) {
-        mvaddch(y, loopJ, ch);
+    x = g_curUIMap->win_rb_x + 1;
+    y = g_curUIMap->win_rb_y + 1;
+    for (loopJ = g_curUIMap->win_lt_x-1; loopJ <= x; loopJ++) {
+        mvwaddch(g_rootUIWin->window, y, loopJ, ch);
     }
 
     /* 四个角处理 */
     /* 左上角 */
-    if (0 == map->addr_lt_x || 0 == map->addr_lt_y) {
-        mvaddch(map->win_lt_y-1, map->win_lt_x-1, ACS_ULCORNER);
+    if (0 == g_curUIMap->addr_lt_x || 0 == g_curUIMap->addr_lt_y) {
+        mvwaddch(g_rootUIWin->window, g_curUIMap->win_lt_y-1, g_curUIMap->win_lt_x-1, ACS_ULCORNER);
     }
     /* 左下角 */
-    if (0 == map->addr_lt_x || map->addr_rb_y == map->height-1) {
-        mvaddch(map->win_rb_y+1, map->win_lt_x-1, ACS_LLCORNER);
+    if (0 == g_curUIMap->addr_lt_x || g_curUIMap->addr_rb_y == g_curUIMap->height-1) {
+        mvwaddch(g_rootUIWin->window, g_curUIMap->win_rb_y+1, g_curUIMap->win_lt_x-1, ACS_LLCORNER);
     }
     /* 右上角 */
-    if (map->addr_rb_x == map->width-1 || 0 == map->addr_lt_y) {
-        mvaddch(map->win_lt_y-1, map->win_rb_x+1, ACS_URCORNER);
+    if (g_curUIMap->addr_rb_x == g_curUIMap->width-1 || 0 == g_curUIMap->addr_lt_y) {
+        mvwaddch(g_rootUIWin->window, g_curUIMap->win_lt_y-1, g_curUIMap->win_rb_x+1, ACS_URCORNER);
     }
     /* 右下角 */
-    if (map->addr_rb_x == map->width-1 || map->addr_rb_y == map->height-1) {
-        mvaddch(map->win_rb_y+1, map->win_rb_x+1, ACS_LRCORNER);
+    if (g_curUIMap->addr_rb_x == g_curUIMap->width-1 || g_curUIMap->addr_rb_y == g_curUIMap->height-1) {
+        mvwaddch(g_rootUIWin->window, g_curUIMap->win_rb_y+1, g_curUIMap->win_rb_x+1, ACS_LRCORNER);
     }
-
 
     //int x, y; 屏幕上的坐标
     //int poi, _x, _y; 地图坐标
-    for (x = map->win_lt_x; x <= map->win_rb_x; x++) {
-        _x = map->addr_lt_x + (x - map->win_lt_x);
-        for (y = map->win_lt_y; y <= map->win_rb_y; y++) {
-            _y = map->addr_lt_y + (y - map->win_lt_y);
-            poi = MAP_ADDR(_x, _y, map->width);
-            if (0x00 == map->nodes[poi].resourse) {
-                mvaddch(y, x, ' ');
+    for (x = g_curUIMap->win_lt_x; x <= g_curUIMap->win_rb_x; x++) {
+        _x = g_curUIMap->addr_lt_x + (x - g_curUIMap->win_lt_x);
+        for (y = g_curUIMap->win_lt_y; y <= g_curUIMap->win_rb_y; y++) {
+            _y = g_curUIMap->addr_lt_y + (y - g_curUIMap->win_lt_y);
+            poi = MAP_ADDR(_x, _y, g_curUIMap->width);
+            if (0x00 == g_curUIMap->nodes[poi].resourse) {
+                mvwaddch(g_rootUIWin->window, y, x, ' ');
             }
             else {
-                mvaddch(y, x, map->nodes[poi].resourse->v);
+                mvwaddch(g_rootUIWin->window, y, x, g_curUIMap->nodes[poi].resourse->v);
             }
         }
     }
+    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_curUIMap->nodes);
 
-    ret = wrefresh(g_rootUIWin->window);
     return;
 }
 

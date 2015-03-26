@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <ncurses.h>
 #include <panel.h>
 #include <string.h>
@@ -11,6 +12,7 @@
 extern UIWin *g_rootUIWin;
 extern UICursor *g_cursor;
 extern UIMap *g_curUIMap;
+extern void *g_tmpPtr;
 
 static UIWin* createUIWin(int height, int width, int starty, int startx) {
     UIWin *win = (UIWin*)zmalloc(sizeof(UIWin));
@@ -19,7 +21,6 @@ static UIWin* createUIWin(int height, int width, int starty, int startx) {
     win->height = height;
     win->width = width;
     win->window = newwin(height, width, starty, startx);
-    wrefresh(win->window);
     return win;
 }
 
@@ -36,13 +37,15 @@ static void initRootUIWin() {
     getmaxyx(stdscr, g_rootUIWin->height, g_rootUIWin->width);
     g_rootUIWin->height-=2; /* 最后一行不可写 */
     g_rootUIWin->width--; /* 最后一列不可写 */
+    keypad(g_rootUIWin->window, TRUE);
 }
 
 static void moveCursor() {
 
     while(1) {
-        g_rootUIWin->ch = getch();
-        mvwin(stdscr, g_cursor->y, g_cursor->x);
+    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
+        g_rootUIWin->ch = wgetch(g_rootUIWin->window);
+    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
         if ('0' <= g_rootUIWin->ch && g_rootUIWin->ch <= '9') {
             if (g_cursor->snumber_len > 6) 
                 continue;
@@ -79,7 +82,10 @@ static void moveCursor() {
         g_cursor->number = 1;
 
         if (KEY_F(1) == g_rootUIWin->ch) break; /* ESC */ 
+
+        trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
         wrefresh(g_rootUIWin->window);
+        trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
     }
 
 }
@@ -89,14 +95,12 @@ void UIInit() {
     char dir[ALLOW_PATH_SIZE] = {""};
 
     initscr();                   /* start the curses mode */
-    //raw();
+    clear();
     cbreak();
-    keypad(stdscr, TRUE);
     noecho();
+    //raw();
 
     initRootUIWin();
-    wrefresh(g_rootUIWin->window);
-
 
     /* 画首幅地图 */
     //sprintf(dir, "%s/arctic.map.json", m_planetdir);
@@ -104,16 +108,20 @@ void UIInit() {
     mapJSON = fileGetContent(dir);
     g_curUIMap = UIParseMap(mapJSON);
 
+    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
     UIDrawMap();
+    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
+    wrefresh(g_rootUIWin->window);
+    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
 
 
     /* 光标置中 */
     g_cursor->x = g_rootUIWin->width / 2;
     g_cursor->y = g_rootUIWin->height / 2;
-    move(g_cursor->y, g_cursor->x);
+    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);
 
+    /* 循环 */
     moveCursor();
 
-    getch();
     endwin();
 }
