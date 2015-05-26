@@ -40,7 +40,7 @@ traveller:$(travellerobjects)
 	$(CC) -o traveller $(travellerobjects) $(LIBRARY)  $(CFLAGS)
 
 %.o: %.c 
-	$(CC) -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o
+	$(CC) -static -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o
 
 clean:
 	rm ./traveller

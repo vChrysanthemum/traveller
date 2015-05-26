@@ -101,7 +101,7 @@ struct NTServer {
     dict* commands;
 };
 
-int NTInitNTServer(int port);
+int NTInit(int port);
 sds NTCatNTSnodeInfoString(sds s, NTSnode *sn);
 NTSnode* NTConnectNTSnode(char *addr, int port);
 void NTAddReplyError(NTSnode *sn, char *err);

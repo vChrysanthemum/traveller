@@ -16,7 +16,6 @@
 extern struct NTServer g_server;
 extern dictType stackStringTableDictType;
 
-extern int g_blockCmdFd;
 extern pthread_mutex_t g_blockNetWMtx;
 
 static void setProtocolError(NTSnode *sn, int pos);
@@ -213,10 +212,6 @@ static void setProtocolError(NTSnode *sn, int pos) {
  * 该函数在 processInputBuffer 完成时调用
  */
 static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
-    if (g_blockCmdFd == sn->fd) {
-        NTAwakeBlockCmd(sn);
-    }
-
     sn->recv_stat = SNODE_RECV_STAT_PREPARE;
     sn->recv_type = ERRNO_NULL;
     sn->recv_parsing_stat = ERRNO_NULL;
@@ -771,7 +766,7 @@ NTSnode* NTGetNTSnodeByFDS(const char *fds) {
     return dictGetVal(de);
 }
 
-int NTInitNTServer(int listenPort) {
+int NTInit(int listenPort) {
     g_server.unixtime = -1;
     g_server.max_snodes = TRV_NET_MAX_SNODE;
     g_server.el = aeCreateEventLoop(g_server.max_snodes);

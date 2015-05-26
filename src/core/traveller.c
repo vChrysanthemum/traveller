@@ -75,9 +75,9 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
 }
 
 
-/* 启动监听服务器
+/* 启动网络
 */
-static void* _NTInitNTServer(void* _v) {
+static void* _NTInit(void* _v) {
     pthread_mutex_lock(&g_rootThreadMutex);
 
     int listenPort;
@@ -99,7 +99,7 @@ static void* _NTInitNTServer(void* _v) {
     else listenPort = -1; /* 输入一个不正常的监听端口，意味着不监听 */
 
 
-    if (ERRNO_ERR == NTInitNTServer(listenPort)) {
+    if (ERRNO_ERR == NTInit(listenPort)) {
         trvExit(0, "初始化网络失败");
     }
 
@@ -204,11 +204,12 @@ int main(int argc, char *argv[]) {
     setupSignalHandlers();
 
 
-    /* 主线程睡眠，等待网络就绪
+    /**
+     * 主线程睡眠，等待网络就绪
      * 单独开一个线程处理网路
      */
     pthread_mutex_lock(&g_rootThreadMutex);
-    pthread_create(&ntid, NULL, _NTInitNTServer, NULL);
+    pthread_create(&ntid, NULL, _NTInit, NULL);
     pthread_cond_wait(&g_rootThreadCond, &g_rootThreadMutex);
     pthread_mutex_unlock(&g_rootThreadMutex);
 
