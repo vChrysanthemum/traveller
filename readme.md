@@ -28,8 +28,8 @@
 开发进度：   
 ui只做了个自适应屏幕的地图展示，vim的上下左右控制光标，在地图里跑来跑去   
 打开 redis 客户端 ./redis-cli -p 1092 ，   
-然后运行planet PUBCitizenLogin j@ioctl.cc traveller ，你会发现返回登录成功，   
-如果你运行 planet PUBCitizenLogin j@ioctl.cc 123 ，你会得到 (error) 用户名或密码错误   
+然后运行planet PUBCitizenLogin j@ioctl.cn traveller ，你会发现返回登录成功，   
+如果你运行 planet PUBCitizenLogin j@ioctl.cn 123 ，你会得到 (error) 用户名或密码错误   
 这个例子展示了，从redis客户端发出请求，server接受请求，并交给lua脚本处理，lua调用数据库，并向redis客户端推送消息。   
 终上所述，要完成还前路漫漫。。。   
 
