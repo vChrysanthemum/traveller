@@ -43,9 +43,7 @@ static void initRootUIWin() {
 static void moveCursor() {
 
     while(1) {
-    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
         g_rootUIWin->ch = wgetch(g_rootUIWin->window);
-    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
         if ('0' <= g_rootUIWin->ch && g_rootUIWin->ch <= '9') {
             if (g_cursor->snumber_len > 6) 
                 continue;
@@ -83,9 +81,7 @@ static void moveCursor() {
 
         if (KEY_F(1) == g_rootUIWin->ch) break; /* ESC */ 
 
-        trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
         wrefresh(g_rootUIWin->window);
-        trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
     }
 
 }
@@ -103,16 +99,13 @@ void UIInit() {
     initRootUIWin();
 
     /* 画首幅地图 */
-    //sprintf(dir, "%s/arctic.map.json", m_planetdir);
-    sprintf(dir, "/Users/j/github/my/traveller/planet/earth/client/arctic.map.json");
+    //sprintf(dir, "%s/arctic.map.json", m_galaxiesdir);
+    sprintf(dir, "/Users/j/github/my/traveller/galaxies/gemini/client/arctic.map.json");
     mapJSON = fileGetContent(dir);
     g_curUIMap = UIParseMap(mapJSON);
 
-    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
     UIDrawMap();
-    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
     wrefresh(g_rootUIWin->window);
-    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_tmpPtr);
 
 
     /* 光标置中 */

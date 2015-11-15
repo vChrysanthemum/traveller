@@ -1,9 +1,9 @@
-/* 星球运转需要的基础C
+/* 星系运转需要的基础C
  */
 #include "core/util.h"
 #include "core/zmalloc.h"
 #include "net/networking.h"
-#include "script/planet.h"
+#include "script/galaxies.h"
 #include "script/db.h"
 #include "script/net.h"
 
@@ -11,12 +11,12 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-extern NTSnode *g_planetSrvSnode; /* 星球服务端连接 */
+extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
-extern char g_planetdir[];
+extern char g_galaxiesdir[];
 extern lua_State *g_srvLuaSt;
 
-/* 调用星球上的函数
+/* 调用星系上的函数
  * 只允许访问函数名 PUB 为开头的函数
  * lua中函数只返回一个字符串
  * argv 为 sn->argv[1:]，既忽略 sn的procName
@@ -28,7 +28,7 @@ int STCallPlanetFunc(NTSnode *sn) {
     int _m;
 
     if ('P' != *funcName && 'U' != *funcName && 'B' != *funcName) {
-        return PLANET_LUA_CALL_ERRNO_FUNC403;
+        return GALAXIES_LUA_CALL_ERRNO_FUNC403;
     }
 
     _m = lua_gettop(g_srvLuaSt);
@@ -37,7 +37,7 @@ int STCallPlanetFunc(NTSnode *sn) {
     lua_getglobal(g_srvLuaSt, funcName);
     if (!lua_isfunction(g_srvLuaSt, -1)) {
         trvLogW("%s not exists", funcName);
-        return PLANET_LUA_CALL_ERRNO_FUNC404;
+        return GALAXIES_LUA_CALL_ERRNO_FUNC404;
     }
 
     lua_pushinteger(g_srvLuaSt, sn->fd);
@@ -54,18 +54,18 @@ int STCallPlanetFunc(NTSnode *sn) {
     if (errno) {
         trvLogW("%s", lua_tostring(g_srvLuaSt, -1));
         lua_pop(g_srvLuaSt, _m);
-        return PLANET_LUA_CALL_ERRNO_FUNC502;
+        return GALAXIES_LUA_CALL_ERRNO_FUNC502;
     }
 
     lua_pop(g_srvLuaSt, lua_gettop(g_srvLuaSt));
 
-    return PLANET_LUA_CALL_ERRNO_OK;
+    return GALAXIES_LUA_CALL_ERRNO_OK;
 }
 
 
-/* 玩家登录星球
+/* 玩家登录星系
  */
 int STLoginPlanet(char *email, char *password) {
-    NTAddReplyMultiString(g_planetSrvSnode, 4, "planet", "PUBCitizenLogin", email, password);
+    NTAddReplyMultiString(g_galaxiesSrvSnode, 4, "galaxies", "PUBCitizenLogin", email, password);
     return 0;
 }

@@ -12,7 +12,7 @@
 #include "net/networking.h"
 #include "net/ae.h"
 #include "script/script.h"
-#include "script/planet.h"
+#include "script/galaxies.h"
 #include "ui/ui.h"
 #include "ui/map.h"
 
@@ -51,15 +51,15 @@ pthread_mutex_t g_blockNetWMtx = PTHREAD_MUTEX_INITIALIZER;
 
 
 /* 服务端模式所需变量 */
-char g_srvPlanetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星球路径 */
+char g_srvPlanetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
 lua_State *g_srvLuaSt;
 sqlite3 *g_srvDB;
 
 /* 客户端模式所需变量 */
-char g_cliPlanetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星球路径 */
+char g_cliPlanetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
 lua_State *g_cliLuaSt;
 sqlite3 *g_cliDB;
-NTSnode *g_planetSrvSnode; /* 星球服务端连接 */
+NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 
 
@@ -124,7 +124,7 @@ static void* _NTInit(void* _v) {
 }
 
 
-/* 启动星球运行支持
+/* 启动星系运行支持
 */
 static void* _STInitPlanet(void* _v) {
     struct configOption *confOpt;
@@ -132,27 +132,27 @@ static void* _STInitPlanet(void* _v) {
 
 
     /* 游戏服务端初始化 */
-    confOpt = configGet(g_conf, "planet_server", "relative_path");
+    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            trvExit(0, "星球文件地址太长");
+            trvExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
-        snprintf(g_srvPlanetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
+        snprintf(g_srvPlanetdir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
         STServerInit();
     }
 
 
     /* 游戏客户端初始化 */
-    confOpt = configGet(g_conf, "planet_client", "relative_path");
+    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            trvExit(0, "星球文件地址太长");
+            trvExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
-        snprintf(g_cliPlanetdir, ALLOW_PATH_SIZE, "%s/../planet/%s", g_basedir, tmpstr);
+        snprintf(g_cliPlanetdir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
         STClientInit();
     }
 

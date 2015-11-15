@@ -3,7 +3,7 @@
 #include "core/util.h"
 #include "core/config.h"
 #include "core/zmalloc.h"
-#include "script/planet.h"
+#include "script/galaxies.h"
 #include "script/db.h"
 #include "script/net.h"
 #include "net/networking.h"
@@ -23,7 +23,7 @@ extern char g_srvPlanetdir[ALLOW_PATH_SIZE];
 extern lua_State *g_cliLuaSt;
 extern sqlite3 *g_cliDB;
 extern char g_cliPlanetdir[ALLOW_PATH_SIZE];
-extern NTSnode *g_planetSrvSnode; /* 星球服务端连接 */
+extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 extern int g_blockCmdFd;
 extern pthread_mutex_t g_blockCmdMtx;
@@ -99,31 +99,31 @@ static void* _UIInit(void* ptr) {
 void STClientInit() {
     STInit(&g_cliLuaSt, g_cliPlanetdir);
     char tmpstr[64];
-    char planetSrvHost[128];
-    int planetSrvPort;
+    char galaxiesSrvHost[128];
+    int galaxiesSrvPort;
     struct configOption *confOpt;
     pthread_t ntid;
-    char *email = "j@ioctl.cc";
 
-    confOpt = configGet(g_conf, "planet_client", "planet_server_host");
+    confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_host");
     if (NULL == confOpt) {
-        trvExit(0, "请配置星球地址，[planet_client] planet_server_host");
+        trvExit(0, "请配置星系地址，[galaxies_client] galaxies_server_host");
     }
-    confOptToStr(confOpt, planetSrvHost);
+    confOptToStr(confOpt, galaxiesSrvHost);
 
-    confOpt = configGet(g_conf, "planet_client", "planet_server_port");
+    confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_port");
     if (NULL == confOpt) {
-        trvExit(0, "请配置星球监听端口，[planet_client] planet_server_port");
+        trvExit(0, "请配置星系监听端口，[galaxies_client] galaxies_server_port");
     }
-    confOptToInt(confOpt, tmpstr, planetSrvPort);
+    confOptToInt(confOpt, tmpstr, galaxiesSrvPort);
 
-    g_planetSrvSnode = NTConnectNTSnode(planetSrvHost, planetSrvPort);
-    if (NULL == g_planetSrvSnode) {
-        trvExit(0, "连接星球失败");
+    g_galaxiesSrvSnode = NTConnectNTSnode(galaxiesSrvHost, galaxiesSrvPort);
+    if (NULL == g_galaxiesSrvSnode) {
+        trvExit(0, "连接星系失败");
     }
-    trvLogI("连接星球成功 %d", g_planetSrvSnode->fd);
+    trvLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
 
-    //NTPrepareBlockCmd(g_planetSrvSnode);
+    //char *email = "j@ioctl.cc";
+    //NTPrepareBlockCmd(g_galaxiesSrvSnode);
     //STLoginPlanet(email, "traveller");
     
 
