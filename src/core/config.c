@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "core/util.h"
 #include "core/config.h"
 #include "core/zmalloc.h"
 
 static void skipWhitespaces(char **ptr)  {
-    while((' ' == **ptr || '\t' == **ptr || '\n' == **ptr) && 0 != **ptr) *ptr+=1;
+    while( 0 != **ptr && (' ' == **ptr || '\t' == **ptr || '\n' == **ptr)) (*ptr)++;
 }
 
 static int parseSection(char *ptr) {
@@ -21,7 +22,7 @@ static int parseSection(char *ptr) {
     return n;
 }
 
-static int parseOptionKeyNSkip(char **ptr) {
+static int parseOptionKeyAndSkip(char **ptr) {
     int n=0, isEqualFound=0;
     while (' ' != **ptr && '\t' != **ptr && 0 != **ptr) {
         if ('=' == **ptr) {
@@ -37,36 +38,39 @@ static int parseOptionKeyNSkip(char **ptr) {
 
     if(1 == isEqualFound) {
         (*ptr)++;
-    }
-    else {
+
+    } else {
         while ('=' != **ptr && 0 != **ptr) {
             (*ptr)++;
         }
-        skipWhitespaces(ptr);
+        (*ptr)++;
     }
 
     return n;
 }
 
-static int parseOptionValue(char *ptr) {
+static int parseOptionValueAndSkip(char **ptr) {
     int n=0, whitespaceCount=0;
+    char *_ptr;
     while (1) {
         whitespaceCount = 0;
-
-        while(' ' == *ptr || '\t' == *ptr) {
+        _ptr = *ptr;
+        while(' ' == *_ptr || '\t' == *_ptr) {
             whitespaceCount += 1;
-            ptr++;
+            _ptr = (*ptr) + whitespaceCount;
         }
 
-        if ('\n' == *ptr) {
-            break;
+        if ('\n' == **ptr) {
+            return n;
         }
 
+        (*ptr) += whitespaceCount;
         n += whitespaceCount;
 
-        ptr++;
+        (*ptr)++;
         n++;
     }
+
     return n;
 }
 
@@ -152,13 +156,13 @@ void configRead(struct config *conf, char *path) {
         opt->section = section;
         opt->sectionLen = sectionLen;
 
+        skipWhitespaces(&ptr);
         opt->key = ptr;
-        opt->keyLen = parseOptionKeyNSkip(&ptr);
+        opt->keyLen = parseOptionKeyAndSkip(&ptr);
 
+        skipWhitespaces(&ptr);
         opt->value = ptr;
-        opt->valueLen = parseOptionValue(ptr);
-
-        ptr += opt->valueLen;
+        opt->valueLen = parseOptionValueAndSkip(&ptr);
 
         strncpy(tmpSection, section, sectionLen);
         tmpSection[sectionLen] = '\0';
@@ -170,8 +174,7 @@ void configRead(struct config *conf, char *path) {
             conf->optionsCount += 1;
             conf->options = (struct configOption**)realloc(conf->options, sizeof(struct configOption**) * conf->optionsCount);
             conf->options[conf->optionsCount-1] = opt;
-        }
-        else {
+        } else {
             free(conf->options[id]);
             conf->options[id] = opt;
         }
