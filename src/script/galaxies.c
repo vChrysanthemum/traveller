@@ -21,7 +21,7 @@ extern lua_State *g_srvLuaSt;
  * lua中函数只返回一个字符串
  * argv 为 sn->argv[1:]，既忽略 sn的procName
  */
-int STCallPlanetFunc(NTSnode *sn) {
+int STCallGalaxyFunc(NTSnode *sn) {
     char **argv = &(sn->argv[1]);
     char *funcName = *argv;
     int argc = sn->argc - 1;
@@ -65,7 +65,7 @@ int STCallPlanetFunc(NTSnode *sn) {
 
 /* 玩家登录星系
  */
-int STLoginPlanet(char *email, char *password) {
+int STLoginGalaxy(char *email, char *password) {
     NTAddReplyMultiString(g_galaxiesSrvSnode, 4, "galaxies", "PUBCitizenLogin", email, password);
     return 0;
 }

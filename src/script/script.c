@@ -18,11 +18,11 @@ extern struct config *g_conf;
 
 extern lua_State *g_srvLuaSt;
 extern sqlite3 *g_srvDB;
-extern char g_srvPlanetdir[ALLOW_PATH_SIZE];
+extern char g_srvGalaxydir[ALLOW_PATH_SIZE];
 
 extern lua_State *g_cliLuaSt;
 extern sqlite3 *g_cliDB;
-extern char g_cliPlanetdir[ALLOW_PATH_SIZE];
+extern char g_cliGalaxydir[ALLOW_PATH_SIZE];
 extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 extern int g_blockCmdFd;
@@ -54,12 +54,12 @@ static void STInit(lua_State **L, char *dir) {
 
 /* 服务端模式初始化 */
 void STServerInit() {
-    STInit(&g_srvLuaSt, g_srvPlanetdir);
+    STInit(&g_srvLuaSt, g_srvGalaxydir);
 
     char *filepath = (char *)zmalloc(ALLOW_PATH_SIZE);
     memset(filepath, 0, ALLOW_PATH_SIZE);
 
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", g_srvPlanetdir);
+    snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", g_srvGalaxydir);
     ZeusLogI("%s", filepath);
     errno = luaL_loadfile(g_srvLuaSt, filepath);
     if (errno) {
@@ -68,7 +68,7 @@ void STServerInit() {
 
     memset(filepath, 0, ALLOW_PATH_SIZE);
 
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/sqlite.db", g_srvPlanetdir);
+    snprintf(filepath, ALLOW_PATH_SIZE, "%s/sqlite.db", g_srvGalaxydir);
     g_srvDB = STInitDB(filepath);
 
 
@@ -97,7 +97,7 @@ static void* _UIInit(void* ptr) {
 
 /* 客户端模式初始化 */
 void STClientInit() {
-    STInit(&g_cliLuaSt, g_cliPlanetdir);
+    STInit(&g_cliLuaSt, g_cliGalaxydir);
     char tmpstr[64];
     char galaxiesSrvHost[128];
     int galaxiesSrvPort;
@@ -124,7 +124,7 @@ void STClientInit() {
 
     //char *email = "j@ioctl.cc";
     //NTPrepareBlockCmd(g_galaxiesSrvSnode);
-    //STLoginPlanet(email, "zeus");
+    //STLoginGalaxy(email, "zeus");
     
 
     ZeusLogI("finshed");

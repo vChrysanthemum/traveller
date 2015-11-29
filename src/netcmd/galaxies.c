@@ -14,7 +14,7 @@ void galaxiesCommand(struct NTSnode_s *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
     int errno;
-    errno = STCallPlanetFunc(sn);
+    errno = STCallGalaxyFunc(sn);
 
     if(GALAXIES_LUA_CALL_ERRNO_OK != errno) {
         NTAddReplyError(sn, "galaxies command error");

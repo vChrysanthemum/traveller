@@ -51,12 +51,12 @@ pthread_mutex_t g_blockNetWMtx = PTHREAD_MUTEX_INITIALIZER;
 
 
 /* 服务端模式所需变量 */
-char g_srvPlanetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
+char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
 lua_State *g_srvLuaSt;
 sqlite3 *g_srvDB;
 
 /* 客户端模式所需变量 */
-char g_cliPlanetdir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
+char g_cliGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
 lua_State *g_cliLuaSt;
 sqlite3 *g_cliDB;
 NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
@@ -126,7 +126,7 @@ static void* _NTInit(void* _v) {
 
 /* 启动星系运行支持
 */
-static void* _STInitPlanet(void* _v) {
+static void* _STInitGalaxy(void* _v) {
     struct configOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
 
@@ -139,7 +139,7 @@ static void* _STInitPlanet(void* _v) {
             ZeusExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
-        snprintf(g_srvPlanetdir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
         STServerInit();
     }
 
@@ -152,7 +152,7 @@ static void* _STInitPlanet(void* _v) {
             ZeusExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
-        snprintf(g_cliPlanetdir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
         STClientInit();
     }
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
     pthread_mutex_unlock(&g_rootThreadMutex);
 
 
-    _STInitPlanet(NULL);
+    _STInitGalaxy(NULL);
 
 
     /* 主线程睡眠，避免退出进程 */

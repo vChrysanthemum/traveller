@@ -8,7 +8,7 @@
 
 #include "net/networking.h"
 
-int STCallPlanetFunc(NTSnode *sn);
-int STLoginPlanet(char *username, char *password);
+int STCallGalaxyFunc(NTSnode *sn);
+int STLoginGalaxy(char *username, char *password);
 
 #endif
