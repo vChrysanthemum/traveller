@@ -1,4 +1,4 @@
-zeusobjects = ./core/zeus.o \
+zeusobjects = ./zeus.o \
 				   ./core/zmalloc.o \
 				   ./core/config.o \
 				   ./core/sds.o \
@@ -43,6 +43,7 @@ zeus:$(zeusobjects)
 	$(CC) -static -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o
 
 clean:
+	rm -f ./*.o ./*.a
 	rm -f ./core/*.o ./core/*.a
 	rm -f ./net/*.o ./net/*.a
 	rm -f ./ui/*.o ./ui/*.a

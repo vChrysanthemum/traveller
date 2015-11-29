@@ -60,10 +60,10 @@ void STServerInit() {
     memset(filepath, 0, ALLOW_PATH_SIZE);
 
     snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", g_srvPlanetdir);
-    trvLogI("%s", filepath);
+    ZeusLogI("%s", filepath);
     errno = luaL_loadfile(g_srvLuaSt, filepath);
     if (errno) {
-        trvExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
+        ZeusExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
     }
 
     memset(filepath, 0, ALLOW_PATH_SIZE);
@@ -75,13 +75,13 @@ void STServerInit() {
     //初始化
     errno = lua_pcall(g_srvLuaSt, 0, 0, 0);
     if (errno) {
-        trvExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
+        ZeusExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
     }
 
     //调用init函数  
     lua_getglobal(g_srvLuaSt, "init");
     if (!lua_isfunction(g_srvLuaSt, -1)) {
-        trvExit(0, "lua: 找不到init函数");
+        ZeusExit(0, "lua: 找不到init函数");
     }
     lua_pcall(g_srvLuaSt, 0, 0, 0);
 
@@ -106,28 +106,28 @@ void STClientInit() {
 
     confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_host");
     if (NULL == confOpt) {
-        trvExit(0, "请配置星系地址，[galaxies_client] galaxies_server_host");
+        ZeusExit(0, "请配置星系地址，[galaxies_client] galaxies_server_host");
     }
     confOptToStr(confOpt, galaxiesSrvHost);
 
     confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_port");
     if (NULL == confOpt) {
-        trvExit(0, "请配置星系监听端口，[galaxies_client] galaxies_server_port");
+        ZeusExit(0, "请配置星系监听端口，[galaxies_client] galaxies_server_port");
     }
     confOptToInt(confOpt, tmpstr, galaxiesSrvPort);
 
     g_galaxiesSrvSnode = NTConnectNTSnode(galaxiesSrvHost, galaxiesSrvPort);
     if (NULL == g_galaxiesSrvSnode) {
-        trvExit(0, "连接星系失败");
+        ZeusExit(0, "连接星系失败");
     }
-    trvLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
+    ZeusLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
 
     //char *email = "j@ioctl.cc";
     //NTPrepareBlockCmd(g_galaxiesSrvSnode);
     //STLoginPlanet(email, "zeus");
     
 
-    trvLogI("finshed");
+    ZeusLogI("finshed");
 
 
     pthread_create(&ntid, NULL, _UIInit, NULL);

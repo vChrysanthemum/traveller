@@ -592,7 +592,7 @@ int anetPeerSocket(char *err, int port, char *bindaddr, int af) {
         if (anetSetReuseAddr(err,s) == ANET_ERR) goto error;
         if (anetNonBlock(err,s) != ANET_OK) goto error;
         if (bind(s,p->ai_addr,p->ai_addrlen) == -1) {
-            trvLogW("bind fail");
+            ZeusLogW("bind fail");
             close(s);
             goto error;
         }
@@ -628,7 +628,7 @@ int anetPeerConnect(int fd, char *err, char *addr, int port) {
         if (connect(fd,p->ai_addr,p->ai_addrlen) == -1) {
             if (EINPROGRESS == errno || EOPNOTSUPP == errno)
                 goto end;
-            trvLogI("%d", errno);
+            ZeusLogI("%d", errno);
             goto error;
         }
         goto end;

@@ -16,7 +16,7 @@ dictType commandTableDictType = {
     NULL                       /* val destructor */
 };
 
-struct trvCommand trvCommandTable[] = {
+struct ZeusCommand ZeusCommandTable[] = {
     {"galaxies", galaxiesCommand, 0},
     {"test", testCommand, 0},
     {"msg", msgCommand, 0},
@@ -27,8 +27,8 @@ void initNetCmd() {
     int loopJ, tmpsize;
 
     g_server.commands = dictCreate(&commandTableDictType, NULL);
-    tmpsize = sizeof(trvCommandTable) / sizeof(trvCommandTable[0]);
+    tmpsize = sizeof(ZeusCommandTable) / sizeof(ZeusCommandTable[0]);
     for (loopJ = 0; loopJ < tmpsize; loopJ++) {
-        dictAdd(g_server.commands, sdsnew(trvCommandTable[loopJ].key), trvCommandTable[loopJ].proc);
+        dictAdd(g_server.commands, sdsnew(ZeusCommandTable[loopJ].key), ZeusCommandTable[loopJ].proc);
     }
 }

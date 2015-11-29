@@ -27,7 +27,7 @@ extern int g_logFInt;
 static void sigtermHandler(int sig) {
     NOTUSED(sig);
 
-    trvLogI("Received SIGTERM, scheduling shutdown...");
+    ZeusLogI("Received SIGTERM, scheduling shutdown...");
 }
 
 #ifdef HAVE_BACKTRACE
@@ -70,22 +70,22 @@ void logStackContent(void **sp) {
         unsigned long val = (unsigned long) sp[i];
 
         if (sizeof(long) == 4) {
-            trvLogW("(%08lx) -> %08lx", addr, val);
+            ZeusLogW("(%08lx) -> %08lx", addr, val);
         }
         else {
-            trvLogW("(%016lx) -> %016lx", addr, val);
+            ZeusLogW("(%016lx) -> %016lx", addr, val);
         }
     }
 }
 
 void logRegisters(ucontext_t *uc) {
-    trvLogW("--- REGISTERS");
+    ZeusLogW("--- REGISTERS");
 
 /* OSX */
 #if defined(__APPLE__) && defined(MAC_OS_X_VERSION_10_6)
   /* OSX AMD64 */
     #if defined(_STRUCT_X86_THREAD_STATE64) && !defined(__i386__)
-    trvLogW(
+    ZeusLogW(
     "\n"
     "RAX:%016lx RBX:%016lx\nRCX:%016lx RDX:%016lx\n"
     "RDI:%016lx RSI:%016lx\nRBP:%016lx RSP:%016lx\n"
@@ -117,7 +117,7 @@ void logRegisters(ucontext_t *uc) {
     logStackContent((void**)uc->uc_mcontext->__ss.__rsp);
     #else
     /* OSX x86 */
-    trvLogW(
+    ZeusLogW(
     "\n"
     "EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n"
     "EDI:%08lx ESI:%08lx EBP:%08lx ESP:%08lx\n"
@@ -146,7 +146,7 @@ void logRegisters(ucontext_t *uc) {
 #elif defined(__linux__)
     /* Linux x86 */
     #if defined(__i386__)
-    trvLogW(
+    ZeusLogW(
     "\n"
     "EAX:%08lx EBX:%08lx ECX:%08lx EDX:%08lx\n"
     "EDI:%08lx ESI:%08lx EBP:%08lx ESP:%08lx\n"
@@ -172,7 +172,7 @@ void logRegisters(ucontext_t *uc) {
     logStackContent((void**)uc->uc_mcontext.gregs[7]);
     #elif defined(__X86_64__) || defined(__x86_64__)
     /* Linux AMD64 */
-    trvLogW(
+    ZeusLogW(
     "\n"
     "RAX:%016lx RBX:%016lx\nRCX:%016lx RDX:%016lx\n"
     "RDI:%016lx RSI:%016lx\nRBP:%016lx RSP:%016lx\n"
@@ -202,7 +202,7 @@ void logRegisters(ucontext_t *uc) {
     logStackContent((void**)uc->uc_mcontext.gregs[15]);
     #endif
 #else
-    trvLogW(
+    ZeusLogW(
         "  Dumping of registers not supported for this OS/arch");
 #endif
 }
@@ -327,16 +327,16 @@ static void sigsegvHandler(int sig, siginfo_t *info, void *secret) {
 
 #if defined(HAVE_PROC_MAPS)
     /* Test memory */
-    trvLogW("--- FAST MEMORY TEST");
+    ZeusLogW("--- FAST MEMORY TEST");
     bioKillThreads();
     if (memtest_test_linux_anonymous_maps()) {
-        trvLogI("!!! MEMORY ERROR DETECTED! Check your memory ASAP !!!");
+        ZeusLogI("!!! MEMORY ERROR DETECTED! Check your memory ASAP !!!");
     } else {
-        trvLogI("Fast memory test PASSED, however your memory can still be broken. Please run a memory test for several hours if possible.");
+        ZeusLogI("Fast memory test PASSED, however your memory can still be broken. Please run a memory test for several hours if possible.");
     }
 #endif
 
-    trvLogW("Suspect RAM error? Use redis-server --test-memory to verify it.\n\n");
+    ZeusLogW("Suspect RAM error? Use redis-server --test-memory to verify it.\n\n");
 
     /* Make sure we exit with the right signal at the end. So for instance
      * the core will be dumped if enabled. */

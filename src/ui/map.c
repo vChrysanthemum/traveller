@@ -208,7 +208,7 @@ void UIDrawMap() {
             }
         }
     }
-    trvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_curUIMap->nodes);
+    ZeusLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_curUIMap->nodes);
 
     return;
 }

@@ -23,13 +23,13 @@
 extern FILE* g_logF;
 extern pthread_mutex_t g_logMutex;
 
-#define trvLog_ERROR 1
-#define trvLog_WARNING 2
-#define trvLog_NOTICE 3
-#define trvLog_INFO 4
-#define trvLog_DEBUG 6
+#define ZeusLog_ERROR 1
+#define ZeusLog_WARNING 2
+#define ZeusLog_NOTICE 3
+#define ZeusLog_INFO 4
+#define ZeusLog_DEBUG 6
 
-#define trvLog(level, FMT, ...) do {\
+#define ZeusLog(level, FMT, ...) do {\
     pthread_mutex_lock(&g_logMutex);\
     char timestr[64];\
     struct timeval tv;\
@@ -42,17 +42,17 @@ extern pthread_mutex_t g_logMutex;
     pthread_mutex_unlock(&g_logMutex);\
 } while(0);
 
-#define trvLogD(FMT, ...) trvLog(trvLog_DEBUG, FMT, ##__VA_ARGS__)
-#define trvLogW(FMT, ...) trvLog(trvLog_WARNING, FMT, ##__VA_ARGS__)
-#define trvLogE(FMT, ...) trvLog(trvLog_ERROR, FMT, ##__VA_ARGS__)
-#define trvLogN(FMT, ...) trvLog(trvLog_NOTICE, FMT, ##__VA_ARGS__)
-#define trvLogI(FMT, ...) trvLog(trvLog_INFO, FMT, ##__VA_ARGS__)
+#define ZeusLogD(FMT, ...) ZeusLog(ZeusLog_DEBUG, FMT, ##__VA_ARGS__)
+#define ZeusLogW(FMT, ...) ZeusLog(ZeusLog_WARNING, FMT, ##__VA_ARGS__)
+#define ZeusLogE(FMT, ...) ZeusLog(ZeusLog_ERROR, FMT, ##__VA_ARGS__)
+#define ZeusLogN(FMT, ...) ZeusLog(ZeusLog_NOTICE, FMT, ##__VA_ARGS__)
+#define ZeusLogI(FMT, ...) ZeusLog(ZeusLog_INFO, FMT, ##__VA_ARGS__)
 
 #ifdef IS_DEBUG
 #include <assert.h>
-#define trvAssert(condition) assert(condition);
+#define ZeusAssert(condition) assert(condition);
 #else
-#define trvAssert(condition) {}
+#define ZeusAssert(condition) {}
 #endif
 
 
@@ -69,8 +69,8 @@ int dictStringCompare(void *privdata, const void *key1,
 
 #define ALLOW_PATH_SIZE 256
 
-#define trvExit(ERRNO, FMT, ...) do { \
-    trvLog(trvLog_ERROR, FMT, ##__VA_ARGS__); \
+#define ZeusExit(ERRNO, FMT, ...) do { \
+    ZeusLog(ZeusLog_ERROR, FMT, ##__VA_ARGS__); \
     exit(ERRNO); \
 } while(0);
 

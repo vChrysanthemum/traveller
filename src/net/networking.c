@@ -305,7 +305,7 @@ static int processInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_n
 static void processInputBufferStatus(NTSnode *sn) {
     int readlen = 0;
 
-    trvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
+    ZeusAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
 
     if (SNODE_RECV_STAT_PARSING_START == sn->recv_parsing_stat) {
         sn->recv_parsing_stat = SNODE_RECV_STAT_PARSING_ARGV_VALUE;
@@ -331,7 +331,7 @@ static void processInputBufferStatus(NTSnode *sn) {
 static void processInputBufferString(NTSnode *sn) {
     int readlen = 0, len;
 
-    trvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
+    ZeusAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
 
     if (SNODE_RECV_STAT_PARSING_START == sn->recv_parsing_stat) {
         sdsclear(sn->tmp_querybuf);
@@ -390,7 +390,7 @@ static void processInputBufferString(NTSnode *sn) {
 static void processInputBufferArray(NTSnode *sn) {
     int readlen = 0, len, argJ;
 
-    trvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
+    ZeusAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat);
 
     if (SNODE_RECV_STAT_PARSING_START == sn->recv_parsing_stat) {
         sdsclear(sn->tmp_querybuf);
@@ -586,7 +586,7 @@ static void readQueryFromNTSnode(aeEventLoop *el, int fd, void *privdata, int ma
             nread = 0;
         } 
         else {
-            trvLogD("Reading from client: %s",strerror(errno));
+            ZeusLogD("Reading from client: %s",strerror(errno));
             NTFreeNTSnode(sn);
         }
         return;
@@ -600,7 +600,7 @@ static void readQueryFromNTSnode(aeEventLoop *el, int fd, void *privdata, int ma
 
 
 static NTSnode* createNTSnode(int fd) {
-    trvLogD("Create snode %d", fd);
+    ZeusLogD("Create snode %d", fd);
 
     NTSnode *sn = zmalloc(sizeof(NTSnode));
 
@@ -640,7 +640,7 @@ static NTSnode* createNTSnode(int fd) {
 
 
 void NTFreeNTSnode(NTSnode *sn) {
-    trvLogD("Free NTSnode %d", sn->fd);
+    ZeusLogD("Free NTSnode %d", sn->fd);
 
     if (-1 != sn->fd) {
         aeDeleteFileEvent(g_server.el, sn->fd, AE_READABLE);
@@ -669,7 +669,7 @@ NTSnode *NTConnectNTSnode(char *addr, int port) {
     fd = anetPeerConnect(fd, g_server.neterr, addr, port);
     //fd = anetPeerConnect(fd, g_server.neterr, addr, port);
     if (ANET_ERR == fd) {
-        trvLogW("Unable to connect to %s", addr);
+        ZeusLogW("Unable to connect to %s", addr);
         return NULL;
     }
     
@@ -680,7 +680,7 @@ NTSnode *NTConnectNTSnode(char *addr, int port) {
 static void acceptCommonHandler(int fd, int flags) {
     NTSnode *sn;
     if (NULL == (sn = createNTSnode(fd))) {
-        trvLogW("Error registering fd event for the new snode: %s (fd=%d)",
+        ZeusLogW("Error registering fd event for the new snode: %s (fd=%d)",
                 strerror(errno),fd);
         close(fd); /* May be already closed, just ignore errors */
         return;
@@ -713,10 +713,10 @@ static void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) 
         cfd = anetTcpAccept(g_server.neterr, fd, cip, sizeof(cip), &cport);
         if (cfd == ANET_ERR) {
             if (errno != EWOULDBLOCK)
-                trvLogW("Accepting snode connection: %s", g_server.neterr);
+                ZeusLogW("Accepting snode connection: %s", g_server.neterr);
             return;
         }
-        trvLogD("Accepted %s:%d", cip, cport);
+        ZeusLogD("Accepted %s:%d", cip, cport);
         acceptCommonHandler(cfd,0);
     }
 }
@@ -746,11 +746,11 @@ static int listenToPort() {
     for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
         if (aeCreateFileEvent(g_server.el, g_server.ipfd[loopJ], AE_READABLE,
                     acceptTcpHandler,NULL) == AE_ERR) {
-            trvLogE("Unrecoverable error creating g_server.ipfd file event.");
+            ZeusLogE("Unrecoverable error creating g_server.ipfd file event.");
         }
     }
 
-    trvLogI("监听端口: %d", g_server.port);
+    ZeusLogI("监听端口: %d", g_server.port);
 
     return ERRNO_OK;
 }
@@ -788,7 +788,7 @@ int NTInit(int listenPort) {
 
     if (listenPort > 0) {
         if (ERRNO_ERR == listenToPort(g_server.port, g_server.ipfd, &g_server.ipfd_count)) {
-            trvLogE("Listen to port err");
+            ZeusLogE("Listen to port err");
             return ERRNO_ERR;
         }
     }

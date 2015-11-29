@@ -75,6 +75,6 @@ void dump(void)
         exit(EXIT_FAILURE);
     }   
     for (j = 0; j < nptrs; j++)
-        trvLogI("[%02d] %s", j, strings[j]);
+        ZeusLogI("[%02d] %s", j, strings[j]);
     free(strings);
 }

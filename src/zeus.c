@@ -70,7 +70,7 @@ void beforeSleep(struct aeEventLoop *eventLoop) {
 
 int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     g_server.unixtime = time(NULL);
-    trvLogI("serverCron");
+    ZeusLogI("serverCron");
     return 0;
 }
 
@@ -89,7 +89,7 @@ static void* _NTInit(void* _v) {
     if (NULL != confOpt) {
 
         if (confOpt->valueLen > TMPSTR_SIZE) {
-            trvExit(0, "监听端口太大");
+            ZeusExit(0, "监听端口太大");
         }
 
         memcpy(tmpstr, confOpt->value, confOpt->valueLen);
@@ -100,12 +100,12 @@ static void* _NTInit(void* _v) {
 
 
     if (ERRNO_ERR == NTInit(listenPort)) {
-        trvExit(0, "初始化网络失败");
+        ZeusExit(0, "初始化网络失败");
     }
 
     /*
     if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
-        trvLogE("Can't create the serverCron time event.");
+        ZeusLogE("Can't create the serverCron time event.");
         exit(1);
     }
     */
@@ -136,7 +136,7 @@ static void* _STInitPlanet(void* _v) {
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            trvExit(0, "星系文件地址太长");
+            ZeusExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
         snprintf(g_srvPlanetdir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
@@ -149,7 +149,7 @@ static void* _STInitPlanet(void* _v) {
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            trvExit(0, "星系文件地址太长");
+            ZeusExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
         snprintf(g_cliPlanetdir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
 
     snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../", argv[0]);
     if (NULL == realpath(tmpstr, g_basedir)) {
-        trvExit(0, "获取当前路径失败");
+        ZeusExit(0, "获取当前路径失败");
     }
 
     g_conf = initConfig();
@@ -187,7 +187,7 @@ int main(int argc, char *argv[]) {
     if (argc > 1) configRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
     if (NULL == g_conf->contents) {
-        trvExit(0, "请选择配置文件");
+        ZeusExit(0, "请选择配置文件");
     }
 
     confOpt = configGet(g_conf, "log", "dir");

@@ -70,7 +70,7 @@ typedef struct NTSnode_s {
 #define SNODE_RECV_TYPE_STRING 2
 #define SNODE_RECV_TYPE_ARRAY  3  /* 数组 且 命令 */
 
-struct trvCommand {
+struct ZeusCommand {
     char *key;
     void (*proc)(struct NTSnode_s *sn);
     int argc;

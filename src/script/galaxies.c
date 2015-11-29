@@ -36,7 +36,7 @@ int STCallPlanetFunc(NTSnode *sn) {
 
     lua_getglobal(g_srvLuaSt, funcName);
     if (!lua_isfunction(g_srvLuaSt, -1)) {
-        trvLogW("%s not exists", funcName);
+        ZeusLogW("%s not exists", funcName);
         return GALAXIES_LUA_CALL_ERRNO_FUNC404;
     }
 
@@ -52,7 +52,7 @@ int STCallPlanetFunc(NTSnode *sn) {
     //argc == count(sn->fd + argv - funcName)
     errno = lua_pcall(g_srvLuaSt, argc, 0, 0);
     if (errno) {
-        trvLogW("%s", lua_tostring(g_srvLuaSt, -1));
+        ZeusLogW("%s", lua_tostring(g_srvLuaSt, -1));
         lua_pop(g_srvLuaSt, _m);
         return GALAXIES_LUA_CALL_ERRNO_FUNC502;
     }
