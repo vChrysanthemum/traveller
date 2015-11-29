@@ -124,7 +124,7 @@ void STClientInit() {
 
     //char *email = "j@ioctl.cc";
     //NTPrepareBlockCmd(g_galaxiesSrvSnode);
-    //STLoginPlanet(email, "traveller");
+    //STLoginPlanet(email, "zeus");
     
 
     trvLogI("finshed");

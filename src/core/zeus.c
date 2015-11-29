@@ -23,7 +23,7 @@
 
 /* 全局变量 */
 struct NTServer g_server;
-char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
+char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(zeus)/src */
 char *g_logdir;
 FILE* g_logF;
 int g_logFInt;

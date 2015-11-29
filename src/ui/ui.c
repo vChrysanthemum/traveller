@@ -100,7 +100,7 @@ void UIInit() {
 
     /* 画首幅地图 */
     //sprintf(dir, "%s/arctic.map.json", m_galaxiesdir);
-    sprintf(dir, "/Users/j/github/my/traveller/galaxies/gemini/client/arctic.map.json");
+    sprintf(dir, "/Users/j/github/my/zeus/galaxies/gemini/client/arctic.map.json");
     mapJSON = fileGetContent(dir);
     g_curUIMap = UIParseMap(mapJSON);
 
