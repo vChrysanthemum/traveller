@@ -9,17 +9,31 @@
 #include "core/config.h"
 #include "core/zmalloc.h"
 
-static void skipCommenting(char **ptr)  {
-    if ('#' == **ptr) {
-        while(0 != **ptr && '\r' != **ptr && '\n' != **ptr) {
-            (*ptr)++;
-        }
-    }
-}
-
 static void skipWhitespaces(char **ptr)  {
     while( 0 != **ptr && (' ' == **ptr || '\t' == **ptr || '\r' == **ptr || '\n' == **ptr)) {
         (*ptr)++;
+    }
+}
+
+static void skipCommenting(char **ptr)  {
+    int ifFound;
+
+    while (1) {
+        ifFound = 0;
+
+        skipWhitespaces(ptr);
+
+        if ('#' == **ptr) {
+            ifFound = 1;
+            while(0 != **ptr && '\r' != **ptr && '\n' != **ptr) {
+                (*ptr)++;
+            }
+
+            skipWhitespaces(ptr);
+        }
+
+        if (0 == ifFound) break;
+
     }
 }
 
@@ -149,9 +163,7 @@ void configRead(struct config *conf, char *path) {
     while (0 != *ptr) {
         opt = (struct configOption*)zmalloc(sizeof(struct configOption));
 
-        skipWhitespaces(&ptr);
         skipCommenting(&ptr);
-        skipWhitespaces(&ptr);
 
         if (0 == *ptr) {
             break;
@@ -163,7 +175,7 @@ void configRead(struct config *conf, char *path) {
             sectionLen = parseSection(ptr);
             ptr += sectionLen;
             ptr++;//skip ]
-            skipWhitespaces(&ptr);
+            skipCommenting(&ptr);
         }
 
         opt->section = section;
