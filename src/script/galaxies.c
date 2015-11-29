@@ -16,11 +16,6 @@ extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 extern char g_galaxiesdir[];
 extern lua_State *g_srvLuaSt;
 
-/* 调用星系上的函数
- * 只允许访问函数名 PUB 为开头的函数
- * lua中函数只返回一个字符串
- * argv 为 sn->argv[1:]，既忽略 sn的procName
- */
 int STCallGalaxyFunc(NTSnode *sn) {
     char **argv = &(sn->argv[1]);
     char *funcName = *argv;
@@ -63,8 +58,6 @@ int STCallGalaxyFunc(NTSnode *sn) {
 }
 
 
-/* 玩家登录星系
- */
 int STLoginGalaxy(char *email, char *password) {
     NTAddReplyMultiString(g_galaxiesSrvSnode, 4, "galaxies", "PUBCitizenLogin", email, password);
     return 0;

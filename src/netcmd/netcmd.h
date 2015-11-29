@@ -8,9 +8,4 @@ void closeCommand(struct NTSnode_s *sn);
 
 void initNetCmd();
 
-int NTPrepareBlockCmd(NTSnode *sn);
-void NTBlockCmd(NTSnode *sn);
-void NTFinishBlockCmd(NTSnode *sn);
-void NTAwakeBlockCmd(NTSnode *sn);
-
 #endif

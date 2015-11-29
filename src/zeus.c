@@ -3,7 +3,6 @@
 #include <string.h>
 #include <unistd.h> 
 #include <locale.h>
-#include <pthread.h>
 
 #include "core/config.h"
 #include "core/zmalloc.h"
@@ -19,7 +18,19 @@
 #include "lua.h"
 #include "sqlite3.h"
 
-#define TMPSTR_SIZE ALLOW_PATH_SIZE
+/**
+ * 运行流程
+ *  Step1. 读取配置文件
+ *  Step2. 开启界面
+ *  Step3. 开启事件
+ *  Step4. 事件不断循环，并传递消息给界面管理器，界面管理器更新界面
+ *  Step5. 界面响应用户，并传递消息给事件管理器
+ *  +------------+        +------------+
+ *  |            |  ===>  |            |
+ *  |  界面线程  |        |  事件线程  |
+ *  |            |  <===  |            |
+ *  +------------+        +------------+
+ */
 
 /* 全局变量 */
 struct NTServer g_server;
@@ -35,21 +46,6 @@ UIWin *g_rootUIWin;
 UICursor g_cursor;
 UIMap *g_curUIMap;
 
-/* 主线程同步 */
-pthread_mutex_t g_rootThreadMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t g_rootThreadCond = PTHREAD_COND_INITIALIZER;
-pthread_mutex_t g_logMutex = PTHREAD_MUTEX_INITIALIZER;
-
-
-/* 协助阻塞模式发送命令 同步 */
-/* 命令发送者使用 */
-int g_blockCmdFd;   /* 标识哪一 NTSnode 正在使用阻塞模式发送命令 */
-pthread_mutex_t g_blockCmdMtx = PTHREAD_MUTEX_INITIALIZER;
-
-/* 保证数据解析一致性 */
-pthread_mutex_t g_blockNetWMtx = PTHREAD_MUTEX_INITIALIZER;
-
-
 /* 服务端模式所需变量 */
 char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
 lua_State *g_srvLuaSt;
@@ -61,110 +57,16 @@ lua_State *g_cliLuaSt;
 sqlite3 *g_cliDB;
 NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
-
-
-
-void beforeSleep(struct aeEventLoop *eventLoop) {
-    NOTUSED(eventLoop);
-}
-
 int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     g_server.unixtime = time(NULL);
     ZeusLogI("serverCron");
     return 0;
 }
 
-
-/* 启动网络
-*/
-static void* _NTInit(void* _v) {
-    pthread_mutex_lock(&g_rootThreadMutex);
-
-    int listenPort;
-    struct configOption *confOpt;
-    char tmpstr[TMPSTR_SIZE] = {""};
-
-    confOpt = configGet(g_conf, "net_server", "port");
-
-    if (NULL != confOpt) {
-
-        if (confOpt->valueLen > TMPSTR_SIZE) {
-            ZeusExit(0, "监听端口太大");
-        }
-
-        memcpy(tmpstr, confOpt->value, confOpt->valueLen);
-        tmpstr[confOpt->valueLen] = 0;
-        listenPort = atoi(tmpstr);
-    }
-    else listenPort = -1; /* 输入一个不正常的监听端口，意味着不监听 */
-
-
-    if (ERRNO_ERR == NTInit(listenPort)) {
-        ZeusExit(0, "初始化网络失败");
-    }
-
-    /*
-    if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
-        ZeusLogE("Can't create the serverCron time event.");
-        exit(1);
-    }
-    */
-
-
-    aeSetBeforeSleepProc(g_server.el, beforeSleep);
-
-    pthread_mutex_unlock(&g_rootThreadMutex);
-
-    pthread_cond_signal(&g_rootThreadCond);
-
-    aeMain(g_server.el);
-    aeDeleteEventLoop(g_server.el);
-
-    return NULL;
-}
-
-
-/* 启动星系运行支持
-*/
-static void* _STInitGalaxy(void* _v) {
-    struct configOption *confOpt;
-    char tmpstr[ALLOW_PATH_SIZE] = {""};
-
-
-    /* 游戏服务端初始化 */
-    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            ZeusExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STServerInit();
-    }
-
-
-    /* 游戏客户端初始化 */
-    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            ZeusExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STClientInit();
-    }
-
-    return NULL;
-}
-
-
-
 int main(int argc, char *argv[]) {
     struct configOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
-    pthread_t ntid;
+    int listenPort;
 
     g_logdir = NULL;
     g_logF = stderr;
@@ -190,36 +92,73 @@ int main(int argc, char *argv[]) {
         ZeusExit(0, "请选择配置文件");
     }
 
-    confOpt = configGet(g_conf, "log", "dir");
+    confOpt = configGet(g_conf, "zeus", "log_dir");
     if (confOpt) {
         g_logdir = (char *)zmalloc(confOpt->valueLen+1);
-        memcpy(g_logdir, confOpt->value, confOpt->valueLen);
-        g_logdir[confOpt->valueLen] = 0;
+        snprintf(g_logdir, ALLOW_PATH_SIZE, "%.*s", confOpt->valueLen, confOpt->value);
         g_logF = fopen(g_logdir, "a+");
         g_logFInt = fileno(g_logF);
     }
+
+    confOpt = configGet(g_conf, "net_server", "port");
+
+    if (NULL != confOpt) {
+
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            ZeusExit(0, "监听端口太大");
+        }
+
+        confOptToStr(confOpt, tmpstr);
+        listenPort = atoi(tmpstr);
+    }
+    else listenPort = -1; /* 输入一个不正常的监听端口，意味着不监听 */
 
     signal(SIGHUP, SIG_IGN);
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
 
+    //开启界面
+    UIInit();
 
-    /**
-     * 主线程睡眠，等待网络就绪
-     * 单独开一个线程处理网路
-     */
-    pthread_mutex_lock(&g_rootThreadMutex);
-    pthread_create(&ntid, NULL, _NTInit, NULL);
-    pthread_cond_wait(&g_rootThreadCond, &g_rootThreadMutex);
-    pthread_mutex_unlock(&g_rootThreadMutex);
+    //开启事件
+    if (ERRNO_ERR == NTInit(listenPort)) {
+        ZeusExit(0, "初始化网络失败");
+    }
 
+    /*
+    if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
+        ZeusLogE("Can't create the serverCron time event.");
+        exit(1);
+    }
+    */
 
-    _STInitGalaxy(NULL);
+    /* 游戏服务端初始化 */
+    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
+    if (confOpt) {
 
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            ZeusExit(0, "星系文件地址太长");
+        }
+        confOptToStr(confOpt, tmpstr);
+        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        STServerInit();
+    }
 
-    /* 主线程睡眠，避免退出进程 */
-    pthread_cond_wait(&g_rootThreadCond, &g_rootThreadMutex);
-    pthread_mutex_unlock(&g_rootThreadMutex);
+    /* 游戏客户端初始化 */
+    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
+    if (confOpt) {
 
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            ZeusExit(0, "星系文件地址太长");
+        }
+        confOptToStr(confOpt, tmpstr);
+        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        STClientInit();
+    }
+
+    //aeSetBeforeSleepProc(g_server.el, beforeSleep);
+
+    aeMain(g_server.el);
+    aeDeleteEventLoop(g_server.el);
     return 0;
 }

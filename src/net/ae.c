@@ -398,6 +398,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
         }
 
         numevents = aeApiPoll(eventLoop, tvp);
+        ZeusLogI("%d", numevents);
         for (j = 0; j < numevents; j++) {
             aeFileEvent *fe = &eventLoop->events[eventLoop->fired[j].fd];
             int mask = eventLoop->fired[j].mask;

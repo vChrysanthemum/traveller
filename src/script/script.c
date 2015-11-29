@@ -1,5 +1,3 @@
-#include <pthread.h>
-
 #include "core/util.h"
 #include "core/config.h"
 #include "core/zmalloc.h"
@@ -24,9 +22,6 @@ extern lua_State *g_cliLuaSt;
 extern sqlite3 *g_cliDB;
 extern char g_cliGalaxydir[ALLOW_PATH_SIZE];
 extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
-
-extern int g_blockCmdFd;
-extern pthread_mutex_t g_blockCmdMtx;
 
 /* 基础部分初始化 */
 static void STInit(lua_State **L, char *dir) {
@@ -88,13 +83,6 @@ void STServerInit() {
     zfree(filepath);
 }
 
-
-/* 简单地对 UIInit 封装，只是为了 pthread */
-static void* _UIInit(void* ptr) {
-    UIInit();
-    return NULL;
-}
-
 /* 客户端模式初始化 */
 void STClientInit() {
     STInit(&g_cliLuaSt, g_cliGalaxydir);
@@ -102,7 +90,6 @@ void STClientInit() {
     char galaxiesSrvHost[128];
     int galaxiesSrvPort;
     struct configOption *confOpt;
-    pthread_t ntid;
 
     confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_host");
     if (NULL == confOpt) {
@@ -122,13 +109,8 @@ void STClientInit() {
     }
     ZeusLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
 
-    //char *email = "j@ioctl.cc";
-    //NTPrepareBlockCmd(g_galaxiesSrvSnode);
-    //STLoginGalaxy(email, "zeus");
-    
+    char *email = "j@ioctl.cc";
+    STLoginGalaxy(email, "zeus");
 
     ZeusLogI("finshed");
-
-
-    pthread_create(&ntid, NULL, _UIInit, NULL);
 }

@@ -93,28 +93,28 @@ UIMap *UIParseMap(char *mapJSON) {
     map->addr_lt_x = 0;
     map->addr_lt_y = 0;
 
-    /* 如果窗口无法一次性显示地图 */
     if (map->width > g_rootUIWin->width-1) {
+        /* 如果窗口无法一次性显示地图 */
         map->win_lt_x = 1;
         map->win_rb_x = g_rootUIWin->width - 1;
         map->addr_rb_x = (g_rootUIWin->width - 1) - 1;
-    }
-    /* 可以一次性显示，则居中显示 */
-    else {
+
+    } else {
+        /* 可以一次性显示，则居中显示 */
         map->win_lt_x = (g_rootUIWin->width - 1) / 2 - map->width / 2 + 1;
         map->win_rb_x = map->win_lt_x + map->width - 1;
         map->addr_rb_x = map->width - 1;
     }
 
 
-    /* 如果窗口无法一次性显示地图 */
     if (map->height > g_rootUIWin->height-1) {
+        /* 如果窗口无法一次性显示地图 */
         map->win_lt_y = 1;
         map->win_rb_y = g_rootUIWin->height - 1;
         map->addr_rb_y = (g_rootUIWin->height - 1) - 1;
-    }
-    /* 可以一次性显示，则居中显示 */
-    else {
+
+    } else {
+        /* 可以一次性显示，则居中显示 */
         map->win_lt_y = (g_rootUIWin->height - 1) / 2 - map->height / 2 + 1;
         map->win_rb_y = map->win_lt_y + map->height - 1;
         map->addr_rb_y = map->height - 1;
@@ -202,8 +202,7 @@ void UIDrawMap() {
             poi = MAP_ADDR(_x, _y, g_curUIMap->width);
             if (0 == g_curUIMap->nodes[poi].resourse) {
                 mvwaddch(g_rootUIWin->window, y, x, ' ');
-            }
-            else {
+            } else {
                 mvwaddch(g_rootUIWin->window, y, x, g_curUIMap->nodes[poi].resourse->v);
             }
         }

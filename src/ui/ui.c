@@ -2,6 +2,7 @@
 #include <ncurses.h>
 #include <panel.h>
 #include <string.h>
+#include <pthread.h>
 
 #include "core/util.h"
 #include "core/zmalloc.h"
@@ -40,7 +41,7 @@ static void initRootUIWin() {
     keypad(g_rootUIWin->window, TRUE);
 }
 
-static void moveCursor() {
+static void* uiLoop(void* _) {
 
     while(1) {
         g_rootUIWin->ch = wgetch(g_rootUIWin->window);
@@ -84,6 +85,7 @@ static void moveCursor() {
         wrefresh(g_rootUIWin->window);
     }
 
+    return 0;
 }
 
 void UIInit() {
@@ -114,7 +116,8 @@ void UIInit() {
     wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);
 
     /* 循环 */
-    moveCursor();
+    pthread_t ntid;
+    pthread_create(&ntid, NULL, uiLoop, NULL);
 
     endwin();
 }

@@ -1,6 +1,4 @@
 #include <stdlib.h>
-#include <pthread.h>
-
 
 #include "core/util.h"
 #include "net/networking.h"

@@ -1,5 +1,3 @@
-#include <pthread.h>
-
 #include "core/util.h"
 #include "core/dict.h"
 #include "net/networking.h"

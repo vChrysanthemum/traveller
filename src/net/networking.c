@@ -2,7 +2,6 @@
 #include <netinet/in.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <pthread.h>
 
 #include "core/adlist.h"
 #include "core/dict.h"
@@ -15,8 +14,6 @@
 
 extern struct NTServer g_server;
 extern dictType stackStringTableDictType;
-
-extern pthread_mutex_t g_blockNetWMtx;
 
 static void setProtocolError(NTSnode *sn, int pos);
 static void resetNTSnodeArgs(NTSnode *sn);
@@ -113,35 +110,26 @@ static void sendReplyToNTSnode(aeEventLoop *el, int fd, void *privdata, int mask
 }
 
 void NTAddReplySds(NTSnode *sn, sds data) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)sdslen(data), data);
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyRawSds(NTSnode *sn, sds data) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatsds(sn->writebuf, data);
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyString(NTSnode *sn, char *data) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)strlen(data), data);
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyRawString(NTSnode *sn, char *data) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscat(sn->writebuf, data);
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyMultiSds(NTSnode *sn, int count, ...) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
@@ -154,24 +142,20 @@ void NTAddReplyMultiSds(NTSnode *sn, int count, ...) {
         sn->writebuf = sdscatfmt(sn->writebuf, "$%d\r\n%S\r\n", sdslen(tmpptr), tmpptr);
     }
     va_end(ap); 
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 
 void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     int loopJ;
     sn->writebuf = sdscatfmt(sn->writebuf, "*%i\r\n", argc);
     for (loopJ = 0; loopJ < argc; loopJ++) {
         sn->writebuf = sdscatfmt(sn->writebuf, "$%i\r\n%s\r\n", strlen(argv[loopJ]), argv[loopJ]);
     }
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 
 void NTAddReplyMultiString(NTSnode *sn, int count, ...) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
@@ -184,16 +168,13 @@ void NTAddReplyMultiString(NTSnode *sn, int count, ...) {
         sn->writebuf = sdscatfmt(sn->writebuf, "$%i\r\n%s\r\n", strlen(tmpptr), tmpptr);
     }
     va_end(ap); 
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 void NTAddReplyError(NTSnode *sn, char *err) {
-    pthread_mutex_lock(&g_blockNetWMtx);
     prepareNTSnodeToWrite(sn);
     sn->writebuf = sdscatlen(sn->writebuf, "-", 1);
     sn->writebuf = sdscat(sn->writebuf, err);
     sn->writebuf = sdscatlen(sn->writebuf, "\r\n", 2);
-    pthread_mutex_unlock(&g_blockNetWMtx);
 }
 
 
@@ -786,11 +767,9 @@ int NTInit(int listenPort) {
     g_server.ipfd[0] = anetPeerSocket(g_server.neterr, g_server.port, g_server.bindaddr, AF_INET);
     g_server.ipfd[1] = anetPeerSocket(g_server.neterr, g_server.port, g_server.bindaddr, AF_INET6);
 
-    if (listenPort > 0) {
-        if (ERRNO_ERR == listenToPort(g_server.port, g_server.ipfd, &g_server.ipfd_count)) {
-            ZeusLogE("Listen to port err");
-            return ERRNO_ERR;
-        }
+    if (listenPort <= 0 || ERRNO_OK != listenToPort(g_server.port, g_server.ipfd, &g_server.ipfd_count)) {
+        ZeusLogE("Listen to port err");
+        return ERRNO_ERR;
     }
 
     initNetCmd();
