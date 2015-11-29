@@ -31,7 +31,7 @@ static void initRootUIWin() {
 
     g_cursor = (UICursor*)zmalloc(sizeof(UICursor));
     g_cursor->number = 1;
-    g_cursor->snumber[0] = 0x00;
+    g_cursor->snumber[0] = 0;
     g_cursor->snumber_len = 0;
 
     getmaxyx(stdscr, g_rootUIWin->height, g_rootUIWin->width);
@@ -50,14 +50,14 @@ static void moveCursor() {
 
             g_cursor->snumber[g_cursor->snumber_len] = g_rootUIWin->ch;
             g_cursor->snumber_len++;
-            g_cursor->snumber[g_cursor->snumber_len] = 0x00;
+            g_cursor->snumber[g_cursor->snumber_len] = 0;
 
             continue;
         }
         else if(g_cursor->snumber_len > 0) {
             g_cursor->number = atoi(g_cursor->snumber);
             g_cursor->snumber_len = 0;
-            g_cursor->snumber[0] = 0x00;
+            g_cursor->snumber[0] = 0;
         }
 
 

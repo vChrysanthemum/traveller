@@ -67,7 +67,7 @@ UIMap *UIParseMap(char *mapJSON) {
     tok = find_json_token(map->root_json_tok, "nodes");
     g_tmpPtr = zmalloc(sizeof(UIMapNode) * map->width * map->height);
     map->nodes = (UIMapNode*)g_tmpPtr;
-    memset(map->nodes, 0x00, sizeof(UIMapNode) * map->width * map->height);
+    memset(map->nodes, 0, sizeof(UIMapNode) * map->width * map->height);
     for (loopJ = 0; loopJ < map->nodes_len; loopJ++) {
         sprintf(tmpchar, "nodes[%d][0]", loopJ);
         tok2 = find_json_token(map->root_json_tok, tmpchar);
@@ -200,7 +200,7 @@ void UIDrawMap() {
         for (y = g_curUIMap->win_lt_y; y <= g_curUIMap->win_rb_y; y++) {
             _y = g_curUIMap->addr_lt_y + (y - g_curUIMap->win_lt_y);
             poi = MAP_ADDR(_x, _y, g_curUIMap->width);
-            if (0x00 == g_curUIMap->nodes[poi].resourse) {
+            if (0 == g_curUIMap->nodes[poi].resourse) {
                 mvwaddch(g_rootUIWin->window, y, x, ' ');
             }
             else {

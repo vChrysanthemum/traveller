@@ -78,7 +78,7 @@ sds fileGetContent(char *path);
 
 #define jsonTokToNumber(result, tok, tmpchar) do { \
     memcpy(tmpchar, tok->ptr, tok->len);\
-    tmpchar[tok->len] = 0x00;\
+    tmpchar[tok->len] = 0;\
     result = atoi(tmpchar);\
 } while(0);
 

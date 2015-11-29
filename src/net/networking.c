@@ -664,7 +664,7 @@ NTSnode *NTConnectNTSnode(char *addr, int port) {
     int fd;
     NTSnode *sn;
 
-    memset(g_server.neterr, 0x00, ANET_ERR_LEN);
+    memset(g_server.neterr, 0, ANET_ERR_LEN);
     fd = anetPeerSocket(g_server.neterr, 0, "0.0.0.0", AF_INET);
     fd = anetPeerConnect(fd, g_server.neterr, addr, port);
     //fd = anetPeerConnect(fd, g_server.neterr, addr, port);

@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
     if (confOpt) {
         g_logdir = (char *)zmalloc(confOpt->valueLen+1);
         memcpy(g_logdir, confOpt->value, confOpt->valueLen);
-        g_logdir[confOpt->valueLen] = 0x00;
+        g_logdir[confOpt->valueLen] = 0;
         g_logF = fopen(g_logdir, "a+");
         g_logFInt = fileno(g_logF);
     }

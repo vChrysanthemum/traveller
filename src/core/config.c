@@ -9,12 +9,12 @@
 #include "core/zmalloc.h"
 
 static void skipWhitespaces(char **ptr)  {
-    while((' ' == **ptr || '\t' == **ptr || '\n' == **ptr) && 0x00 != **ptr) *ptr+=1;
+    while((' ' == **ptr || '\t' == **ptr || '\n' == **ptr) && 0 != **ptr) *ptr+=1;
 }
 
 static int parseSection(char *ptr) {
     int n = 0;
-    while (']' != *ptr && 0x00 != *ptr) {
+    while (']' != *ptr && 0 != *ptr) {
         n++;
         ptr++;
     }
@@ -23,7 +23,7 @@ static int parseSection(char *ptr) {
 
 static int parseOptionKeyNSkip(char **ptr) {
     int n=0, isEqualFound=0;
-    while (' ' != **ptr && '\t' != **ptr && 0x00 != **ptr) {
+    while (' ' != **ptr && '\t' != **ptr && 0 != **ptr) {
         if ('=' == **ptr) {
             isEqualFound = 1;
             break;
@@ -39,7 +39,7 @@ static int parseOptionKeyNSkip(char **ptr) {
         (*ptr)++;
     }
     else {
-        while ('=' != **ptr && 0x00 != **ptr) {
+        while ('=' != **ptr && 0 != **ptr) {
             (*ptr)++;
         }
         skipWhitespaces(ptr);
@@ -94,7 +94,7 @@ static int configGetReturnId(struct config *conf, char *section, char *option) {
 struct config *initConfig() {
     struct config *conf;
     conf = zmalloc(sizeof(struct config));
-    memset(conf, 0x00, sizeof(struct config));
+    memset(conf, 0, sizeof(struct config));
     return conf;
 }
 
@@ -121,7 +121,7 @@ void configRead(struct config *conf, char *path) {
     }
 
     content = zmalloc(len + 1);
-    memset(content, 0x00, len + 1);
+    memset(content, 0, len + 1);
     fread(content, len, 1, fp);
 
     conf->contentsCount += 1;
@@ -131,12 +131,12 @@ void configRead(struct config *conf, char *path) {
 
     ptr = content;
 
-    while (0x00 != *ptr) {
+    while (0 != *ptr) {
         opt = (struct configOption*)zmalloc(sizeof(struct configOption));
 
         skipWhitespaces(&ptr);
 
-        if (0x00 == *ptr) {
+        if (0 == *ptr) {
             break;
         }
 
