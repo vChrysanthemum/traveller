@@ -55,10 +55,10 @@ void STServerInit() {
     memset(filepath, 0, ALLOW_PATH_SIZE);
 
     snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", g_srvGalaxydir);
-    ZeusLogI("%s", filepath);
+    TrvLogI("%s", filepath);
     errno = luaL_loadfile(g_srvLuaSt, filepath);
     if (errno) {
-        ZeusExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
+        TrvExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
     }
 
     memset(filepath, 0, ALLOW_PATH_SIZE);
@@ -70,13 +70,13 @@ void STServerInit() {
     //初始化
     errno = lua_pcall(g_srvLuaSt, 0, 0, 0);
     if (errno) {
-        ZeusExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
+        TrvExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
     }
 
     //调用init函数  
     lua_getglobal(g_srvLuaSt, "init");
     if (!lua_isfunction(g_srvLuaSt, -1)) {
-        ZeusExit(0, "lua: 找不到init函数");
+        TrvExit(0, "lua: 找不到init函数");
     }
     lua_pcall(g_srvLuaSt, 0, 0, 0);
 
@@ -93,24 +93,24 @@ void STClientInit() {
 
     confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_host");
     if (NULL == confOpt) {
-        ZeusExit(0, "请配置星系地址，[galaxies_client] galaxies_server_host");
+        TrvExit(0, "请配置星系地址，[galaxies_client] galaxies_server_host");
     }
     confOptToStr(confOpt, galaxiesSrvHost);
 
     confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_port");
     if (NULL == confOpt) {
-        ZeusExit(0, "请配置星系监听端口，[galaxies_client] galaxies_server_port");
+        TrvExit(0, "请配置星系监听端口，[galaxies_client] galaxies_server_port");
     }
     confOptToInt(confOpt, tmpstr, galaxiesSrvPort);
 
     g_galaxiesSrvSnode = NTConnectNTSnode(galaxiesSrvHost, galaxiesSrvPort);
     if (NULL == g_galaxiesSrvSnode) {
-        ZeusExit(0, "连接星系失败");
+        TrvExit(0, "连接星系失败");
     }
-    ZeusLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
+    TrvLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
 
     char *email = "j@ioctl.cc";
-    STLoginGalaxy(email, "zeus");
+    STLoginGalaxy(email, "travller");
 
-    ZeusLogI("finshed");
+    TrvLogI("finshed");
 }

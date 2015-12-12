@@ -1,7 +1,7 @@
 *.o
 *.swp
 *.a
-*src/zeus
+*src/travller
 *.DS_Store
 *.log
 */tags

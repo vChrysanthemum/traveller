@@ -15,7 +15,7 @@ sqlite3* STInitDB(char *filepath) {
     errno = sqlite3_open(filepath, &db);
     if (errno) {
         sqlite3_close(db);
-        ZeusExit(0, "打开数据库失败，%s", filepath);
+        TrvExit(0, "打开数据库失败，%s", filepath);
     }
 
     return db;
@@ -38,7 +38,7 @@ int STDBQuery(lua_State *L) {
             &errmsg);
 
     if (SQLITE_OK != errno) {
-        ZeusLogW("STDBQuery Error: %s", errmsg);
+        TrvLogW("STDBQuery Error: %s", errmsg);
         sqlite3_free(errmsg);
 
         lua_pushnil(L);

@@ -19,14 +19,14 @@ void testCommand(struct NTSnode_s *sn) {
 void msgCommand(struct NTSnode_s *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
-    ZeusLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
+    TrvLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
     setNTSnodeExcuteCommandFinished(sn);
 }
 
 void closeCommand(struct NTSnode_s *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
-    ZeusLogD("closed by other people");
+    TrvLogD("closed by other people");
     NTAddReplyMultiString(sn, 2, "msg", "21oi4oaiwef");
     setNTSnodeExcuteCommandFinished(sn);
  

@@ -21,13 +21,13 @@
 
 extern FILE* g_logF;
 
-#define ZeusLog_ERROR 1
-#define ZeusLog_WARNING 2
-#define ZeusLog_NOTICE 3
-#define ZeusLog_INFO 4
-#define ZeusLog_DEBUG 6
+#define TrvLog_ERROR 1
+#define TrvLog_WARNING 2
+#define TrvLog_NOTICE 3
+#define TrvLog_INFO 4
+#define TrvLog_DEBUG 6
 
-#define ZeusLog(level, FMT, ...) do {\
+#define TrvLog(level, FMT, ...) do {\
     char timestr[64];\
     struct timeval tv;\
     gettimeofday(&tv,NULL);\
@@ -38,17 +38,17 @@ extern FILE* g_logF;
     fflush(g_logF);\
 } while(0);
 
-#define ZeusLogD(FMT, ...) ZeusLog(ZeusLog_DEBUG, FMT, ##__VA_ARGS__)
-#define ZeusLogW(FMT, ...) ZeusLog(ZeusLog_WARNING, FMT, ##__VA_ARGS__)
-#define ZeusLogE(FMT, ...) ZeusLog(ZeusLog_ERROR, FMT, ##__VA_ARGS__)
-#define ZeusLogN(FMT, ...) ZeusLog(ZeusLog_NOTICE, FMT, ##__VA_ARGS__)
-#define ZeusLogI(FMT, ...) ZeusLog(ZeusLog_INFO, FMT, ##__VA_ARGS__)
+#define TrvLogD(FMT, ...) TrvLog(TrvLog_DEBUG, FMT, ##__VA_ARGS__)
+#define TrvLogW(FMT, ...) TrvLog(TrvLog_WARNING, FMT, ##__VA_ARGS__)
+#define TrvLogE(FMT, ...) TrvLog(TrvLog_ERROR, FMT, ##__VA_ARGS__)
+#define TrvLogN(FMT, ...) TrvLog(TrvLog_NOTICE, FMT, ##__VA_ARGS__)
+#define TrvLogI(FMT, ...) TrvLog(TrvLog_INFO, FMT, ##__VA_ARGS__)
 
 #ifdef IS_DEBUG
 #include <assert.h>
-#define ZeusAssert(condition) assert(condition);
+#define TrvAssert(condition) assert(condition);
 #else
-#define ZeusAssert(condition) {}
+#define TrvAssert(condition) {}
 #endif
 
 
@@ -65,8 +65,8 @@ int dictStringCompare(void *privdata, const void *key1,
 
 #define ALLOW_PATH_SIZE 256
 
-#define ZeusExit(ERRNO, FMT, ...) do { \
-    ZeusLog(ZeusLog_ERROR, FMT, ##__VA_ARGS__); \
+#define TrvExit(ERRNO, FMT, ...) do { \
+    TrvLog(TrvLog_ERROR, FMT, ##__VA_ARGS__); \
     exit(ERRNO); \
 } while(0);
 

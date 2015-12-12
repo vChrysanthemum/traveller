@@ -12,30 +12,7 @@ extern UICursor *g_cursor;
 extern UIMap *g_curUIMap;
 extern void *g_tmpPtr;
 
-/* 地图json格式：
- * {
- *   'map_width' : 300, //地图宽
- *   'map_height': 300, //地图长
- *   'resourses' : {
- *      [1] : {
- *          'v'     : '&', // 显示出来的字符
- *          'name'  : '岩石',
- *          'introduction' : '无法移动的岩石',
- *          'is_overlay'   : 0  // 该点上面是否能叠加物体，譬如玩家是否可以站在这上面 
- *      },
- *      ...
- *   }
- *   'nodes' : [
- *      [$position_x, $position_y, $resourse_id],
- *      ...
- *   ]
- * }
- * 
- */
 
-
-/* 将字符串转换成地图 
- */
 UIMap *UIParseMap(char *mapJSON) {
     const struct json_token *tok, *tok2;
     char tmpchar[64];
@@ -123,7 +100,6 @@ UIMap *UIParseMap(char *mapJSON) {
     return map;
 }
 
-/* 画地图 */
 void UIDrawMap() {
     g_curUIMap->nodes = g_tmpPtr;
     int x, y;
@@ -207,12 +183,11 @@ void UIDrawMap() {
             }
         }
     }
-    ZeusLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_curUIMap->nodes);
+    TrvLogI("0x%8X 0x%8X", (unsigned int)g_curUIMap, (unsigned int)g_curUIMap->nodes);
 
     return;
 }
 
-/* 在x轴上移动地图 */
 void UIMoveCurMapX(int x) {
     int _x = x;
     if (g_curUIMap->addr_lt_x + x < 0) {
@@ -227,7 +202,6 @@ void UIMoveCurMapX(int x) {
     UIDrawMap();
 }
 
-/* 在y轴上移动地图 */
 void UIMoveCurMapY(int y) {
     int _y = y;
     /* 到达上边界 */
@@ -244,7 +218,6 @@ void UIMoveCurMapY(int y) {
     UIDrawMap();
 }
 
-/* 释放地图 */
 void UIFreeUIMap(UIMap *map) {
     zfree(map->root_json_content);
     zfree(map->root_json_tok);
@@ -254,13 +227,6 @@ void UIFreeUIMap(UIMap *map) {
     zfree(map);
 }
 
-/* 移动地图上可移动的物体
- */
-void UIMoveStuff(UIMapStuff *stuff) {
-
-}
-
-/* 根据窗口x、y，获取相对应的地图节点 */
 UIMapNode* UIGetMapNodeByXY(int x, int y) {
     return NULL;
 } 

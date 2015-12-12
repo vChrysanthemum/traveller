@@ -36,8 +36,8 @@
 #define SNODE_RECV_STAT_PARSING_FINISHED    4
 
 
-/* 对于zeus的网络库来说，每个与travler连接的socket，都将分装成 NTSnode (socket node)，
- * 包括连接zeus的client，或zeus主动连接的g_server
+/* 对于travller的网络库来说，每个与travler连接的socket，都将分装成 NTSnode (socket node)，
+ * 包括连接travller的client，或travller主动连接的g_server
  */
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) /* 1GB max query buffer. */
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  /* 发送完信息后，断开连接 */
@@ -70,7 +70,7 @@ typedef struct NTSnode_s {
 #define SNODE_RECV_TYPE_STRING 2
 #define SNODE_RECV_TYPE_ARRAY  3  /* 数组 且 命令 */
 
-struct ZeusCommand {
+struct TrvCommand {
     char *key;
     void (*proc)(struct NTSnode_s *sn);
     int argc;

@@ -34,7 +34,7 @@
 
 /* 全局变量 */
 struct NTServer g_server;
-char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(zeus)/src */
+char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(travller)/src */
 char *g_logdir;
 FILE* g_logF;
 int g_logFInt;
@@ -59,7 +59,7 @@ NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     g_server.unixtime = time(NULL);
-    ZeusLogI("serverCron");
+    TrvLogI("serverCron");
     return 0;
 }
 
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
     snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../", argv[0]);
     if (NULL == realpath(tmpstr, g_basedir)) {
-        ZeusExit(0, "获取当前路径失败");
+        TrvExit(0, "获取当前路径失败");
     }
 
     g_conf = initConfig();
@@ -89,10 +89,10 @@ int main(int argc, char *argv[]) {
     if (argc > 1) configRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
     if (NULL == g_conf->contents) {
-        ZeusExit(0, "请选择配置文件");
+        TrvExit(0, "请选择配置文件");
     }
 
-    confOpt = configGet(g_conf, "zeus", "log_dir");
+    confOpt = configGet(g_conf, "travller", "log_dir");
     if (confOpt) {
         g_logdir = (char *)zmalloc(confOpt->valueLen+1);
         snprintf(g_logdir, ALLOW_PATH_SIZE, "%.*s", confOpt->valueLen, confOpt->value);
@@ -105,7 +105,7 @@ int main(int argc, char *argv[]) {
     if (NULL != confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            ZeusExit(0, "监听端口太大");
+            TrvExit(0, "监听端口太大");
         }
 
         confOptToStr(confOpt, tmpstr);
@@ -122,12 +122,12 @@ int main(int argc, char *argv[]) {
 
     //开启事件
     if (ERRNO_ERR == NTInit(listenPort)) {
-        ZeusExit(0, "初始化网络失败");
+        TrvExit(0, "初始化网络失败");
     }
 
     /*
     if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
-        ZeusLogE("Can't create the serverCron time event.");
+        TrvLogE("Can't create the serverCron time event.");
         exit(1);
     }
     */
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            ZeusExit(0, "星系文件地址太长");
+            TrvExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
         snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            ZeusExit(0, "星系文件地址太长");
+            TrvExit(0, "星系文件地址太长");
         }
         confOptToStr(confOpt, tmpstr);
         snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);

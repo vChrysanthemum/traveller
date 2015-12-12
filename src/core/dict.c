@@ -258,7 +258,7 @@ int dictRehash(dict *d, int n) {
         /* Note that rehashidx can't overflow as we are sure there are more
          * elements because ht[0].used != 0 */
         //assert(d->ht[0].size > (unsigned)d->rehashidx);
-        ZeusAssert(d->ht[0].size > (unsigned)d->rehashidx);
+        TrvAssert(d->ht[0].size > (unsigned)d->rehashidx);
         while(d->ht[0].table[d->rehashidx] == NULL) d->rehashidx++;
         de = d->ht[0].table[d->rehashidx];
         /* Move all the keys in this bucket from the old to the new hash HT */
@@ -607,7 +607,7 @@ void dictReleaseIterator(dictIterator *iter)
             iter->d->iterators--;
         else
             //assert(iter->fingerprint == dictFingerprint(iter->d));
-            ZeusAssert(iter->fingerprint == dictFingerprint(iter->d));
+            TrvAssert(iter->fingerprint == dictFingerprint(iter->d));
     }
     zfree(iter);
 }
@@ -698,7 +698,7 @@ int dictGetRandomKeys(dict *d, dictEntry **des, int count) {
             /* If there is only one table and we iterated it all, we should
              * already have 'count' elements. Assert this condition. */
             //assert(dictIsRehashing(d) != 0);
-            ZeusAssert(dictIsRehashing(d) != 0);
+            TrvAssert(dictIsRehashing(d) != 0);
         }
     }
     return stored; /* Never reached. */

@@ -3,9 +3,28 @@
 
 #include "core/frozen.h"
 
+/* 地图json格式：
+ * {
+ *   'map_width' : 300, //地图宽
+ *   'map_height': 300, //地图长
+ *   'resourses' : {
+ *      [1] : {
+ *          'v'     : '&', // 显示出来的字符
+ *          'name'  : '岩石',
+ *          'introduction' : '无法移动的岩石',
+ *          'is_overlay'   : 0  // 该点上面是否能叠加物体，譬如玩家是否可以站在这上面 
+ *      },
+ *      ...
+ *   }
+ *   'nodes' : [
+ *      [$position_x, $position_y, $resourse_id],
+ *      ...
+ *   ]
+ * }
+ */
+
 /* 根据x,y，返回map上节点键值 */
 #define MAP_ADDR(x, y, width) (y * width + x)
-
 
 /* 地图上的物体 */
 typedef struct {
@@ -66,10 +85,16 @@ typedef struct {
     int addr_rb_y;
 } UIMap;
 
+/* 将字符串转换成地图 */
 UIMap *UIParseMap(char *mapJSON);
+/* 画地图 */
 void UIDrawMap();
+/* 在x轴上移动地图 */
 void UIMoveCurMapX(int x);
+/* 在y轴上移动地图 */
 void UIMoveCurMapY(int y);
+/* 释放地图 */
 void UIFreeUIMap(UIMap *map);
+/* 根据窗口x、y，获取相对应的地图节点 */
 UIMapNode* UIGetMapNodeByXY(int x, int y);
 #endif

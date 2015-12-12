@@ -31,7 +31,7 @@ int STCallGalaxyFunc(NTSnode *sn) {
 
     lua_getglobal(g_srvLuaSt, funcName);
     if (!lua_isfunction(g_srvLuaSt, -1)) {
-        ZeusLogW("%s not exists", funcName);
+        TrvLogW("%s not exists", funcName);
         return GALAXIES_LUA_CALL_ERRNO_FUNC404;
     }
 
@@ -47,7 +47,7 @@ int STCallGalaxyFunc(NTSnode *sn) {
     //argc == count(sn->fd + argv - funcName)
     errno = lua_pcall(g_srvLuaSt, argc, 0, 0);
     if (errno) {
-        ZeusLogW("%s", lua_tostring(g_srvLuaSt, -1));
+        TrvLogW("%s", lua_tostring(g_srvLuaSt, -1));
         lua_pop(g_srvLuaSt, _m);
         return GALAXIES_LUA_CALL_ERRNO_FUNC502;
     }
