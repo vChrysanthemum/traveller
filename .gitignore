@@ -1,7 +1,7 @@
 *.o
 *.swp
 *.a
-*src/travller
+*src/traveller
 *.DS_Store
 *.log
 */tags

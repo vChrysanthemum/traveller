@@ -34,7 +34,7 @@
 
 /* 全局变量 */
 struct NTServer g_server;
-char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(travller)/src */
+char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char *g_logdir;
 FILE* g_logF;
 int g_logFInt;
@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
         TrvExit(0, "请选择配置文件");
     }
 
-    confOpt = configGet(g_conf, "travller", "log_dir");
+    confOpt = configGet(g_conf, "traveller", "log_dir");
     if (confOpt) {
         g_logdir = (char *)zmalloc(confOpt->valueLen+1);
         snprintf(g_logdir, ALLOW_PATH_SIZE, "%.*s", confOpt->valueLen, confOpt->value);

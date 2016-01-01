@@ -1,4 +1,4 @@
-travllerobjects = ./travller.o \
+travellerobjects = ./traveller.o \
 				   ./core/zmalloc.o \
 				   ./core/config.o \
 				   ./core/sds.o \
@@ -34,10 +34,10 @@ LIBRARY= /usr/local/lib/libncurses.a ../deps/lua/src/liblua.a
 CFLAGS=$(STD)
 CC:=gcc
 #CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc') $(CFLAGS)
-all:travller
+all:traveller
 
-travller:$(travllerobjects)
-	$(CC) -o travller $(travllerobjects) $(LIBRARY)  $(CFLAGS)
+traveller:$(travellerobjects)
+	$(CC) -o traveller $(travellerobjects) $(LIBRARY)  $(CFLAGS)
 
 %.o: %.c 
 	$(CC) -static -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o
@@ -49,4 +49,4 @@ clean:
 	rm -f ./ui/*.o ./ui/*.a
 	rm -f ./netcmd/*.o ./netcmd/*.a
 	rm -f ./script/*.o ./script/*.a
-	rm ./travller
+	rm ./traveller

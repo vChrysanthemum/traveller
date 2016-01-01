@@ -110,7 +110,7 @@ void STClientInit() {
     TrvLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
 
     char *email = "j@ioctl.cc";
-    STLoginGalaxy(email, "travller");
+    STLoginGalaxy(email, "traveller");
 
     TrvLogI("finshed");
 }
