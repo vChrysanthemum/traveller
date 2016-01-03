@@ -4,101 +4,104 @@
 #include <string.h>
 #include <pthread.h>
 
+#include "core/adlist.h"
 #include "core/util.h"
-#include "core/zmalloc.h"
 #include "core/sds.h"
 #include "ui/ui.h"
-#include "ui/map.h"
 
-extern UIWin *g_rootUIWin;
-extern UICursor *g_cursor;
+extern UIWindow *g_rootUIWindow;
 extern UIMap *g_curUIMap;
-extern void *g_tmpPtr;
 
-static UIWin* createUIWin(int height, int width, int starty, int startx) {
-    UIWin *win = (UIWin*)zmalloc(sizeof(UIWin));
-    win->startx = startx;
-    win->starty = starty;
-    win->height = height;
-    win->width = width;
-    win->window = newwin(height, width, starty, startx);
-    return win;
-}
+UIEnv *ui_env;
+list *ui_panels;
+UIConsole *ui_console;
+int ui_width, ui_height; //屏幕宽度、高度
 
-static void initRootUIWin() {
-    int height, width;
-    getmaxyx(stdscr, height, width);
-    g_rootUIWin = createUIWin(height, width, 0, 0);
+static void initRootUIWindow() {
+    g_rootUIWindow = UIcreateWindow(ui_height-5, ui_width, 0, 0);
 
-    g_cursor = (UICursor*)zmalloc(sizeof(UICursor));
-    g_cursor->number = 1;
-    g_cursor->snumber[0] = 0;
-    g_cursor->snumber_len = 0;
+    ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
+    ui_env->number = 1;
+    ui_env->snumber[0] = 0;
+    ui_env->snumber_len = 0;
 
-    getmaxyx(stdscr, g_rootUIWin->height, g_rootUIWin->width);
-    g_rootUIWin->height-=2; /* 最后一行不可写 */
-    g_rootUIWin->width--; /* 最后一列不可写 */
-    keypad(g_rootUIWin->window, TRUE);
+    getmaxyx(stdscr, g_rootUIWindow->height, g_rootUIWindow->width);
+    //g_rootUIWindow->height--; /* 最后一行不可写 */
+    //g_rootUIWindow->width--; /* 最后一列不可写 */
+    keypad(g_rootUIWindow->win, TRUE);
 }
 
 static void* uiLoop(void* _) {
 
     while(1) {
-        g_rootUIWin->ch = wgetch(g_rootUIWin->window);
-        if ('0' <= g_rootUIWin->ch && g_rootUIWin->ch <= '9') {
-            if (g_cursor->snumber_len > 6) 
+        ui_env->ch = getch();
+        if ('0' <= ui_env->ch && ui_env->ch <= '9') {
+            if (ui_env->snumber_len > 6) {
                 continue;
+            }
 
-            g_cursor->snumber[g_cursor->snumber_len] = g_rootUIWin->ch;
-            g_cursor->snumber_len++;
-            g_cursor->snumber[g_cursor->snumber_len] = 0;
+            ui_env->snumber[ui_env->snumber_len] = ui_env->ch;
+            ui_env->snumber_len++;
+            ui_env->snumber[ui_env->snumber_len] = 0;
 
             continue;
         }
-        else if(g_cursor->snumber_len > 0) {
-            g_cursor->number = atoi(g_cursor->snumber);
-            g_cursor->snumber_len = 0;
-            g_cursor->snumber[0] = 0;
+        else if(ui_env->snumber_len > 0) {
+            ui_env->number = atoi(ui_env->snumber);
+            ui_env->snumber_len = 0;
+            ui_env->snumber[0] = 0;
         }
 
 
-        if (KEY_UP == g_rootUIWin->ch || 'k' == g_rootUIWin->ch) {
-            UIMoveUICursorUp(g_cursor->number);
+        if (KEY_UP == ui_env->ch || 'k' == ui_env->ch) {
+            UIMoveUICursorUp(ui_env->number);
         }
 
-        else if (KEY_DOWN == g_rootUIWin->ch || 'j' == g_rootUIWin->ch) {
-            UIMoveUICursorDown(g_cursor->number);
+        else if (KEY_DOWN == ui_env->ch || 'j' == ui_env->ch) {
+            UIMoveUICursorDown(ui_env->number);
         }
 
-        else if (KEY_LEFT == g_rootUIWin->ch || 'h' == g_rootUIWin->ch) {
-            UIMoveUICursorLeft(g_cursor->number);
+        else if (KEY_LEFT == ui_env->ch || 'h' == ui_env->ch) {
+            UIMoveUICursorLeft(ui_env->number);
         }
 
-        else if (KEY_RIGHT == g_rootUIWin->ch || 'l' == g_rootUIWin->ch) {
-            UIMoveUICursorRight(g_cursor->number);
+        else if (KEY_RIGHT == ui_env->ch || 'l' == ui_env->ch) {
+            UIMoveUICursorRight(ui_env->number);
         }
 
-        g_cursor->number = 1;
+        ui_env->number = 1;
 
-        if (KEY_F(1) == g_rootUIWin->ch) break; /* ESC */ 
+        if (KEY_F(1) == ui_env->ch) break; /* ESC */ 
 
-        wrefresh(g_rootUIWin->window);
+        refresh();
+        wrefresh(g_rootUIWindow->win);
+        wrefresh(ui_console->uiwin->win);
     }
+
+    endwin();
 
     return 0;
 }
 
-void UIInit() {
+int UIInit() {
     sds mapJSON;
     char dir[ALLOW_PATH_SIZE] = {""};
 
-    initscr();                   /* start the curses mode */
+    ui_panels = listCreate();
+
+    initscr();
     clear();
     cbreak();
     noecho();
     //raw();
 
-    initRootUIWin();
+    getmaxyx(stdscr, ui_height, ui_width);
+
+    UIinitColor();
+
+    initRootUIWindow();
+
+    UIinitConsole();
 
     /* 画首幅地图 */
     //sprintf(dir, "%s/arctic.map.json", m_galaxiesdir);
@@ -107,17 +110,19 @@ void UIInit() {
     g_curUIMap = UIParseMap(mapJSON);
 
     UIDrawMap();
-    wrefresh(g_rootUIWin->window);
-
 
     /* 光标置中 */
-    g_cursor->x = g_rootUIWin->width / 2;
-    g_cursor->y = g_rootUIWin->height / 2;
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);
+    ui_env->cursor_x = g_rootUIWindow->width / 2;
+    ui_env->cursor_y = g_rootUIWindow->height / 2;
+    wmove(g_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);
+
+    refresh();
+    wrefresh(g_rootUIWindow->win);
+    wrefresh(ui_console->uiwin->win);
 
     /* 循环 */
     pthread_t ntid;
     pthread_create(&ntid, NULL, uiLoop, NULL);
 
-    endwin();
+    return ERRNO_OK;
 }

@@ -39,11 +39,9 @@ char *g_logdir;
 FILE* g_logF;
 int g_logFInt;
 struct config *g_conf;
-void *g_tmpPtr;
 
 /* UI部分 */
-UIWin *g_rootUIWin;
-UICursor g_cursor;
+UIWindow *g_rootUIWindow;
 UIMap *g_curUIMap;
 
 /* 服务端模式所需变量 */
@@ -117,12 +115,19 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
 
-    //开启界面
-    UIInit();
-
     //开启事件
     if (ERRNO_ERR == NTInit(listenPort)) {
         TrvExit(0, "初始化网络失败");
+    }
+
+    //开启界面
+    if (ERRNO_ERR == UIInit()) {
+        TrvExit(0, "初始化UI失败");
+    }
+
+    //开启脚本支持
+    if (ERRNO_ERR == STInit()) {
+        TrvExit(0, "初始化UI失败");
     }
 
     /*
@@ -131,30 +136,6 @@ int main(int argc, char *argv[]) {
         exit(1);
     }
     */
-
-    /* 游戏服务端初始化 */
-    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STServerInit();
-    }
-
-    /* 游戏客户端初始化 */
-    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STClientInit();
-    }
 
     //aeSetBeforeSleepProc(g_server.el, beforeSleep);
 

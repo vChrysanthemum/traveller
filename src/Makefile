@@ -1,4 +1,5 @@
 travellerobjects = ./traveller.o \
+				   ../deps/sqlite/sqlite3.o \
 				   ./core/zmalloc.o \
 				   ./core/config.o \
 				   ./core/sds.o \
@@ -9,7 +10,6 @@ travellerobjects = ./traveller.o \
 				   ./core/debug.o \
 				   ./core/sha1.o \
 				   ./core/crc64.o \
-				   ../deps/sqlite/sqlite3.o \
 				   ./net/anet.o \
 				   ./net/ae.o \
 				   ./net/networking.o \
@@ -22,7 +22,8 @@ travellerobjects = ./traveller.o \
 				   ./script/db.o \
 				   ./script/net.o \
 				   ./ui/ui.o \
-				   ./ui/map.o 
+				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o \
+				   ./spaceship/spaceship.o
 
 
 ALL_INCS= -I ./ \
@@ -30,7 +31,7 @@ ALL_INCS= -I ./ \
 		  -I ../deps/sqlite/ 
 
 STD=-g -Wall
-LIBRARY= /usr/local/lib/libncurses.a ../deps/lua/src/liblua.a 
+LIBRARY= /usr/local/lib/libncurses.a /usr/local/lib/libpanel.a ../deps/lua/src/liblua.a 
 CFLAGS=$(STD)
 CC:=gcc
 #CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc') $(CFLAGS)

@@ -7,11 +7,10 @@
 #include "ui/ui.h"
 #include "ui/map.h"
 
-extern UIWin *g_rootUIWin;
-extern UICursor *g_cursor;
+extern UIWindow *g_rootUIWindow;
 extern UIMap *g_curUIMap;
-extern void *g_tmpPtr;
 
+static void *g_tmpPtr;
 
 UIMap *UIParseMap(char *mapJSON) {
     const struct json_token *tok, *tok2;
@@ -70,29 +69,29 @@ UIMap *UIParseMap(char *mapJSON) {
     map->addr_lt_x = 0;
     map->addr_lt_y = 0;
 
-    if (map->width > g_rootUIWin->width-1) {
+    if (map->width > g_rootUIWindow->width-1) {
         /* 如果窗口无法一次性显示地图 */
         map->win_lt_x = 1;
-        map->win_rb_x = g_rootUIWin->width - 1;
-        map->addr_rb_x = (g_rootUIWin->width - 1) - 1;
+        map->win_rb_x = g_rootUIWindow->width - 1;
+        map->addr_rb_x = (g_rootUIWindow->width - 1) - 1;
 
     } else {
         /* 可以一次性显示，则居中显示 */
-        map->win_lt_x = (g_rootUIWin->width - 1) / 2 - map->width / 2 + 1;
+        map->win_lt_x = (g_rootUIWindow->width - 1) / 2 - map->width / 2 + 1;
         map->win_rb_x = map->win_lt_x + map->width - 1;
         map->addr_rb_x = map->width - 1;
     }
 
 
-    if (map->height > g_rootUIWin->height-1) {
+    if (map->height > g_rootUIWindow->height-1) {
         /* 如果窗口无法一次性显示地图 */
         map->win_lt_y = 1;
-        map->win_rb_y = g_rootUIWin->height - 1;
-        map->addr_rb_y = (g_rootUIWin->height - 1) - 1;
+        map->win_rb_y = g_rootUIWindow->height - 1;
+        map->addr_rb_y = (g_rootUIWindow->height - 1) - 1;
 
     } else {
         /* 可以一次性显示，则居中显示 */
-        map->win_lt_y = (g_rootUIWin->height - 1) / 2 - map->height / 2 + 1;
+        map->win_lt_y = (g_rootUIWindow->height - 1) / 2 - map->height / 2 + 1;
         map->win_rb_y = map->win_lt_y + map->height - 1;
         map->addr_rb_y = map->height - 1;
     }
@@ -115,7 +114,7 @@ void UIDrawMap() {
     x = g_curUIMap->win_lt_x - 1;
     y = g_curUIMap->win_rb_y + 1;
     for (loopJ = g_curUIMap->win_lt_y-1; loopJ <= y; loopJ++) {
-        mvwaddch(g_rootUIWin->window, loopJ, x, ch);
+        mvwaddch(g_rootUIWindow->win, loopJ, x, ch);
     }
 
     /* 到达右边界 */
@@ -126,7 +125,7 @@ void UIDrawMap() {
     x = g_curUIMap->win_rb_x + 1;
     y = g_curUIMap->win_rb_y + 1;
     for (loopJ = g_curUIMap->win_lt_y-1; loopJ <= y; loopJ++) {
-        mvwaddch(g_rootUIWin->window, loopJ, x, ch);
+        mvwaddch(g_rootUIWindow->win, loopJ, x, ch);
     }
 
     /* 到达上边界 */
@@ -137,7 +136,7 @@ void UIDrawMap() {
     x = g_curUIMap->win_rb_x + 1;
     y = g_curUIMap->win_lt_y - 1;
     for (loopJ = g_curUIMap->win_lt_x-1; loopJ <= x; loopJ++) {
-        mvwaddch(g_rootUIWin->window, y, loopJ, ch);
+        mvwaddch(g_rootUIWindow->win, y, loopJ, ch);
     }
 
     /* 到达下边界 */
@@ -148,25 +147,25 @@ void UIDrawMap() {
     x = g_curUIMap->win_rb_x + 1;
     y = g_curUIMap->win_rb_y + 1;
     for (loopJ = g_curUIMap->win_lt_x-1; loopJ <= x; loopJ++) {
-        mvwaddch(g_rootUIWin->window, y, loopJ, ch);
+        mvwaddch(g_rootUIWindow->win, y, loopJ, ch);
     }
 
     /* 四个角处理 */
     /* 左上角 */
     if (0 == g_curUIMap->addr_lt_x || 0 == g_curUIMap->addr_lt_y) {
-        mvwaddch(g_rootUIWin->window, g_curUIMap->win_lt_y-1, g_curUIMap->win_lt_x-1, ACS_ULCORNER);
+        mvwaddch(g_rootUIWindow->win, g_curUIMap->win_lt_y-1, g_curUIMap->win_lt_x-1, ACS_ULCORNER);
     }
     /* 左下角 */
     if (0 == g_curUIMap->addr_lt_x || g_curUIMap->addr_rb_y == g_curUIMap->height-1) {
-        mvwaddch(g_rootUIWin->window, g_curUIMap->win_rb_y+1, g_curUIMap->win_lt_x-1, ACS_LLCORNER);
+        mvwaddch(g_rootUIWindow->win, g_curUIMap->win_rb_y+1, g_curUIMap->win_lt_x-1, ACS_LLCORNER);
     }
     /* 右上角 */
     if (g_curUIMap->addr_rb_x == g_curUIMap->width-1 || 0 == g_curUIMap->addr_lt_y) {
-        mvwaddch(g_rootUIWin->window, g_curUIMap->win_lt_y-1, g_curUIMap->win_rb_x+1, ACS_URCORNER);
+        mvwaddch(g_rootUIWindow->win, g_curUIMap->win_lt_y-1, g_curUIMap->win_rb_x+1, ACS_URCORNER);
     }
     /* 右下角 */
     if (g_curUIMap->addr_rb_x == g_curUIMap->width-1 || g_curUIMap->addr_rb_y == g_curUIMap->height-1) {
-        mvwaddch(g_rootUIWin->window, g_curUIMap->win_rb_y+1, g_curUIMap->win_rb_x+1, ACS_LRCORNER);
+        mvwaddch(g_rootUIWindow->win, g_curUIMap->win_rb_y+1, g_curUIMap->win_rb_x+1, ACS_LRCORNER);
     }
 
     //int x, y; 屏幕上的坐标
@@ -177,9 +176,9 @@ void UIDrawMap() {
             _y = g_curUIMap->addr_lt_y + (y - g_curUIMap->win_lt_y);
             poi = MAP_ADDR(_x, _y, g_curUIMap->width);
             if (0 == g_curUIMap->nodes[poi].resourse) {
-                mvwaddch(g_rootUIWin->window, y, x, ' ');
+                mvwaddch(g_rootUIWindow->win, y, x, ' ');
             } else {
-                mvwaddch(g_rootUIWin->window, y, x, g_curUIMap->nodes[poi].resourse->v);
+                mvwaddch(g_rootUIWindow->win, y, x, g_curUIMap->nodes[poi].resourse->v);
             }
         }
     }

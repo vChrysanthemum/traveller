@@ -1,6 +1,7 @@
 #include "core/util.h"
 #include "core/config.h"
 #include "core/zmalloc.h"
+#include "script/script.h"
 #include "script/galaxies.h"
 #include "script/db.h"
 #include "script/net.h"
@@ -8,11 +9,8 @@
 #include "netcmd/netcmd.h"
 #include "ui/ui.h"
 
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-
 extern struct config *g_conf;
+extern char g_basedir[];
 
 extern lua_State *g_srvLuaSt;
 extern sqlite3 *g_srvDB;
@@ -24,7 +22,38 @@ extern char g_cliGalaxydir[ALLOW_PATH_SIZE];
 extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 /* 基础部分初始化 */
-static void STInit(lua_State **L, char *dir) {
+int STInit() {
+    struct configOption *confOpt;
+    char tmpstr[ALLOW_PATH_SIZE] = {""};
+
+    /* 游戏服务端初始化 */
+    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
+    if (confOpt) {
+
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            TrvExit(0, "星系文件地址太长");
+        }
+        confOptToStr(confOpt, tmpstr);
+        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        STServerInit();
+    }
+
+    /* 游戏客户端初始化 */
+    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
+    if (confOpt) {
+
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            TrvExit(0, "星系文件地址太长");
+        }
+        confOptToStr(confOpt, tmpstr);
+        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        STClientInit();
+    }
+
+    return ERRNO_OK;
+}
+
+static void STInitLua(lua_State **L, char *dir) {
     int errno;
 
     *L = luaL_newstate();
@@ -49,7 +78,7 @@ static void STInit(lua_State **L, char *dir) {
 
 /* 服务端模式初始化 */
 void STServerInit() {
-    STInit(&g_srvLuaSt, g_srvGalaxydir);
+    STInitLua(&g_srvLuaSt, g_srvGalaxydir);
 
     char *filepath = (char *)zmalloc(ALLOW_PATH_SIZE);
     memset(filepath, 0, ALLOW_PATH_SIZE);
@@ -85,7 +114,7 @@ void STServerInit() {
 
 /* 客户端模式初始化 */
 void STClientInit() {
-    STInit(&g_cliLuaSt, g_cliGalaxydir);
+    STInitLua(&g_cliLuaSt, g_cliGalaxydir);
     char tmpstr[64];
     char galaxiesSrvHost[128];
     int galaxiesSrvPort;

@@ -1,64 +1,82 @@
 #ifndef __UI_UI_H
 #define __UI_UI_H
 
+#include <panel.h>
 #include <ncurses.h>
+#include "core/sds.h"
+#include "core/zmalloc.h"
+#include "ui/map.h"
+#include "ui/color.h"
 
 #define UIMoveUICursorLeft(count) do {\
-    g_cursor->x -= count;\
-    if (g_cursor->x < 0) {\
-        UIMoveCurMapX(g_cursor->x);\
-        g_cursor->x = 0;\
+    ui_env->cursor_x -= count;\
+    if (ui_env->cursor_x < 0) {\
+        UIMoveCurMapX(ui_env->cursor_x);\
+        ui_env->cursor_x = 0;\
     }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
+    wmove(g_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
 } while(0);
 
 #define UIMoveUICursorRight(count) do {\
-    g_cursor->x += count;\
-    if (g_cursor->x > g_rootUIWin->width) {\
-        UIMoveCurMapX(g_cursor->x - g_rootUIWin->width);\
-        g_cursor->x = g_rootUIWin->width;\
+    ui_env->cursor_x += count;\
+    if (ui_env->cursor_x > g_rootUIWindow->width) {\
+        UIMoveCurMapX(ui_env->cursor_x - g_rootUIWindow->width);\
+        ui_env->cursor_x = g_rootUIWindow->width;\
     }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
+    wmove(g_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
 } while(0);
 
 #define UIMoveUICursorUp(count) do {\
-    g_cursor->y -= count;\
-    if (g_cursor->y < 0) {\
-        UIMoveCurMapY(g_cursor->y);\
-        g_cursor->y = 0;\
+    ui_env->cursor_y -= count;\
+    if (ui_env->cursor_y < 0) {\
+        UIMoveCurMapY(ui_env->cursor_y);\
+        ui_env->cursor_y = 0;\
     }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
+    wmove(g_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
 } while(0);
 
 #define UIMoveUICursorDown(count) do {\
-    g_cursor->y += count;\
-    if (g_cursor->y > g_rootUIWin->height) {\
-        UIMoveCurMapY(g_cursor->y - g_rootUIWin->height);\
-        g_cursor->y = g_rootUIWin->height;\
+    ui_env->cursor_y += count;\
+    if (ui_env->cursor_y > g_rootUIWindow->height) {\
+        UIMoveCurMapY(ui_env->cursor_y - g_rootUIWindow->height);\
+        ui_env->cursor_y = g_rootUIWindow->height;\
     }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
+    wmove(g_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
 } while(0);
 
+#define UI_MAX_PANELS 32;
+
 typedef struct {
-    int x;
-    int y;
-    int number;
+    int ch;
+    int cursor_x;
+    int cursor_y;
+    int number;          /* 已输入的数字*/
     char snumber[8];     /* 已输入的数字 */
     int snumber_len;
-} UICursor;
-
-enum UIWinMode {gamer_mode, pick_mode};
+} UIEnv;
 
 typedef struct {
     int height;         /* 行数 */
-    int width;            /* 列数 */
+    int width;          /* 列数 */
     int startx;
     int starty;
-    int ch;
-    enum UIWinMode mode;
-    WINDOW *window;
-} UIWin;
+    WINDOW *win;
+    PANEL *panel;
+} UIWindow;
 
-void UIInit();
+UIWindow* UIcreateWindow(int height, int width, int starty, int startx);
+
+int UIInit();
+
+typedef struct {
+    char *name;
+} UIconsoleTab;
+
+typedef struct {
+    UIWindow     *uiwin;
+    UIconsoleTab *main_tab;
+} UIConsole;
+
+void UIinitConsole();
 
 #endif
