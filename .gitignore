@@ -5,3 +5,5 @@
 *.DS_Store
 *.log
 */tags
+tests/win
+tests/t

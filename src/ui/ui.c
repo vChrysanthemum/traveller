@@ -1,8 +1,6 @@
 #include <stdio.h>
-#include <ncurses.h>
 #include <panel.h>
 #include <string.h>
-#include <pthread.h>
 
 #include "core/adlist.h"
 #include "core/util.h"
@@ -31,8 +29,7 @@ static void initRootUIWindow() {
     keypad(g_rootUIWindow->win, TRUE);
 }
 
-static void* uiLoop(void* _) {
-
+static void uiLoop() {
     while(1) {
         ui_env->ch = getch();
         if ('0' <= ui_env->ch && ui_env->ch <= '9') {
@@ -79,8 +76,6 @@ static void* uiLoop(void* _) {
     }
 
     endwin();
-
-    return 0;
 }
 
 int UIInit() {
@@ -89,6 +84,7 @@ int UIInit() {
 
     ui_panels = listCreate();
 
+    setlocale(LC_ALL, "");  
     initscr();
     clear();
     cbreak();
@@ -121,8 +117,7 @@ int UIInit() {
     wrefresh(ui_console->uiwin->win);
 
     /* 循环 */
-    pthread_t ntid;
-    pthread_create(&ntid, NULL, uiLoop, NULL);
+    uiLoop();
 
     return ERRNO_OK;
 }

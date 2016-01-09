@@ -11,7 +11,7 @@ traveller一个 All-In-One 的游戏，它集合了服务端和客户端，你�
 2-2. 玩家可以通过编程，自己实现一个星系，然后和其他星系互相承认、互相移民      
 
 技术概要:      
-关键词:c lua sqlite ncurses redis     
+关键词:c lua sqlite curses redis     
 
 3-1. 星系编写:用 lua 编写星系相关逻辑     
 
@@ -22,7 +22,7 @@ traveller一个 All-In-One 的游戏，它集合了服务端和客户端，你�
 3-3. 线程:运行后分两个线程，一个处理网络和事件，一个处理UI     
   
 安装与运行:     
-4-1. 首先要安装 libcurses，我安装到了 /usr/local/lib/libncurses.a，所以src/makefile，里根据你安装的位置重新设置一下     
+4-1. 首先要安装 libcurses 
 4-2. 进入 deps/lua ，然后 make macosx （根据你的操作系统make，譬如linux等）       
 4-3. 进入 galaxies/gemini/server 然后按照install.sql 生成sqlite数据库文件sqlite.db      
 4-4. 进入 src/ ，然后make   

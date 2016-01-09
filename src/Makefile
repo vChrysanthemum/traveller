@@ -31,7 +31,7 @@ ALL_INCS= -I ./ \
 		  -I ../deps/sqlite/ 
 
 STD=-g -Wall
-LIBRARY= /usr/local/lib/libncurses.a /usr/local/lib/libpanel.a ../deps/lua/src/liblua.a 
+LIBRARY= -lcurses /usr/local/lib/libpanel.a ../deps/lua/src/liblua.a 
 CFLAGS=$(STD)
 CC:=gcc
 #CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc') $(CFLAGS)

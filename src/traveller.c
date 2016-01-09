@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h> 
 #include <locale.h>
+#include <pthread.h>
 
 #include "core/config.h"
 #include "core/zmalloc.h"
@@ -59,6 +60,23 @@ int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     g_server.unixtime = time(NULL);
     TrvLogI("serverCron");
     return 0;
+}
+
+//循环处理事件
+static void* eventLoop(void* _) {
+    /*
+    if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
+        TrvLogE("Can't create the serverCron time event.");
+        exit(1);
+    }
+    */
+
+    //aeSetBeforeSleepProc(g_server.el, beforeSleep);
+
+    aeMain(g_server.el);
+    aeDeleteEventLoop(g_server.el);
+
+    return NULL;
 }
 
 int main(int argc, char *argv[]) {
@@ -120,26 +138,19 @@ int main(int argc, char *argv[]) {
         TrvExit(0, "初始化网络失败");
     }
 
-    //开启界面
-    if (ERRNO_ERR == UIInit()) {
-        TrvExit(0, "初始化UI失败");
-    }
-
     //开启脚本支持
     if (ERRNO_ERR == STInit()) {
         TrvExit(0, "初始化UI失败");
     }
 
-    /*
-    if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
-        TrvLogE("Can't create the serverCron time event.");
-        exit(1);
+    /* 循环 */
+    pthread_t ntid;
+    pthread_create(&ntid, NULL, eventLoop, NULL);
+
+    //开启界面，并阻塞在 uiLoop
+    if (ERRNO_ERR == UIInit()) {
+        TrvExit(0, "初始化UI失败");
     }
-    */
 
-    //aeSetBeforeSleepProc(g_server.el, beforeSleep);
-
-    aeMain(g_server.el);
-    aeDeleteEventLoop(g_server.el);
     return 0;
 }

@@ -2,7 +2,7 @@
 #define __UI_UI_H
 
 #include <panel.h>
-#include <ncurses.h>
+#include <curses.h>
 #include "core/sds.h"
 #include "core/zmalloc.h"
 #include "ui/map.h"

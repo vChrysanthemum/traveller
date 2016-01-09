@@ -1,5 +1,4 @@
 #include <string.h>
-#include <ncurses.h>
 
 #include "core/zmalloc.h"
 #include "core/util.h"
