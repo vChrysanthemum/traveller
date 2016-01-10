@@ -26,6 +26,42 @@
 /* 根据x,y，返回map上节点键值 */
 #define MAP_ADDR(x, y, width) (y * width + x)
 
+#define UIMoveUICursorLeft(count) do {\
+    ui_env->cursor_x -= count;\
+    if (ui_env->cursor_x < 0) {\
+        UIMoveCurMapX(ui_env->cursor_x);\
+        ui_env->cursor_x = 0;\
+    }\
+    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+} while(0);
+
+#define UIMoveUICursorRight(count) do {\
+    ui_env->cursor_x += count;\
+    if (ui_env->cursor_x > ui_rootUIWindow->width) {\
+        UIMoveCurMapX(ui_env->cursor_x - ui_rootUIWindow->width);\
+        ui_env->cursor_x = ui_rootUIWindow->width;\
+    }\
+    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+} while(0);
+
+#define UIMoveUICursorUp(count) do {\
+    ui_env->cursor_y -= count;\
+    if (ui_env->cursor_y < 0) {\
+        UIMoveCurMapY(ui_env->cursor_y);\
+        ui_env->cursor_y = 0;\
+    }\
+    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+} while(0);
+
+#define UIMoveUICursorDown(count) do {\
+    ui_env->cursor_y += count;\
+    if (ui_env->cursor_y > ui_rootUIWindow->height) {\
+        UIMoveCurMapY(ui_env->cursor_y - ui_rootUIWindow->height);\
+        ui_env->cursor_y = ui_rootUIWindow->height;\
+    }\
+    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+} while(0);
+
 /* 地图上的物体 */
 typedef struct {
     char v;                 /* 显示出来的字符 */

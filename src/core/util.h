@@ -58,6 +58,7 @@ unsigned int dictSdsCaseHash(const void *key);
 unsigned int dictStringCaseHash(const void *key);
 int dictStringCompare(void *privdata, const void *key1,
         const void *key2);
+int utf8StrWidth (char *str);
 
 #define ALLOW_PATH_SIZE 256
 

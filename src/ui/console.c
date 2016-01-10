@@ -1,16 +1,18 @@
+#include <string.h>
 #include "ui/ui.h"
 #include "extern.h"
 
-static void renderTabs() {
-    WINDOW *win = ui_console->uiwin->win;
+static WINDOW   *win;
+static UICursor *cursor;
+static UIConsoleCommand *cmd;
 
+static void renderTabs() {
     wattron(win, COLOR_PAIR(CP_CONSOLE_TAB_BG));
     for (int i = 0; i < ui_width; i++) {
         mvwaddch(win, 0, i, ' ');
     }
     wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB_BG));
 
-    TrvLogD("hi");
     wmove(win, 0, 0);
 
     listNode *node;
@@ -36,33 +38,92 @@ static void renderTabs() {
         }
     }
     listReleaseIterator(iter);
+
+    wmove(win, cursor->y, cursor->x);
+}
+
+static void cmdAddch(int ch) {
+    mvwaddch(win, cursor->y, cursor->x, ch);
+
+    if ('\n' == ch || cursor->x >= ui_width-1) {
+        cursor->y++;
+        cursor->x = 0;
+    } else {
+        cursor->x++;
+    }
+}
+
+static void cmdPrintw(char *str) {
+    mvwprintw(win, cursor->y, cursor->x, str);
+
+    int str_width = utf8StrWidth(str);
+    if (cursor->x + str_width >= ui_width) {
+        cursor->y++;
+        cursor->x = cursor->x + str_width - ui_width;
+
+    } else {
+        cursor->x += str_width;
+    }
+
+    wmove(win, cursor->y, cursor->x);
+}
+
+static void keyDownProcessorCmdMode (int ch) {
+    cmd->line = sdscatlen(cmd->line, &ch, 1);
+    if (ch < 0) {
+        cursor->utf8charPoi++;
+        if (cursor->utf8charPoi >= 2) {
+            cursor->utf8char[cursor->utf8charPoi] = ch;
+            cmdPrintw(cursor->utf8char);
+            cursor->utf8charPoi = -1;
+
+        } else {
+            cursor->utf8char[cursor->utf8charPoi] = ch;
+        }
+
+    } else {
+        cmdAddch(ch);
+    }
 }
 
 static void keyDownProcessor (int ch) {
-    wrefresh(ui_console->uiwin->win);
+    switch(ui_console->mode) {
+        case CONSOLE_MODE_CMD:
+            keyDownProcessorCmdMode(ch);
+            break;
+    }
+
+    wrefresh(win);
+}
+
+static void prepareCmdMode() {
+    cmdPrintw(cmd->header);
+    cmdAddch(' ');
+    ui_console->mode = CONSOLE_MODE_CMD;
 }
 
 void UIinitConsole() {
     ui_console = (UIConsole*)zmalloc(sizeof(UIConsole));
 
     ui_console->uiwin = UIcreateWindow(6, ui_width, ui_height-6, 0);
+    ui_console->cursor.y = 1;
+    ui_console->cursor.x = 0;
+    ui_console->cmd.line = sdsempty();
+    ui_console->cmd.header = sdsnew("野马号$");
 
+    memset(ui_console->cursor.utf8char, 0, 4*sizeof(char));
+    ui_console->cursor.utf8charPoi = -1;
+
+    win = ui_console->uiwin->win;
+    cursor = &ui_console->cursor;
+    cmd = &ui_console->cmd;
+
+    prepareCmdMode();
     UISubscribeKeyDownEvent((UIKeyDownProcessor)keyDownProcessor);
 
-    UIPage *page;
-    page = UINewPage("雷达");
-    mvwprintw(page->uiwin->win, 2, 2, "我是雷达");
-    UINewPage("飞船");
-    ui_activePage = page;
-    UIreRenderConsole();
-
-    wrefresh(ui_console->uiwin->win);
+    wrefresh(win);
 }
 
 void UIreRenderConsole() {
-    WINDOW *win = ui_console->uiwin->win;
-
     renderTabs();
-
-    mvwprintw(win, 1, 0, ":Ground control to major Tom.");
 }

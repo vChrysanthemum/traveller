@@ -76,11 +76,20 @@ int UIInit() {
     UIinitColor();
 
     UIinitConsole();
-    UIInitMap();
+    //UIInitMap();
 
     top_panel(ui_console->uiwin->panel);
     update_panels();
     doupdate();
+
+    UIPage *page;
+    page = UINewPage("地图");
+    mvwprintw(page->uiwin->win, 2, 2, "");
+    UINewPage("飞船");
+    ui_activePage = page;
+    UIreRenderConsole();
+
+    wrefresh(ui_console->uiwin->win);
 
     uiLoop();
 

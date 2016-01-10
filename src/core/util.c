@@ -1,8 +1,9 @@
+#include <execinfo.h>
+#include <string.h>
+
 #include "core/util.h"
 #include "core/dict.h"
 #include "core/sds.h"
-
-#include <execinfo.h>
 
 dictType stackStringTableDictType = {
     dictStringCaseHash,        /* hash function */
@@ -62,8 +63,7 @@ sds fileGetContent(char *path) {
     return content;
 }
 
-void dump(void)
-{
+void dump(void) {
     int j, nptrs;
     void *buffer[100];
     char **strings;
@@ -77,4 +77,24 @@ void dump(void)
     for (j = 0; j < nptrs; j++)
         TrvLogI("[%02d] %s", j, strings[j]);
     free(strings);
+}
+
+//获取 utf8 字符串占用屏幕宽度
+int utf8StrWidth (char *str) {
+    int result = 0;
+    int str_len = strlen(str);
+    int utf8num = 0;
+    for (int i = 0; i < str_len; i++) {
+        if (str[i] < 0) {
+            utf8num++;
+            if (utf8num >= 3) {
+                result += 2;
+                utf8num = 0;
+            }
+        } else {
+            result++;
+        }
+    }
+
+    return result;
 }
