@@ -22,8 +22,7 @@ travellerobjects = ./traveller.o \
 				   ./script/db.o \
 				   ./script/net.o \
 				   ./ui/ui.o \
-				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o \
-				   ./spaceship/spaceship.o
+				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o
 
 
 ALL_INCS= -I ./ \

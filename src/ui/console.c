@@ -1,12 +1,7 @@
 #include "ui/ui.h"
+#include "extern.h"
 
-extern UIConsole *ui_console;
-extern int ui_width, ui_height;
-
-void UIinitConsole() {
-    ui_console = (UIConsole*)zmalloc(sizeof(UIConsole));
-    ui_console->uiwin = UIcreateWindow(4, ui_width, ui_height-4, 0);
-
+static void renderTabs() {
     WINDOW *win = ui_console->uiwin->win;
 
     wattron(win, COLOR_PAIR(CP_CONSOLE_TAB_BG));
@@ -15,17 +10,59 @@ void UIinitConsole() {
     }
     wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB_BG));
 
-    sds tab_spaceship = sdsnew(" 飞船 ");
+    TrvLogD("hi");
+    wmove(win, 0, 0);
 
-    wattron(win, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
-    mvwprintw(win, 0, 1, tab_spaceship);
-    wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
+    listNode *node;
+    UIPage *page;
+    listIter *iter = listGetIterator(ui_pages, AL_START_HEAD);
+    while (NULL != (node = listNext(iter))) {
+        page = (UIPage*)node->value;
 
-    sds tab_map = sdsnew(" 地图 ");
+        if (page == ui_activePage) {
+            wattron(win, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
+        } else {
+            wattron(win, COLOR_PAIR(CP_CONSOLE_TAB));
+        }
 
-    wattron(win, COLOR_PAIR(CP_CONSOLE_TAB));
-    wprintw(win, tab_map);
-    wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB));
+        wprintw(win, " ");
+        wprintw(win, page->title);
+        wprintw(win, " ");
+
+        if (page == ui_activePage) {
+            wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
+        } else {
+            wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB));
+        }
+    }
+    listReleaseIterator(iter);
+}
+
+static void keyDownProcessor (int ch) {
+    wrefresh(ui_console->uiwin->win);
+}
+
+void UIinitConsole() {
+    ui_console = (UIConsole*)zmalloc(sizeof(UIConsole));
+
+    ui_console->uiwin = UIcreateWindow(6, ui_width, ui_height-6, 0);
+
+    UISubscribeKeyDownEvent((UIKeyDownProcessor)keyDownProcessor);
+
+    UIPage *page;
+    page = UINewPage("雷达");
+    mvwprintw(page->uiwin->win, 2, 2, "我是雷达");
+    UINewPage("飞船");
+    ui_activePage = page;
+    UIreRenderConsole();
+
+    wrefresh(ui_console->uiwin->win);
+}
+
+void UIreRenderConsole() {
+    WINDOW *win = ui_console->uiwin->win;
+
+    renderTabs();
 
     mvwprintw(win, 1, 0, ":Ground control to major Tom.");
 }

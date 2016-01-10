@@ -15,10 +15,6 @@
 /* Anti-warning macro... */
 #define NOTUSED(V) ((void) V)
 
-#define ERRNO_OK    0
-#define ERRNO_ERR   -500
-#define ERRNO_NULL  -404
-
 extern FILE* g_logF;
 
 #define TrvLog_ERROR 1

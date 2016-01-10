@@ -5,6 +5,7 @@
 #include <locale.h>
 #include <pthread.h>
 
+#include "core/errors.h"
 #include "core/config.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
@@ -42,8 +43,6 @@ int g_logFInt;
 struct config *g_conf;
 
 /* UI部分 */
-UIWindow *g_rootUIWindow;
-UIMap *g_curUIMap;
 
 /* 服务端模式所需变量 */
 char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */

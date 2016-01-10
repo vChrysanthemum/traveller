@@ -7,82 +7,62 @@
 #include "core/sds.h"
 #include "ui/ui.h"
 
-extern UIWindow *g_rootUIWindow;
-extern UIMap *g_curUIMap;
+UIWindow *ui_rootUIWindow;
+UIMap *ui_curUIMap;
 
 UIEnv *ui_env;
 list *ui_panels;
 UIConsole *ui_console;
 int ui_width, ui_height; //屏幕宽度、高度
+list *ui_pages;
+UIPage *ui_activePage;
 
-static void initRootUIWindow() {
-    g_rootUIWindow = UIcreateWindow(ui_height-5, ui_width, 0, 0);
-
-    ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
-    ui_env->number = 1;
-    ui_env->snumber[0] = 0;
-    ui_env->snumber_len = 0;
-
-    getmaxyx(stdscr, g_rootUIWindow->height, g_rootUIWindow->width);
-    //g_rootUIWindow->height--; /* 最后一行不可写 */
-    //g_rootUIWindow->width--; /* 最后一列不可写 */
-    keypad(g_rootUIWindow->win, TRUE);
-}
+static list *keyDownProcessors;
 
 static void uiLoop() {
     while(1) {
         ui_env->ch = getch();
-        if ('0' <= ui_env->ch && ui_env->ch <= '9') {
-            if (ui_env->snumber_len > 6) {
-                continue;
-            }
 
-            ui_env->snumber[ui_env->snumber_len] = ui_env->ch;
-            ui_env->snumber_len++;
-            ui_env->snumber[ui_env->snumber_len] = 0;
-
-            continue;
+        UIKeyDownProcessor proc;
+        listNode *node;
+        listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
+        while (NULL != (node = listNext(iter))) {
+            proc = (UIKeyDownProcessor)node->value;
+            proc(ui_env->ch);
         }
-        else if(ui_env->snumber_len > 0) {
-            ui_env->number = atoi(ui_env->snumber);
-            ui_env->snumber_len = 0;
-            ui_env->snumber[0] = 0;
-        }
-
-
-        if (KEY_UP == ui_env->ch || 'k' == ui_env->ch) {
-            UIMoveUICursorUp(ui_env->number);
-        }
-
-        else if (KEY_DOWN == ui_env->ch || 'j' == ui_env->ch) {
-            UIMoveUICursorDown(ui_env->number);
-        }
-
-        else if (KEY_LEFT == ui_env->ch || 'h' == ui_env->ch) {
-            UIMoveUICursorLeft(ui_env->number);
-        }
-
-        else if (KEY_RIGHT == ui_env->ch || 'l' == ui_env->ch) {
-            UIMoveUICursorRight(ui_env->number);
-        }
-
-        ui_env->number = 1;
-
-        if (KEY_F(1) == ui_env->ch) break; /* ESC */ 
-
-        refresh();
-        wrefresh(g_rootUIWindow->win);
-        wrefresh(ui_console->uiwin->win);
+        listReleaseIterator(iter);
     }
 
     endwin();
 }
 
-int UIInit() {
-    sds mapJSON;
-    char dir[ALLOW_PATH_SIZE] = {""};
+int UISubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+    keyDownProcessors = listAddNodeTail(keyDownProcessors, subscriber);
+    return ERRNO_OK;
+}
 
+int UIUnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+    listNode *node;
+    listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
+    while (NULL != (node = listNext(iter))) {
+        if (subscriber == node->value) {
+            listDelNode(keyDownProcessors, node);
+            break;
+        }
+    }
+    listReleaseIterator(iter);
+    return ERRNO_OK;
+}
+
+int UIInit() {
     ui_panels = listCreate();
+    ui_pages = listCreate();
+    keyDownProcessors = listCreate();
+
+    ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
+    ui_env->number = 1;
+    ui_env->snumber[0] = 0;
+    ui_env->snumber_len = 0;
 
     setlocale(LC_ALL, "");  
     initscr();
@@ -95,29 +75,15 @@ int UIInit() {
 
     UIinitColor();
 
-    initRootUIWindow();
-
     UIinitConsole();
+    UIInitMap();
 
-    /* 画首幅地图 */
-    //sprintf(dir, "%s/arctic.map.json", m_galaxiesdir);
-    sprintf(dir, "/Users/j/github/my/traveller/galaxies/gemini/client/arctic.map.json");
-    mapJSON = fileGetContent(dir);
-    g_curUIMap = UIParseMap(mapJSON);
+    top_panel(ui_console->uiwin->panel);
+    update_panels();
+    doupdate();
 
-    UIDrawMap();
-
-    /* 光标置中 */
-    ui_env->cursor_x = g_rootUIWindow->width / 2;
-    ui_env->cursor_y = g_rootUIWindow->height / 2;
-    wmove(g_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);
-
-    refresh();
-    wrefresh(g_rootUIWindow->win);
-    wrefresh(ui_console->uiwin->win);
-
-    /* 循环 */
     uiLoop();
 
     return ERRNO_OK;
+
 }

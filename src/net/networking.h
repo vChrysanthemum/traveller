@@ -1,6 +1,7 @@
 #ifndef __NET_NETWORKING_H
 #define __NET_NETWORKING_H
 
+#include "core/errors.h"
 #include "core/adlist.h"
 #include "core/sds.h"
 #include "core/dict.h"

@@ -12,6 +12,9 @@ UIWindow* UIcreateWindow(int height, int width, int starty, int startx) {
     win->width = width;
     win->win = newwin(height, width, starty, startx);
     win->panel = new_panel(win->win);
-    listAddNodeTail(ui_panels, win->panel);
+    ui_panels = listAddNodeTail(ui_panels, win->panel);
     return win;
+}
+
+void UIUpdateWindow() {
 }
