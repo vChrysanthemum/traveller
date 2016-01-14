@@ -8,11 +8,12 @@
 #include "core/zmalloc.h"
 #include "core/util.h"
 #include "net/networking.h"
-#include "net/ae.h"
 #include "net/anet.h"
+#include "event/ae.h"
 #include "netcmd/netcmd.h"
 
-extern struct NTServer g_server;
+extern NTServer g_server;
+extern aeEventLoop *g_el;
 extern dictType stackStringTableDictType;
 
 static void setProtocolError(NTSnode *sn, int pos);
@@ -83,7 +84,7 @@ static NTSnode* snodeArgvClear(NTSnode *sn) {
 static void prepareNTSnodeToWrite(NTSnode *sn) {
     if (sn->is_write_mod) return;
 
-    aeCreateFileEvent(g_server.el, sn->fd, AE_WRITABLE, sendReplyToNTSnode, sn);
+    aeCreateFileEvent(g_el, sn->fd, AE_WRITABLE, sendReplyToNTSnode, sn);
     sn->is_write_mod = 1;
 }
 
@@ -102,7 +103,7 @@ static void sendReplyToNTSnode(aeEventLoop *el, int fd, void *privdata, int mask
     if (bufpos > 0) sdsrange(sn->writebuf, bufpos, -1);
 
     if (0 == sdslen(sn->writebuf)) {
-        aeDeleteFileEvent(g_server.el, sn->fd, AE_WRITABLE);
+        aeDeleteFileEvent(g_el, sn->fd, AE_WRITABLE);
         sn->is_write_mod = 0;
 
         if (sn->flags & SNODE_CLOSE_AFTER_REPLY) NTFreeNTSnode(sn);
@@ -593,7 +594,7 @@ static NTSnode* createNTSnode(int fd) {
     anetEnableTcpNoDelay(NULL,fd);
     if (g_server.tcpkeepalive)
         anetKeepAlive(NULL,fd,g_server.tcpkeepalive);
-    if (aeCreateFileEvent(g_server.el,fd,AE_READABLE,
+    if (aeCreateFileEvent(g_el,fd,AE_READABLE,
                 readQueryFromNTSnode, sn) == AE_ERR)
     {
         close(fd);
@@ -624,8 +625,8 @@ void NTFreeNTSnode(NTSnode *sn) {
     TrvLogD("Free NTSnode %d", sn->fd);
 
     if (-1 != sn->fd) {
-        aeDeleteFileEvent(g_server.el, sn->fd, AE_READABLE);
-        aeDeleteFileEvent(g_server.el, sn->fd, AE_WRITABLE);
+        aeDeleteFileEvent(g_el, sn->fd, AE_READABLE);
+        aeDeleteFileEvent(g_el, sn->fd, AE_WRITABLE);
         close(sn->fd);
     }
 
@@ -725,7 +726,7 @@ static int listenToPort() {
     if (0 == g_server.ipfd_count) return ERRNO_ERR;
 
     for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
-        if (aeCreateFileEvent(g_server.el, g_server.ipfd[loopJ], AE_READABLE,
+        if (aeCreateFileEvent(g_el, g_server.ipfd[loopJ], AE_READABLE,
                     acceptTcpHandler,NULL) == AE_ERR) {
             TrvLogE("Unrecoverable error creating g_server.ipfd file event.");
         }
@@ -750,7 +751,6 @@ NTSnode* NTGetNTSnodeByFDS(const char *fds) {
 int NTInit(int listenPort) {
     g_server.unixtime = -1;
     g_server.max_snodes = TRV_NET_MAX_SNODE;
-    g_server.el = aeCreateEventLoop(g_server.max_snodes);
 
     g_server.bindaddr = "0.0.0.0";
     g_server.port = listenPort;

@@ -8,7 +8,7 @@
 /* 向星系发送命令请求
  * argv[0]
  */
-void galaxiesCommand(struct NTSnode_s *sn) {
+void galaxiesCommand(NTSnode *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
     int errno;

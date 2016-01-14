@@ -99,9 +99,9 @@ static int parseOptionValueAndSkip(char **ptr) {
     return n;
 }
 
-static int configGetReturnId(struct config *conf, char *section, char *option) {
+static int configGetReturnId(config *conf, char *section, char *option) {
     int j;
-    struct configOption* opt;
+    configOption* opt;
     for (j = 0; j < conf->optionsCount; j++) {
         opt = conf->options[j];
 
@@ -120,21 +120,21 @@ static int configGetReturnId(struct config *conf, char *section, char *option) {
 }
 
 
-struct config *initConfig() {
-    struct config *conf;
-    conf = zmalloc(sizeof(struct config));
-    memset(conf, 0, sizeof(struct config));
+config *initConfig() {
+    config *conf;
+    conf = zmalloc(sizeof(config));
+    memset(conf, 0, sizeof(config));
     return conf;
 }
 
-void configRead(struct config *conf, char *path) {
+void configRead(config *conf, char *path) {
     FILE* fp; 
     long len;
     char *content, *ptr;
     int currentContentId, sectionLen=0, id;
     char* section = NULL;
     char tmpSection[512] = "", tmpOption[512] = "";
-    struct configOption *opt = NULL;
+    configOption *opt = NULL;
 
     fp = fopen(path, "r");
     if (fp == NULL) {
@@ -161,7 +161,7 @@ void configRead(struct config *conf, char *path) {
     ptr = content;
 
     while (0 != *ptr) {
-        opt = (struct configOption*)zmalloc(sizeof(struct configOption));
+        opt = (configOption*)zmalloc(sizeof(configOption));
 
         skipCommenting(&ptr);
 
@@ -197,7 +197,7 @@ void configRead(struct config *conf, char *path) {
         id = configGetReturnId(conf, tmpSection, tmpOption);
         if (id < 0) {
             conf->optionsCount += 1;
-            conf->options = (struct configOption**)realloc(conf->options, sizeof(struct configOption**) * conf->optionsCount);
+            conf->options = (configOption**)realloc(conf->options, sizeof(configOption**) * conf->optionsCount);
             conf->options[conf->optionsCount-1] = opt;
         } else {
             free(conf->options[id]);
@@ -207,7 +207,7 @@ void configRead(struct config *conf, char *path) {
     }
 }
 
-struct configOption* configGet(struct config *conf, char *section, char *option) {
+configOption* configGet(config *conf, char *section, char *option) {
     int j = configGetReturnId(conf, section, option);
     if (-1 == j) {
         return NULL;
@@ -215,7 +215,7 @@ struct configOption* configGet(struct config *conf, char *section, char *option)
     return conf->options[j];
 }
 
-void releaseConfig(struct config **conf) {
+void releaseConfig(config **conf) {
     int j;
     for (j = 0; j < (*conf)->contentsCount; j++) {
         free((*conf)->options[j]);

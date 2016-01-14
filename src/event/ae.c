@@ -42,20 +42,20 @@
 
 #include "core/zmalloc.h"
 #include "core/util.h"
-#include "net/ae.h"
+#include "event/ae.h"
 
 /* Include the best multiplexing layer supported by this system.
  * The following should be ordered by performances, descending. */
 #ifdef HAVE_EVPORT
-#include "net/ae_evport.c"
+#include "event/ae_evport.c"
 #else
     #ifdef HAVE_EPOLL
-    #include "net/ae_epoll.c"
+    #include "event/ae_epoll.c"
     #else
         #ifdef HAVE_KQUEUE
-        #include "net/ae_kqueue.c"
+        #include "event/ae_kqueue.c"
         #else
-        #include "net/ae_select.c"
+        #include "event/ae_select.c"
         #endif
     #endif
 #endif
@@ -352,6 +352,8 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
 int aeProcessEvents(aeEventLoop *eventLoop, int flags)
 {
     int processed = 0, numevents;
+
+    //强势插入actor事件处理
 
     /* Nothing to do? return ASAP */
     if (!(flags & AE_TIME_EVENTS) && !(flags & AE_FILE_EVENTS)) return 0;

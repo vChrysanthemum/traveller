@@ -5,7 +5,7 @@
 #include "core/adlist.h"
 #include "core/sds.h"
 #include "core/dict.h"
-#include "net/ae.h"
+#include "event/ae.h"
 #include "net/anet.h"
 
 /* networking，分装了所有的网络操作
@@ -43,7 +43,7 @@
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) /* 1GB max query buffer. */
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  /* 发送完信息后，断开连接 */
 
-typedef struct NTSnode_s {
+typedef struct NTSnode {
     int flags;              /* SNODE_CLOSE_AFTER_REPLY | ... */
     int fd;
     char fds[16];           /* 字符串类型的fd */
@@ -62,7 +62,7 @@ typedef struct NTSnode_s {
     int argv_remaining;     /* 正在解析中的参数还有多少字符未获取 -1 为还没开始解析*/
     time_t lastinteraction; /* time of the last interaction, used for timeout */
 
-    void (*proc)(struct NTSnode_s *sn);
+    void (*proc)(struct NTSnode *sn);
     int is_write_mod;       /* 是否已处于写数据模式，避免重复进入写数据模式 */
 } NTSnode;
 
@@ -73,15 +73,14 @@ typedef struct NTSnode_s {
 
 struct TrvCommand {
     char *key;
-    void (*proc)(struct NTSnode_s *sn);
+    void (*proc)(NTSnode *sn);
     int argc;
 };
 
-struct NTServer {
+typedef struct NTServer {
     time_t unixtime;        /* Unix time sampled every cron cycle. */
 
     int max_snodes;
-    aeEventLoop *el;
     char *bindaddr;
     int port;
     int tcp_backlog;
@@ -100,7 +99,7 @@ struct NTServer {
     NTSnode* current_snode;
 
     dict* commands;
-};
+} NTServer;
 
 int NTInit(int port);
 sds NTCatNTSnodeInfoString(sds s, NTSnode *sn);

@@ -7,26 +7,26 @@
 
 #define HAVE_BACKTRACE 1
 
-struct configOption {
+typedef struct configOption {
     char *section;
     int sectionLen;
     char *key;
     int keyLen;
     char *value;
     int valueLen;
-};
+} configOption;
 
-struct config {
+typedef struct config {
     char **contents;
     int contentsCount;
     struct configOption **options;
     int optionsCount;
-};
+} config;
 
-struct config *initConfig();
-void configRead(struct config *conf, char *path);
-struct configOption *configGet(struct config *conf, char *section, char *option);
-void releaseConfig(struct config **conf);
+config *initConfig();
+void configRead(config *conf, char *path);
+configOption *configGet(config *conf, char *section, char *option);
+void releaseConfig(config **conf);
 
 #define confOptToStr(confOpt, result) do {\
     memcpy(result, confOpt->value, confOpt->valueLen);\

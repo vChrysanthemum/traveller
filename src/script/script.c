@@ -9,7 +9,7 @@
 #include "netcmd/netcmd.h"
 #include "ui/ui.h"
 
-extern struct config *g_conf;
+extern config *g_conf;
 extern char g_basedir[];
 
 extern lua_State *g_srvLuaSt;

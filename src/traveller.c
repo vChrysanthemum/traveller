@@ -11,7 +11,7 @@
 #include "core/util.h"
 #include "core/debug.h"
 #include "net/networking.h"
-#include "net/ae.h"
+#include "event/ae.h"
 #include "script/script.h"
 #include "script/galaxies.h"
 #include "ui/ui.h"
@@ -35,12 +35,13 @@
  */
 
 /* 全局变量 */
-struct NTServer g_server;
+aeEventLoop *g_el;
+NTServer g_server;
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char *g_logdir;
 FILE* g_logF;
 int g_logFInt;
-struct config *g_conf;
+config *g_conf;
 
 /* UI部分 */
 
@@ -55,25 +56,27 @@ lua_State *g_cliLuaSt;
 sqlite3 *g_cliDB;
 NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
-int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
+/*
+static int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
     g_server.unixtime = time(NULL);
     TrvLogI("serverCron");
     return 0;
 }
+*/
 
 //循环处理事件
 static void* eventLoop(void* _) {
     /*
-    if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
+    if(aeCreateTimeEvent(g_el, 1, serverCron, NULL, NULL) == AE_ERR) {
         TrvLogE("Can't create the serverCron time event.");
         exit(1);
     }
     */
 
-    //aeSetBeforeSleepProc(g_server.el, beforeSleep);
+    //aeSetBeforeSleepProc(g_el, beforeSleep);
 
-    aeMain(g_server.el);
-    aeDeleteEventLoop(g_server.el);
+    aeMain(g_el);
+    aeDeleteEventLoop(g_el);
 
     return NULL;
 }
@@ -133,6 +136,9 @@ int main(int argc, char *argv[]) {
     setupSignalHandlers();
 
     //开启事件
+    g_el = aeCreateEventLoop(1024*1024);
+
+    //开启网络
     if (ERRNO_ERR == NTInit(listenPort)) {
         TrvExit(0, "初始化网络失败");
     }

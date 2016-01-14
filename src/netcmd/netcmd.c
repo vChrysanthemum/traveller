@@ -3,7 +3,7 @@
 #include "net/networking.h"
 #include "netcmd/netcmd.h"
 
-extern struct NTServer g_server;
+extern NTServer g_server;
 
 dictType commandTableDictType = {
     dictSdsCaseHash,           /* hash function */

@@ -4,7 +4,7 @@
 #include "net/networking.h"
 #include "netcmd/netcmd.h"
 
-void testCommand(struct NTSnode_s *sn) {
+void testCommand(NTSnode *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
     NTAddReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
@@ -16,14 +16,14 @@ void testCommand(struct NTSnode_s *sn) {
     }
 }
 
-void msgCommand(struct NTSnode_s *sn) {
+void msgCommand(NTSnode *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
     TrvLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
     setNTSnodeExcuteCommandFinished(sn);
 }
 
-void closeCommand(struct NTSnode_s *sn) {
+void closeCommand(NTSnode *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
 
     TrvLogD("closed by other people");
