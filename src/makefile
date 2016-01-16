@@ -12,7 +12,7 @@ travellerobjects = ./traveller.o \
 				   ./core/crc64.o \
 				   ./net/anet.o ./net/networking.o \
 				   ./event/ae.o \
-				   ./netcmd/netcmd.o ./netcmd/test.o ./netcmd/galaxies.o \
+				   ./service/service.o ./service/test.o ./service/galaxies.o \
 				   ./script/script.o \
 				   ./script/citizen.o \
 				   ./script/galaxies.o \
@@ -44,7 +44,7 @@ clean:
 	rm -f ./core/*.o
 	rm -f ./net/*.o
 	rm -f ./ui/*.o ./ui/widget/*.o
-	rm -f ./netcmd/*.o
+	rm -f ./service/*.o
 	rm -f ./event/*.o
 	rm -f ./script/*.o
 	rm ./traveller

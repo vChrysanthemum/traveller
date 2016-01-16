@@ -27,3 +27,11 @@ src								traveller源代码
 deps							第三方依赖，src/makefile中将会用到
 readme.md
 ```
+
+#### 模块   
+```
+UI src/ui 
+SV src/service
+ST src/script
+NT src/net
+``` 

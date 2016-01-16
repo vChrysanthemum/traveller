@@ -6,7 +6,7 @@
 #include "script/db.h"
 #include "script/net.h"
 #include "net/networking.h"
-#include "netcmd/netcmd.h"
+#include "service/service.h"
 #include "ui/ui.h"
 
 extern config *g_conf;

@@ -1,11 +1,11 @@
 #include "core/util.h"
 #include "core/dict.h"
 #include "net/networking.h"
-#include "netcmd/netcmd.h"
+#include "service/service.h"
 
 extern NTServer g_server;
 
-dictType commandTableDictType = {
+dictType serviceTableDictType = {
     dictSdsCaseHash,           /* hash function */
     NULL,                      /* key dup */
     NULL,                      /* val dup */
@@ -14,19 +14,19 @@ dictType commandTableDictType = {
     NULL                       /* val destructor */
 };
 
-struct TrvCommand TrvCommandTable[] = {
-    {"galaxies", galaxiesCommand, 0},
-    {"test", testCommand, 0},
-    {"msg", msgCommand, 0},
-    {"close", closeCommand, 0}
+SVServiceRouter SVServiceRouterTable[] = {
+    {"galaxies", SVGalaxies, 0},
+    {"test", SVTest, 0},
+    {"msg", SVMsg, 0},
+    {"close", SVClose, 0}
 };
 
-void initNetCmd() {
+void SVInit() {
     int loopJ, tmpsize;
 
-    g_server.commands = dictCreate(&commandTableDictType, NULL);
-    tmpsize = sizeof(TrvCommandTable) / sizeof(TrvCommandTable[0]);
+    g_server.services = dictCreate(&serviceTableDictType, NULL);
+    tmpsize = sizeof(SVServiceRouterTable) / sizeof(SVServiceRouterTable[0]);
     for (loopJ = 0; loopJ < tmpsize; loopJ++) {
-        dictAdd(g_server.commands, sdsnew(TrvCommandTable[loopJ].key), TrvCommandTable[loopJ].proc);
+        dictAdd(g_server.services, sdsnew(SVServiceRouterTable[loopJ].key), SVServiceRouterTable[loopJ].proc);
     }
 }
