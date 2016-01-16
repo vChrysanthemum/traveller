@@ -11,7 +11,7 @@ travellerobjects = ./traveller.o \
 				   ./core/sha1.o \
 				   ./core/crc64.o \
 				   ./net/anet.o ./net/networking.o \
-				   ./event/ae.o ./event/actor.o \
+				   ./event/device.o ./event/ae.o ./event/actor.o \
 				   ./service/service.o ./service/test.o ./service/galaxies.o \
 				   ./script/script.o \
 				   ./script/citizen.o \

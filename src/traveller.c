@@ -3,7 +3,6 @@
 #include <string.h>
 #include <unistd.h> 
 #include <locale.h>
-#include <pthread.h>
 
 #include "core/errors.h"
 #include "core/config.h"
@@ -11,7 +10,7 @@
 #include "core/util.h"
 #include "core/debug.h"
 #include "net/networking.h"
-#include "event/ae.h"
+#include "event/event.h"
 #include "script/script.h"
 #include "script/galaxies.h"
 #include "ui/ui.h"
@@ -35,7 +34,11 @@
  */
 
 /* 全局变量 */
+ETDevice *g_mainDevice;
+ETDevice *g_fooDevice;
+
 ETLooper *g_el;
+ETDevice *g_netDevice;
 NTServer g_server;
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char *g_logdir;
@@ -63,23 +66,6 @@ static int serverCron(struct ETLooper *eventLoop, long long id, void *clientData
     return 0;
 }
 */
-
-//循环处理事件
-static void* eventLoop(void* _) {
-    /*
-    if(aeCreateTimeEvent(g_el, 1, serverCron, NULL, NULL) == AE_ERR) {
-        TrvLogE("Can't create the serverCron time event.");
-        exit(1);
-    }
-    */
-
-    //aeSetBeforeSleepProc(g_el, beforeSleep);
-
-    ETMain(g_el);
-    ETDeleteLooper(g_el);
-
-    return NULL;
-}
 
 int main(int argc, char *argv[]) {
     struct configOption *confOpt;
@@ -135,8 +121,12 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
 
+    g_mainDevice = ETNewDevice();
+    g_netDevice = ETNewDevice();
+    g_fooDevice = ETNewDevice();
+
     //开启事件
-    g_el = ETCreateLooper(1024*1024);
+    g_el = ETNewLooper(1024*1024);
 
     //开启网络
     if (ERRNO_ERR == NTInit(listenPort)) {
@@ -148,9 +138,7 @@ int main(int argc, char *argv[]) {
         TrvExit(0, "初始化UI失败");
     }
 
-    /* 循环 */
-    pthread_t ntid;
-    pthread_create(&ntid, NULL, eventLoop, NULL);
+    ETDeviceStartJob(g_netDevice, NULL, ETMainJobWraper, NULL);
 
     //开启界面，并阻塞在 uiLoop
     if (ERRNO_ERR == UIInit()) {

@@ -42,7 +42,7 @@
 
 #include "core/zmalloc.h"
 #include "core/util.h"
-#include "event/ae.h"
+#include "event/event.h"
 
 /* Include the best multiplexing layer supported by this system.
  * The following should be ordered by performances, descending. */
@@ -60,7 +60,9 @@
     #endif
 #endif
 
-ETLooper *ETCreateLooper(int setsize) {
+extern ETLooper *g_el;
+
+ETLooper *ETNewLooper(int setsize) {
     ETLooper *eventLoop;
     int i;
 
@@ -80,8 +82,6 @@ ETLooper *ETCreateLooper(int setsize) {
      * vector with it. */
     for (i = 0; i < setsize; i++)
         eventLoop->events[i].mask = AE_NONE;
-
-    eventLoop->factory_actor = ETCreateFactoryActor();
 
     return eventLoop;
 
@@ -128,8 +128,6 @@ void ETDeleteLooper(ETLooper *eventLoop) {
     aeApiFree(eventLoop);
     zfree(eventLoop->events);
     zfree(eventLoop->fired);
-
-    ETFreeFactoryActor(eventLoop->factory_actor);
 
     zfree(eventLoop);
 }
@@ -458,12 +456,25 @@ int aeWait(int fd, int mask, long long milliseconds) {
 void ETMain(ETLooper *eventLoop) {
     eventLoop->stop = 0;
     while (!eventLoop->stop) {
-        ETProcessActorEvent(eventLoop->factory_actor);
-
         if (eventLoop->beforesleep != NULL)
             eventLoop->beforesleep(eventLoop);
         aeProcessEvents(eventLoop, AE_ALL_EVENTS);
     }
+}
+
+void *ETMainJobWraper(void* _) {
+    /*
+       if(aeCreateTimeEvent(g_el, 1, serverCron, NULL, NULL) == AE_ERR) {
+       TrvLogE("Can't create the serverCron time event.");
+       exit(1);
+       }
+       aeSetBeforeSleepProc(g_el, beforeSleep);
+       */
+
+    ETMain(g_el);
+    ETDeleteLooper(g_el);
+
+    return NULL;
 }
 
 char *aeGetApiName(void) {

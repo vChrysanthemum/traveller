@@ -1,7 +1,6 @@
-#include <pthread.h>
 #include "core/util.h"
 #include "core/dict.h"
-#include "event/ae.h"
+#include "event/event.h"
 
 dictType ETKeyChannelDictType = {
     dictSdsHash,                /* hash function */
@@ -24,6 +23,7 @@ void ETFreeActor(void *_actor) {
 
 ETActorEvent *ETNewActorEvent(void) {
     ETActorEvent *actorEvent = (ETActorEvent*)zmalloc(sizeof(ETActorEvent));
+    memset(actorEvent, 0, sizeof(ETActorEvent));
     return actorEvent;
 }
 
@@ -40,6 +40,7 @@ void dictChannelDestructor(void *privdata, void *val) {
 
 ETChannelActor *ETNewChanelActor(void) {
     ETChannelActor *chanelActor = (ETChannelActor*)zmalloc(sizeof(ETChannelActor));
+    memset(chanelActor, 0, sizeof(ETChannelActor));
     chanelActor->subscribers = listCreate();
     return chanelActor;
 }
@@ -49,21 +50,18 @@ void ETFreeChanelActor(ETChannelActor *chanelActor) {
     listRelease(chanelActor->subscribers);
 }
 
-ETFactoryActor* ETCreateFactoryActor(void) {
+ETFactoryActor* ETNewFactoryActor(void) {
     ETFactoryActor *factoryActor = (ETFactoryActor*)zmalloc(sizeof(ETFactoryActor));
+    memset(factoryActor, 0, sizeof(ETFactoryActor));
 
     factoryActor->actor_list = listCreate();
     factoryActor->actor_list->free = ETFreeActor;
-
-    pthread_mutex_init(&factoryActor->actor_mutex, NULL);
 
     factoryActor->running_actor_event_list = listCreate();
     factoryActor->running_actor_event_list->free = ETFreeActorEvent;
 
     factoryActor->waiting_actor_event_list = listCreate();
     factoryActor->waiting_actor_event_list->free = ETFreeActorEvent;
-
-    pthread_mutex_init(&factoryActor->actor_event_mutex, NULL);
 
     factoryActor->channels = dictCreate(&ETKeyChannelDictType, NULL);
 
@@ -73,10 +71,8 @@ ETFactoryActor* ETCreateFactoryActor(void) {
 void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
     listRelease(factoryActor->running_actor_event_list);
     listRelease(factoryActor->waiting_actor_event_list);
-    pthread_mutex_destroy(&factoryActor->actor_event_mutex);
 
     listRelease(factoryActor->actor_list);
-    pthread_mutex_destroy(&factoryActor->actor_mutex);
 
     zfree(factoryActor);
 }
@@ -86,18 +82,14 @@ void ETHostingActor(ETFactoryActor *factoryActor, ETActor *actor) {
 }
 
 void ETHostingActorEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
-    pthread_mutex_lock(&factoryActor->actor_event_mutex);
     factoryActor->waiting_actor_event_list = listAddNodeTail(factoryActor->waiting_actor_event_list, actorEvent);
-    pthread_mutex_unlock(&factoryActor->actor_event_mutex);
 }
 
 void ETProcessActorEvent(ETFactoryActor *factoryActor) {
     list *_l;
-    pthread_mutex_lock(&factoryActor->actor_event_mutex);
     _l = factoryActor->running_actor_event_list;
     factoryActor->running_actor_event_list = factoryActor->waiting_actor_event_list;
     factoryActor->waiting_actor_event_list = _l;
-    pthread_mutex_unlock(&factoryActor->actor_event_mutex);
 
     listIter *iter;
     listNode *node;

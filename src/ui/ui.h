@@ -62,7 +62,7 @@ typedef struct {
     UIConsoleCommand cmd;
 } UIConsole;
 
-UIPage* UINewPage();
+UIPage* UINewPage(char *title);
 UIWindow* UIcreateWindow(int height, int width, int starty, int startx);
 int UIInit();
 

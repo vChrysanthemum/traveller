@@ -35,6 +35,7 @@
 
 #include <core/platform.h>
 #include <pthread.h>
+#include <string.h>
 #include "core/zmalloc.h"
 #include "core/sds.h"
 #include "core/adlist.h"
@@ -71,7 +72,6 @@ typedef struct ETActorEvent {
     sds     channel;
     va_list argv;
 } ETActorEvent;
-void ETActorRelease(ETActor *actor);
 
 // 推送消息给订阅者，订阅者为 ETActor
 typedef struct ETChannelActor {
@@ -82,10 +82,8 @@ typedef struct ETChannelActor {
 // 管理 Actor与ActorEvent
 typedef struct ETFactoryActor {
     list *actor_list;
-    pthread_mutex_t actor_mutex;
     list *running_actor_event_list; // 正在处理中的 ActorEvent
     list *waiting_actor_event_list; // 等待处理的 ActorEvent
-    pthread_mutex_t actor_event_mutex;
     dict *channels;                 // 发布订阅频道
 } ETFactoryActor;
 
@@ -96,7 +94,7 @@ void ETFreeActorEvent(void *_actor);
 void dictChannelDestructor(void *privdata, void *val);
 ETChannelActor* ETNewChanelActor(void);
 void ETFreeChanelActor(ETChannelActor *chanelActor);
-ETFactoryActor* ETCreateFactoryActor(void);
+ETFactoryActor* ETNewFactoryActor(void);
 void ETFreeFactoryActor(ETFactoryActor *factoryActor);
 void ETHostingActor(ETFactoryActor *factoryActor, ETActor *actor);
 void ETHostingActorEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
@@ -145,12 +143,10 @@ typedef struct ETLooper {
     int stop;
     void *apidata; /* This is used for polling API specific data */
     aeBeforeSleepProc *beforesleep;
-
-    ETFactoryActor *factory_actor;
 } ETLooper;
 
 /* Prototypes */
-ETLooper *ETCreateLooper(int setsize);
+ETLooper *ETNewLooper(int setsize);
 void aeStop(ETLooper *eventLoop);
 int aeCreateFileEvent(ETLooper *eventLoop, int fd, int mask,
         aeFileProc *proc, void *clientData);
@@ -168,5 +164,15 @@ int aeGetSetSize(ETLooper *eventLoop);
 int aeResizeSetSize(ETLooper *eventLoop, int setsize);
 void ETDeleteLooper(ETLooper *eventLoop);
 void ETMain(ETLooper *eventLoop);
+void* ETMainJobWraper(void *_);
+
+typedef struct ETDevice {
+    pthread_mutex_t mutex;
+    ETFactoryActor *factory_actor;
+} ETDevice;
+ETDevice* ETNewDevice(void);
+void ETFreeDevice(ETDevice *device);
+pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,
+        void *(*start_routine) (void *), void *arg);
 
 #endif
