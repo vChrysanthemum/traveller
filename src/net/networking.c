@@ -13,7 +13,7 @@
 #include "service/service.h"
 
 extern NTServer g_server;
-extern aeEventLoop *g_el;
+extern ETLooper *g_el;
 extern dictType stackStringTableDictType;
 
 static void setProtocolError(NTSnode *sn, int pos);
@@ -24,13 +24,13 @@ static void parseInputBufferStatus(NTSnode *sn);
 static void parseInputBufferString(NTSnode *sn);
 static void parseInputBufferArray(NTSnode *sn);
 static void parseInputBuffer(NTSnode *sn);
-static void readQueryFromNTSnode(aeEventLoop *el, int fd, void *privdata, int mask);
+static void readQueryFromNTSnode(ETLooper *el, int fd, void *privdata, int mask);
 static NTSnode* createNTSnode(int fd);
 static void acceptCommonHandler(int fd, int flags);
-static void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask);
+static void acceptTcpHandler(ETLooper *el, int fd, void *privdata, int mask);
 static int listenToPort(int port, int *fds, int *count);
 static void prepareNTSnodeToWrite(NTSnode *sn);
-static void sendReplyToNTSnode(aeEventLoop *el, int fd, void *privdata, int mask);
+static void sendReplyToNTSnode(ETLooper *el, int fd, void *privdata, int mask);
 static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count);
 static NTSnode* snodeArgvClear(NTSnode *sn);
 static NTSnode* snodeArgvEmpty(NTSnode *sn);
@@ -88,7 +88,7 @@ static void prepareNTSnodeToWrite(NTSnode *sn) {
     sn->is_write_mod = 1;
 }
 
-static void sendReplyToNTSnode(aeEventLoop *el, int fd, void *privdata, int mask) {
+static void sendReplyToNTSnode(ETLooper *el, int fd, void *privdata, int mask) {
     int nwritten = 0;
     int bufpos = 0;
     NTSnode *sn = privdata;
@@ -541,7 +541,7 @@ static void parseInputBuffer(NTSnode *sn) {
 }
 
 
-static void readQueryFromNTSnode(aeEventLoop *el, int fd, void *privdata, int mask) {
+static void readQueryFromNTSnode(ETLooper *el, int fd, void *privdata, int mask) {
     NTSnode *sn = (NTSnode*) privdata;
     int nread;
     NOTUSED(el);
@@ -684,7 +684,7 @@ static void acceptCommonHandler(int fd, int flags) {
 
 
 
-static void acceptTcpHandler(aeEventLoop *el, int fd, void *privdata, int mask) {
+static void acceptTcpHandler(ETLooper *el, int fd, void *privdata, int mask) {
     int cport, cfd, max = TRV_NET_MAX_ACCEPTS_PER_CALL;
     char cip[INET6_ADDRSTRLEN];
     NOTUSED(el);

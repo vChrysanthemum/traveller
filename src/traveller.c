@@ -35,7 +35,7 @@
  */
 
 /* 全局变量 */
-aeEventLoop *g_el;
+ETLooper *g_el;
 NTServer g_server;
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char *g_logdir;
@@ -57,7 +57,7 @@ sqlite3 *g_cliDB;
 NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 /*
-static int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
+static int serverCron(struct ETLooper *eventLoop, long long id, void *clientData) {
     g_server.unixtime = time(NULL);
     TrvLogI("serverCron");
     return 0;
@@ -75,8 +75,8 @@ static void* eventLoop(void* _) {
 
     //aeSetBeforeSleepProc(g_el, beforeSleep);
 
-    aeMain(g_el);
-    aeDeleteEventLoop(g_el);
+    ETMain(g_el);
+    ETDeleteLooper(g_el);
 
     return NULL;
 }
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     setupSignalHandlers();
 
     //开启事件
-    g_el = aeCreateEventLoop(1024*1024);
+    g_el = ETCreateLooper(1024*1024);
 
     //开启网络
     if (ERRNO_ERR == NTInit(listenPort)) {

@@ -38,7 +38,7 @@ typedef struct aeApiState {
     struct kevent *events;
 } aeApiState;
 
-static int aeApiCreate(aeEventLoop *eventLoop) {
+static int aeApiCreate(ETLooper *eventLoop) {
     aeApiState *state = zmalloc(sizeof(aeApiState));
 
     if (!state) return -1;
@@ -57,14 +57,14 @@ static int aeApiCreate(aeEventLoop *eventLoop) {
     return 0;
 }
 
-static int aeApiResize(aeEventLoop *eventLoop, int setsize) {
+static int aeApiResize(ETLooper *eventLoop, int setsize) {
     aeApiState *state = eventLoop->apidata;
 
     state->events = zrealloc(state->events, sizeof(struct kevent)*setsize);
     return 0;
 }
 
-static void aeApiFree(aeEventLoop *eventLoop) {
+static void aeApiFree(ETLooper *eventLoop) {
     aeApiState *state = eventLoop->apidata;
 
     close(state->kqfd);
@@ -72,7 +72,7 @@ static void aeApiFree(aeEventLoop *eventLoop) {
     zfree(state);
 }
 
-static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
+static int aeApiAddEvent(ETLooper *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
     struct kevent ke;
 
@@ -87,7 +87,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     return 0;
 }
 
-static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
+static void aeApiDelEvent(ETLooper *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
     struct kevent ke;
 
@@ -101,7 +101,7 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
     }
 }
 
-static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
+static int aeApiPoll(ETLooper *eventLoop, struct timeval *tvp) {
     aeApiState *state = eventLoop->apidata;
     int retval, numevents = 0;
 

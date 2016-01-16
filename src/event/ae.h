@@ -34,6 +34,11 @@
 #define __AE_H__
 
 #include <core/platform.h>
+#include <pthread.h>
+#include "core/zmalloc.h"
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 
 #define AE_OK 0
 #define AE_ERR -1
@@ -52,13 +57,56 @@
 /* Macros */
 #define AE_NOTUSED(V) ((void) V)
 
-struct aeEventLoop;
+#define ET_ACTOR_EVENT_TYPE_MSG 1
+
+struct ETLooper;
+
+/* Actor */
+typedef struct ETActor {
+} ETActor;
+
+typedef struct ETActorEvent {
+    ETActor *sender;
+    ETActor *receiver;
+    sds     channel;
+    va_list argv;
+} ETActorEvent;
+void ETActorRelease(ETActor *actor);
+
+// 推送消息给订阅者，订阅者为 ETActor
+typedef struct ETChannelActor {
+    sds  key;
+    list *subscribers; //ETActor
+} ETChannelActor;
+
+// 管理 Actor与ActorEvent
+typedef struct ETFactoryActor {
+    list *actor_list;
+    pthread_mutex_t actor_mutex;
+    list *running_actor_event_list; // 正在处理中的 ActorEvent
+    list *waiting_actor_event_list; // 等待处理的 ActorEvent
+    pthread_mutex_t actor_event_mutex;
+    dict *channels;                 // 发布订阅频道
+} ETFactoryActor;
+
+ETActor* ETNewActor(void);
+void ETFreeActor(void *_actor);
+ETActorEvent* ETNewActorEvent(void);
+void ETFreeActorEvent(void *_actor);
+void dictChannelDestructor(void *privdata, void *val);
+ETChannelActor* ETNewChanelActor(void);
+void ETFreeChanelActor(ETChannelActor *chanelActor);
+ETFactoryActor* ETCreateFactoryActor(void);
+void ETFreeFactoryActor(ETFactoryActor *factoryActor);
+void ETHostingActor(ETFactoryActor *factoryActor, ETActor *actor);
+void ETHostingActorEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
+void ETProcessActorEvent(ETFactoryActor *factoryActor);
 
 /* Types and data structures */
-typedef void aeFileProc(struct aeEventLoop *eventLoop, int fd, void *clientData, int mask);
-typedef int aeTimeProc(struct aeEventLoop *eventLoop, long long id, void *clientData);
-typedef void aeEventFinalizerProc(struct aeEventLoop *eventLoop, void *clientData);
-typedef void aeBeforeSleepProc(struct aeEventLoop *eventLoop);
+typedef void aeFileProc(struct ETLooper *eventLoop, int fd, void *clientData, int mask);
+typedef int aeTimeProc(struct ETLooper *eventLoop, long long id, void *clientData);
+typedef void aeEventFinalizerProc(struct ETLooper *eventLoop, void *clientData);
+typedef void aeBeforeSleepProc(struct ETLooper *eventLoop);
 
 /* File event structure */
 typedef struct aeFileEvent {
@@ -86,7 +134,7 @@ typedef struct aeFiredEvent {
 } aeFiredEvent;
 
 /* State of an event based program */
-typedef struct aeEventLoop {
+typedef struct ETLooper {
     int maxfd;   /* highest file descriptor currently registered */
     int setsize; /* max number of file descriptors tracked */
     long long timeEventNextId;
@@ -97,26 +145,28 @@ typedef struct aeEventLoop {
     int stop;
     void *apidata; /* This is used for polling API specific data */
     aeBeforeSleepProc *beforesleep;
-} aeEventLoop;
+
+    ETFactoryActor *factory_actor;
+} ETLooper;
 
 /* Prototypes */
-aeEventLoop *aeCreateEventLoop(int setsize);
-void aeDeleteEventLoop(aeEventLoop *eventLoop);
-void aeStop(aeEventLoop *eventLoop);
-int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
+ETLooper *ETCreateLooper(int setsize);
+void aeStop(ETLooper *eventLoop);
+int aeCreateFileEvent(ETLooper *eventLoop, int fd, int mask,
         aeFileProc *proc, void *clientData);
-void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask);
-int aeGetFileEvents(aeEventLoop *eventLoop, int fd);
-long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds,
+void aeDeleteFileEvent(ETLooper *eventLoop, int fd, int mask);
+int aeGetFileEvents(ETLooper *eventLoop, int fd);
+long long aeCreateTimeEvent(ETLooper *eventLoop, long long milliseconds,
         aeTimeProc *proc, void *clientData,
         aeEventFinalizerProc *finalizerProc);
-int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id);
-int aeProcessEvents(aeEventLoop *eventLoop, int flags);
+int aeDeleteTimeEvent(ETLooper *eventLoop, long long id);
+int aeProcessEvents(ETLooper *eventLoop, int flags);
 int aeWait(int fd, int mask, long long milliseconds);
-void aeMain(aeEventLoop *eventLoop);
 char *aeGetApiName(void);
-void aeSetBeforeSleepProc(aeEventLoop *eventLoop, aeBeforeSleepProc *beforesleep);
-int aeGetSetSize(aeEventLoop *eventLoop);
-int aeResizeSetSize(aeEventLoop *eventLoop, int setsize);
+void aeSetBeforeSleepProc(ETLooper *eventLoop, aeBeforeSleepProc *beforesleep);
+int aeGetSetSize(ETLooper *eventLoop);
+int aeResizeSetSize(ETLooper *eventLoop, int setsize);
+void ETDeleteLooper(ETLooper *eventLoop);
+void ETMain(ETLooper *eventLoop);
 
 #endif
