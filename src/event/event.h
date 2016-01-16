@@ -87,7 +87,7 @@ typedef struct ETFactoryActor {
     dict *channels;                 // 发布订阅频道
 } ETFactoryActor;
 
-ETActor* ETNewActor(void);
+ETActor* ETCreateActor(ETFactoryActor *factoryActor);
 void ETFreeActor(void *_actor);
 ETActorEvent* ETNewActorEvent(void);
 void ETFreeActorEvent(void *_actor);
@@ -166,10 +166,27 @@ void ETDeleteLooper(ETLooper *eventLoop);
 void ETMain(ETLooper *eventLoop);
 void* ETMainJobWraper(void *_);
 
+typedef struct ETDeviceJob {
+    unsigned long         index;
+    pthread_t             ntid;
+    const pthread_attr_t  *pthread_attr;
+    void *(*start_routine) (void *);
+    void                  *arg;
+    void                  *exit_status;
+} ETDeviceJob;
+
 typedef struct ETDevice {
+    list            *jobs;
     pthread_mutex_t mutex;
-    ETFactoryActor *factory_actor;
+    ETFactoryActor  *factory_actor;
 } ETDevice;
+
+typedef struct ETDeviceStartJobParam {
+    ETDevice    *device;
+    ETDeviceJob *job;
+} ETDeviceStartJobParam;
+
+void ETFreeDeviceJob(void* _job);
 ETDevice* ETNewDevice(void);
 void ETFreeDevice(ETDevice *device);
 pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,

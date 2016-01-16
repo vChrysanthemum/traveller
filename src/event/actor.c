@@ -11,8 +11,9 @@ dictType ETKeyChannelDictType = {
     dictChannelDestructor       /* val destructor */
 };
 
-ETActor* ETNewActor(void) {
+ETActor* ETCreateActor(ETFactoryActor *factoryActor) {
     ETActor *actor = (ETActor*)zmalloc(sizeof(ETActor));
+    factoryActor->actor_list = listAddNodeTail(factoryActor->actor_list, actor);
     return actor;
 }
 
@@ -77,11 +78,7 @@ void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
     zfree(factoryActor);
 }
 
-void ETHostingActor(ETFactoryActor *factoryActor, ETActor *actor) {
-    factoryActor->actor_list = listAddNodeTail(factoryActor->actor_list, actor);
-}
-
-void ETHostingActorEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
+void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
     factoryActor->waiting_actor_event_list = listAddNodeTail(factoryActor->waiting_actor_event_list, actorEvent);
 }
 

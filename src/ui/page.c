@@ -2,7 +2,7 @@
 #include "extern.h"
 
 UIPage* UINewPage(char *title) {
-    UIPage *page = (UIPage*)malloc(sizeof(UIPage));
+    UIPage *page = (UIPage*)zmalloc(sizeof(UIPage));
     page->id = ui_pages->len + 1;
     page->title = sdsnew(title);
 
