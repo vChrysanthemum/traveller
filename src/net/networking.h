@@ -43,6 +43,8 @@
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
 
+struct NTSnode;
+typedef struct NTSnode NTSnode;
 typedef struct NTSnode {
     int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
     int fd;
@@ -62,7 +64,7 @@ typedef struct NTSnode {
     int argv_remaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
     time_t lastinteraction; // time of the last interaction, used for timeout 
 
-    void (*proc) (struct NTSnode *sn);
+    void (*proc) (NTSnode *sn);
     int is_write_mod;       // 是否已处于写数据模式，避免重复进入写数据模式 
 } NTSnode;
 

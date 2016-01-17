@@ -57,8 +57,12 @@ int STCallGalaxyFunc(NTSnode *sn) {
     return GALAXIES_LUA_CALL_ERRNO_OK;
 }
 
+static void STLoginGalaxyGetResult(NTSnode *sn) {
+    TrvLogW("%d %s", sn->recv_type, sn->argv[0]);
+}
 
 int STLoginGalaxy(char *email, char *password) {
     NTAddReplyMultiString(g_galaxiesSrvSnode, 4, "galaxies", "PUBCitizenLogin", email, password);
+    g_galaxiesSrvSnode->proc = STLoginGalaxyGetResult;
     return 0;
 }
