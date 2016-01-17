@@ -19,34 +19,26 @@
 #include "lua.h"
 #include "sqlite3.h"
 
+#include "net/extern.h"
+
 /**
  * 运行流程
  *  Step1. 读取配置文件
  *  Step2. 开启界面
  *  Step3. 开启事件
- *  Step4. 事件不断循环，并传递消息给界面管理器，界面管理器更新界面
- *  Step5. 界面响应用户，并传递消息给事件管理器
- *  +------------+        +------------+
- *  |            |  ===>  |            |
- *  |  界面线程  |        |  事件线程  |
- *  |            |  <===  |            |
- *  +------------+        +------------+
+ *  Step4. 开启3块 ETDevice g_mainDevice g_netDevice g_fooDevice
  */
 
 /* 全局变量 */
 ETDevice *g_mainDevice;
 ETDevice *g_fooDevice;
-
-ETLooper *g_el;
 ETDevice *g_netDevice;
-NTServer g_server;
+
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char *g_logdir;
 FILE* g_logF;
 int g_logFInt;
 config *g_conf;
-
-/* UI部分 */
 
 /* 服务端模式所需变量 */
 char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
@@ -58,14 +50,6 @@ char g_cliGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
 lua_State *g_cliLuaSt;
 sqlite3 *g_cliDB;
 NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
-
-/*
-static int serverCron(struct ETLooper *eventLoop, long long id, void *clientData) {
-    g_server.unixtime = time(NULL);
-    TrvLogI("serverCron");
-    return 0;
-}
-*/
 
 int main(int argc, char *argv[]) {
     struct configOption *confOpt;
@@ -121,24 +105,26 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
 
-    g_mainDevice = ETNewDevice();
-    g_netDevice = ETNewDevice();
-    g_fooDevice = ETNewDevice();
-
-    //开启事件
-    g_el = ETNewLooper(1024*1024);
-
     //开启网络
-    if (ERRNO_ERR == NTInit(listenPort)) {
+    if (ERRNO_ERR == NTPrepare(listenPort)) {
         TrvExit(0, "初始化网络失败");
     }
 
     //开启脚本支持
-    if (ERRNO_ERR == STInit()) {
+    if (ERRNO_ERR == STPrepare()) {
         TrvExit(0, "初始化UI失败");
     }
 
-    ETDeviceStartJob(g_netDevice, NULL, ETMainJobWraper, NULL);
+    g_mainDevice = ETNewDevice(0, 0);
+    ETDeviceStart(g_mainDevice);
+
+    g_netDevice = ETNewDevice(aeMainDeviceWrap, nt_el);
+    ETDeviceStart(g_netDevice);
+
+    g_fooDevice = ETNewDevice(0, 0);
+    ETDeviceStart(g_fooDevice);
+
+    //ETDeviceStartJob(g_netDevice, NULL, ETMainJobWraper, NULL);
 
     //开启界面，并阻塞在 uiLoop
     if (ERRNO_ERR == UIInit()) {

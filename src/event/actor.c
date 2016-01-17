@@ -25,6 +25,7 @@ void ETFreeActor(void *_actor) {
 ETActorEvent *ETNewActorEvent(void) {
     ETActorEvent *actorEvent = (ETActorEvent*)zmalloc(sizeof(ETActorEvent));
     memset(actorEvent, 0, sizeof(ETActorEvent));
+
     return actorEvent;
 }
 
@@ -36,17 +37,17 @@ void ETFreeActorEvent(void *_actorEvent) {
 
 void dictChannelDestructor(void *privdata, void *val) {
     DICT_NOTUSED(privdata);
-    ETFreeChanelActor((ETChannelActor*)val);
+    ETFreeChannelActor((ETChannelActor*)val);
 }
 
-ETChannelActor *ETNewChanelActor(void) {
+ETChannelActor *ETNewChannelActor(void) {
     ETChannelActor *chanelActor = (ETChannelActor*)zmalloc(sizeof(ETChannelActor));
     memset(chanelActor, 0, sizeof(ETChannelActor));
     chanelActor->subscribers = listCreate();
     return chanelActor;
 }
 
-void ETFreeChanelActor(ETChannelActor *chanelActor) {
+void ETFreeChannelActor(ETChannelActor *chanelActor) {
     sdsfree(chanelActor->key);
     listRelease(chanelActor->subscribers);
 }
@@ -58,11 +59,11 @@ ETFactoryActor* ETNewFactoryActor(void) {
     factoryActor->actor_list = listCreate();
     factoryActor->actor_list->free = ETFreeActor;
 
-    factoryActor->running_actor_event_list = listCreate();
-    factoryActor->running_actor_event_list->free = ETFreeActorEvent;
+    factoryActor->running_event_list = listCreate();
+    factoryActor->running_event_list->free = ETFreeActorEvent;
 
-    factoryActor->waiting_actor_event_list = listCreate();
-    factoryActor->waiting_actor_event_list->free = ETFreeActorEvent;
+    factoryActor->waiting_event_list = listCreate();
+    factoryActor->waiting_event_list->free = ETFreeActorEvent;
 
     factoryActor->channels = dictCreate(&ETKeyChannelDictType, NULL);
 
@@ -70,8 +71,8 @@ ETFactoryActor* ETNewFactoryActor(void) {
 }
 
 void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
-    listRelease(factoryActor->running_actor_event_list);
-    listRelease(factoryActor->waiting_actor_event_list);
+    listRelease(factoryActor->running_event_list);
+    listRelease(factoryActor->waiting_event_list);
 
     listRelease(factoryActor->actor_list);
 
@@ -79,21 +80,56 @@ void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
 }
 
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
-    factoryActor->waiting_actor_event_list = listAddNodeTail(factoryActor->waiting_actor_event_list, actorEvent);
+    factoryActor->waiting_event_list = listAddNodeTail(factoryActor->waiting_event_list, actorEvent);
 }
 
-void ETProcessActorEvent(ETFactoryActor *factoryActor) {
-    list *_l;
-    _l = factoryActor->running_actor_event_list;
-    factoryActor->running_actor_event_list = factoryActor->waiting_actor_event_list;
-    factoryActor->waiting_actor_event_list = _l;
+static void processActorEvent(ETFactoryActor *factoryActor, ETActorEvent *event) {
+    ETActor *actor;
+    dictEntry *chanDe;
+    ETChannelActor *channel;
+    listIter *iterActor;
+    listNode *nodeActor;
 
-    listIter *iter;
-    listNode *node;
-    iter = listGetIterator(factoryActor->running_actor_event_list, AL_START_HEAD);
-    while (NULL != (node = listNext(iter))) {
+    if (0 != event->receiver) {
+        actor = event->receiver;
+        actor->proc(actor, event->mail_args, event->mail_argv);
+    }
 
-        listDelNode(factoryActor->running_actor_event_list, node);
+    if (0 != event->channel) {
+        chanDe = dictFind(factoryActor->channels, event->channel);
+
+        if (NULL != chanDe) {
+            channel = (ETChannelActor*)dictGetVal(chanDe);
+            iterActor = listGetIterator(channel->subscribers, AL_START_HEAD);
+            while (NULL != (nodeActor = listNext(iterActor))) {
+                actor = (ETActor*)nodeActor->value;
+                actor->proc(actor, event->mail_args, event->mail_argv);
+            }
+        }
     }
 }
 
+void* ETFactoryActorLoopEvent(ETFactoryActor *factoryActor) {
+
+    if (0 == factoryActor->running_event_list->len) {
+        if (0 == factoryActor->waiting_event_list->len) {
+            return 0;
+        }
+
+        list *_l;
+        _l = factoryActor->running_event_list;
+        factoryActor->running_event_list = factoryActor->waiting_event_list;
+        factoryActor->waiting_event_list = _l;
+    }
+
+    listIter *iter;
+    listNode *node;
+    iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
+    while (NULL != (node = listNext(iter))) {
+        processActorEvent(factoryActor, (ETActorEvent*)node->value);
+
+        listDelNode(factoryActor->running_event_list, node);
+    }
+
+    return 0;
+}

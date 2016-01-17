@@ -38,7 +38,7 @@ typedef struct aeApiState {
     fd_set _rfds, _wfds;
 } aeApiState;
 
-static int aeApiCreate(ETLooper *eventLoop) {
+static int aeApiCreate(aeLooper *eventLoop) {
     aeApiState *state = zmalloc(sizeof(aeApiState));
 
     if (!state) return -1;
@@ -48,17 +48,17 @@ static int aeApiCreate(ETLooper *eventLoop) {
     return 0;
 }
 
-static int aeApiResize(ETLooper *eventLoop, int setsize) {
+static int aeApiResize(aeLooper *eventLoop, int setsize) {
     /* Just ensure we have enough room in the fd_set type. */
     if (setsize >= FD_SETSIZE) return -1;
     return 0;
 }
 
-static void aeApiFree(ETLooper *eventLoop) {
+static void aeApiFree(aeLooper *eventLoop) {
     zfree(eventLoop->apidata);
 }
 
-static int aeApiAddEvent(ETLooper *eventLoop, int fd, int mask) {
+static int aeApiAddEvent(aeLooper *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
 
     if (mask & AE_READABLE) FD_SET(fd,&state->rfds);
@@ -66,14 +66,14 @@ static int aeApiAddEvent(ETLooper *eventLoop, int fd, int mask) {
     return 0;
 }
 
-static void aeApiDelEvent(ETLooper *eventLoop, int fd, int mask) {
+static void aeApiDelEvent(aeLooper *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
 
     if (mask & AE_READABLE) FD_CLR(fd,&state->rfds);
     if (mask & AE_WRITABLE) FD_CLR(fd,&state->wfds);
 }
 
-static int aeApiPoll(ETLooper *eventLoop, struct timeval *tvp) {
+static int aeApiPoll(aeLooper *eventLoop, struct timeval *tvp) {
     aeApiState *state = eventLoop->apidata;
     int retval, j, numevents = 0;
 

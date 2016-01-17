@@ -2,8 +2,7 @@
 #include "core/dict.h"
 #include "net/networking.h"
 #include "service/service.h"
-
-extern NTServer g_server;
+#include "net/extern.h"
 
 dictType serviceTableDictType = {
     dictSdsCaseHash,           /* hash function */
@@ -24,9 +23,9 @@ SVServiceRouter SVServiceRouterTable[] = {
 void SVInit() {
     int loopJ, tmpsize;
 
-    g_server.services = dictCreate(&serviceTableDictType, NULL);
+    nt_server.services = dictCreate(&serviceTableDictType, NULL);
     tmpsize = sizeof(SVServiceRouterTable) / sizeof(SVServiceRouterTable[0]);
     for (loopJ = 0; loopJ < tmpsize; loopJ++) {
-        dictAdd(g_server.services, sdsnew(SVServiceRouterTable[loopJ].key), SVServiceRouterTable[loopJ].proc);
+        dictAdd(nt_server.services, sdsnew(SVServiceRouterTable[loopJ].key), SVServiceRouterTable[loopJ].proc);
     }
 }

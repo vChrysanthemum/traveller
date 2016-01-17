@@ -60,10 +60,8 @@
     #endif
 #endif
 
-extern ETLooper *g_el;
-
-ETLooper *ETNewLooper(int setsize) {
-    ETLooper *eventLoop;
+aeLooper *aeNewLooper(int setsize) {
+    aeLooper *eventLoop;
     int i;
 
     if ((eventLoop = zmalloc(sizeof(*eventLoop))) == NULL) goto err;
@@ -95,7 +93,7 @@ err:
 }
 
 /* Return the current set size. */
-int aeGetSetSize(ETLooper *eventLoop) {
+int aeGetSetSize(aeLooper *eventLoop) {
     return eventLoop->setsize;
 }
 
@@ -106,7 +104,7 @@ int aeGetSetSize(ETLooper *eventLoop) {
  * performed at all.
  *
  * Otherwise AE_OK is returned and the operation is successful. */
-int aeResizeSetSize(ETLooper *eventLoop, int setsize) {
+int aeResizeSetSize(aeLooper *eventLoop, int setsize) {
     int i;
 
     if (setsize == eventLoop->setsize) return AE_OK;
@@ -124,7 +122,7 @@ int aeResizeSetSize(ETLooper *eventLoop, int setsize) {
     return AE_OK;
 }
 
-void ETDeleteLooper(ETLooper *eventLoop) {
+void aeDeleteLooper(aeLooper *eventLoop) {
     aeApiFree(eventLoop);
     zfree(eventLoop->events);
     zfree(eventLoop->fired);
@@ -132,11 +130,11 @@ void ETDeleteLooper(ETLooper *eventLoop) {
     zfree(eventLoop);
 }
 
-void aeStop(ETLooper *eventLoop) {
+void aeStop(aeLooper *eventLoop) {
     eventLoop->stop = 1;
 }
 
-int aeCreateFileEvent(ETLooper *eventLoop, int fd, int mask,
+int aeCreateFileEvent(aeLooper *eventLoop, int fd, int mask,
         aeFileProc *proc, void *clientData)
 {
     if (fd >= eventLoop->setsize) {
@@ -156,7 +154,7 @@ int aeCreateFileEvent(ETLooper *eventLoop, int fd, int mask,
     return AE_OK;
 }
 
-void aeDeleteFileEvent(ETLooper *eventLoop, int fd, int mask)
+void aeDeleteFileEvent(aeLooper *eventLoop, int fd, int mask)
 {
     if (fd >= eventLoop->setsize) return;
     aeFileEvent *fe = &eventLoop->events[fd];
@@ -174,7 +172,7 @@ void aeDeleteFileEvent(ETLooper *eventLoop, int fd, int mask)
     aeApiDelEvent(eventLoop, fd, mask);
 }
 
-int aeGetFileEvents(ETLooper *eventLoop, int fd) {
+int aeGetFileEvents(aeLooper *eventLoop, int fd) {
     if (fd >= eventLoop->setsize) return 0;
     aeFileEvent *fe = &eventLoop->events[fd];
 
@@ -204,7 +202,7 @@ static void aeAddMillisecondsToNow(long long milliseconds, long *sec, long *ms) 
     *ms = when_ms;
 }
 
-long long aeCreateTimeEvent(ETLooper *eventLoop, long long milliseconds,
+long long aeCreateTimeEvent(aeLooper *eventLoop, long long milliseconds,
         aeTimeProc *proc, void *clientData,
         aeEventFinalizerProc *finalizerProc)
 {
@@ -223,7 +221,7 @@ long long aeCreateTimeEvent(ETLooper *eventLoop, long long milliseconds,
     return id;
 }
 
-int aeDeleteTimeEvent(ETLooper *eventLoop, long long id)
+int aeDeleteTimeEvent(aeLooper *eventLoop, long long id)
 {
     aeTimeEvent *te, *prev = NULL;
 
@@ -256,7 +254,7 @@ int aeDeleteTimeEvent(ETLooper *eventLoop, long long id)
  *    Much better but still insertion or deletion of timers is O(N).
  * 2) Use a skiplist to have this operation as O(1) and insertion as O(log(N)).
  */
-static aeTimeEvent *aeSearchNearestTimer(ETLooper *eventLoop)
+static aeTimeEvent *aeSearchNearestTimer(aeLooper *eventLoop)
 {
     aeTimeEvent *te = eventLoop->timeEventHead;
     aeTimeEvent *nearest = NULL;
@@ -272,7 +270,7 @@ static aeTimeEvent *aeSearchNearestTimer(ETLooper *eventLoop)
 }
 
 /* Process time events */
-static int processTimeEvents(ETLooper *eventLoop) {
+static int processTimeEvents(aeLooper *eventLoop) {
     int processed = 0;
     aeTimeEvent *te;
     long long maxId;
@@ -353,7 +351,7 @@ static int processTimeEvents(ETLooper *eventLoop) {
  * the events that's possible to process without to wait are processed.
  *
  * The function returns the number of events processed. */
-int aeProcessEvents(ETLooper *eventLoop, int flags)
+int aeProcessEvents(aeLooper *eventLoop, int flags)
 {
     int processed = 0, numevents;
 
@@ -453,34 +451,26 @@ int aeWait(int fd, int mask, long long milliseconds) {
     }
 }
 
-void ETMain(ETLooper *eventLoop) {
+void aeMain(aeLooper *eventLoop) {
     eventLoop->stop = 0;
     while (!eventLoop->stop) {
         if (eventLoop->beforesleep != NULL)
             eventLoop->beforesleep(eventLoop);
         aeProcessEvents(eventLoop, AE_ALL_EVENTS);
     }
+
+    aeDeleteLooper(eventLoop);
 }
 
-void *ETMainJobWraper(void* _) {
-    /*
-       if(aeCreateTimeEvent(g_el, 1, serverCron, NULL, NULL) == AE_ERR) {
-       TrvLogE("Can't create the serverCron time event.");
-       exit(1);
-       }
-       aeSetBeforeSleepProc(g_el, beforeSleep);
-       */
-
-    ETMain(g_el);
-    ETDeleteLooper(g_el);
-
-    return NULL;
+void* aeMainDeviceWrap(void *_eventLoop) {
+    aeMain((aeLooper*)_eventLoop);
+    return 0;
 }
 
 char *aeGetApiName(void) {
     return aeApiName();
 }
 
-void aeSetBeforeSleepProc(ETLooper *eventLoop, aeBeforeSleepProc *beforesleep) {
+void aeSetBeforeSleepProc(aeLooper *eventLoop, aeBeforeSleepProc *beforesleep) {
     eventLoop->beforesleep = beforesleep;
 }

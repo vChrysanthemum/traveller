@@ -60,17 +60,22 @@
 
 #define ET_ACTOR_EVENT_TYPE_MSG 1
 
-struct ETLooper;
+struct aeLooper;
 
 /* Actor */
+
+struct ETActor;
+typedef struct ETActor ETActor;
 typedef struct ETActor {
+    void* (*proc)(ETActor *actor, int args, void **argv);
 } ETActor;
 
 typedef struct ETActorEvent {
     ETActor *sender;
     ETActor *receiver;
     sds     channel;
-    va_list argv;
+    int     mail_args;
+    void    **mail_argv;
 } ETActorEvent;
 
 // 推送消息给订阅者，订阅者为 ETActor
@@ -82,9 +87,9 @@ typedef struct ETChannelActor {
 // 管理 Actor与ActorEvent
 typedef struct ETFactoryActor {
     list *actor_list;
-    list *running_actor_event_list; // 正在处理中的 ActorEvent
-    list *waiting_actor_event_list; // 等待处理的 ActorEvent
-    dict *channels;                 // 发布订阅频道
+    list *running_event_list; // 正在处理中的 ActorEvent
+    list *waiting_event_list; // 等待处理的 ActorEvent
+    dict *channels;                 // 发布订阅频道 ETKeyChannelDictType
 } ETFactoryActor;
 
 ETActor* ETCreateActor(ETFactoryActor *factoryActor);
@@ -92,19 +97,18 @@ void ETFreeActor(void *_actor);
 ETActorEvent* ETNewActorEvent(void);
 void ETFreeActorEvent(void *_actor);
 void dictChannelDestructor(void *privdata, void *val);
-ETChannelActor* ETNewChanelActor(void);
-void ETFreeChanelActor(ETChannelActor *chanelActor);
+ETChannelActor* ETNewChannelActor(void);
+void ETFreeChannelActor(ETChannelActor *chanelActor);
 ETFactoryActor* ETNewFactoryActor(void);
 void ETFreeFactoryActor(ETFactoryActor *factoryActor);
-void ETHostingActor(ETFactoryActor *factoryActor, ETActor *actor);
-void ETHostingActorEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
-void ETProcessActorEvent(ETFactoryActor *factoryActor);
+void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
+void* ETFactoryActorLoopEvent(ETFactoryActor *factoryActor);
 
 /* Types and data structures */
-typedef void aeFileProc(struct ETLooper *eventLoop, int fd, void *clientData, int mask);
-typedef int aeTimeProc(struct ETLooper *eventLoop, long long id, void *clientData);
-typedef void aeEventFinalizerProc(struct ETLooper *eventLoop, void *clientData);
-typedef void aeBeforeSleepProc(struct ETLooper *eventLoop);
+typedef void aeFileProc(struct aeLooper *eventLoop, int fd, void *clientData, int mask);
+typedef int aeTimeProc(struct aeLooper *eventLoop, long long id, void *clientData);
+typedef void aeEventFinalizerProc(struct aeLooper *eventLoop, void *clientData);
+typedef void aeBeforeSleepProc(struct aeLooper *eventLoop);
 
 /* File event structure */
 typedef struct aeFileEvent {
@@ -132,7 +136,7 @@ typedef struct aeFiredEvent {
 } aeFiredEvent;
 
 /* State of an event based program */
-typedef struct ETLooper {
+typedef struct aeLooper {
     int maxfd;   /* highest file descriptor currently registered */
     int setsize; /* max number of file descriptors tracked */
     long long timeEventNextId;
@@ -143,28 +147,28 @@ typedef struct ETLooper {
     int stop;
     void *apidata; /* This is used for polling API specific data */
     aeBeforeSleepProc *beforesleep;
-} ETLooper;
+} aeLooper;
 
 /* Prototypes */
-ETLooper *ETNewLooper(int setsize);
-void aeStop(ETLooper *eventLoop);
-int aeCreateFileEvent(ETLooper *eventLoop, int fd, int mask,
+aeLooper *aeNewLooper(int setsize);
+void aeStop(aeLooper *eventLoop);
+int aeCreateFileEvent(aeLooper *eventLoop, int fd, int mask,
         aeFileProc *proc, void *clientData);
-void aeDeleteFileEvent(ETLooper *eventLoop, int fd, int mask);
-int aeGetFileEvents(ETLooper *eventLoop, int fd);
-long long aeCreateTimeEvent(ETLooper *eventLoop, long long milliseconds,
+void aeDeleteFileEvent(aeLooper *eventLoop, int fd, int mask);
+int aeGetFileEvents(aeLooper *eventLoop, int fd);
+long long aeCreateTimeEvent(aeLooper *eventLoop, long long milliseconds,
         aeTimeProc *proc, void *clientData,
         aeEventFinalizerProc *finalizerProc);
-int aeDeleteTimeEvent(ETLooper *eventLoop, long long id);
-int aeProcessEvents(ETLooper *eventLoop, int flags);
+int aeDeleteTimeEvent(aeLooper *eventLoop, long long id);
+int aeProcessEvents(aeLooper *eventLoop, int flags);
 int aeWait(int fd, int mask, long long milliseconds);
 char *aeGetApiName(void);
-void aeSetBeforeSleepProc(ETLooper *eventLoop, aeBeforeSleepProc *beforesleep);
-int aeGetSetSize(ETLooper *eventLoop);
-int aeResizeSetSize(ETLooper *eventLoop, int setsize);
-void ETDeleteLooper(ETLooper *eventLoop);
-void ETMain(ETLooper *eventLoop);
-void* ETMainJobWraper(void *_);
+void aeSetBeforeSleepProc(aeLooper *eventLoop, aeBeforeSleepProc *beforesleep);
+int aeGetSetSize(aeLooper *eventLoop);
+int aeResizeSetSize(aeLooper *eventLoop, int setsize);
+void aeDeleteLooper(aeLooper *eventLoop);
+void aeMain(aeLooper *eventLoop);
+void* aeMainDeviceWrap(void *_eventLoop);
 
 typedef struct ETDeviceJob {
     unsigned long         index;
@@ -175,10 +179,17 @@ typedef struct ETDeviceJob {
     void                  *exit_status;
 } ETDeviceJob;
 
+typedef void* (*ETDeviceLooper) (void* arg);
 typedef struct ETDevice {
     list            *jobs;
-    pthread_mutex_t mutex;
+    pthread_mutex_t job_mutex;
+    pthread_mutex_t actor_mutex;
+    pthread_mutex_t event_mutex;
+    list            *waiting_event_list;
     ETFactoryActor  *factory_actor;
+    pthread_t       looper_ntid;
+    ETDeviceLooper  looper;
+    void            *looper_arg;
 } ETDevice;
 
 typedef struct ETDeviceStartJobParam {
@@ -187,9 +198,12 @@ typedef struct ETDeviceStartJobParam {
 } ETDeviceStartJobParam;
 
 void ETFreeDeviceJob(void* _job);
-ETDevice* ETNewDevice(void);
+ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg);
 void ETFreeDevice(ETDevice *device);
+void ETDeviceStart(ETDevice *device);
 pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,
         void *(*start_routine) (void *), void *arg);
+void ETDeviceAppendEvent(ETDevice *device, ETActorEvent *event);
+list* ETDevicePopEventList(ETDevice *device);
 
 #endif

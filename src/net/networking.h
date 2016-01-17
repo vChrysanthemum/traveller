@@ -38,7 +38,7 @@
 
 
 /* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 NTSnode (socket node)，
- * 包括连接traveller的client，或traveller主动连接的g_server
+ * 包括连接traveller的client，或traveller主动连接的nt_server
  */
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
@@ -95,7 +95,7 @@ typedef struct NTServer {
     dict* services;
 } NTServer;
 
-int NTInit(int port);
+int NTPrepare(int port);
 sds NTCatNTSnodeInfoString(sds s, NTSnode *sn);
 NTSnode* NTConnectNTSnode(char *addr, int port);
 void NTAddReplyError(NTSnode *sn, char *err);

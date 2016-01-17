@@ -14,7 +14,6 @@ dictType stackStringTableDictType = {
     NULL                       /* val destructor */
 };
 
-
 /*====================== Hash table type implementation  ==================== */
 
 /* This is a hash table type that uses the SDS dynamic strings library as

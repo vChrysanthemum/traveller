@@ -11,10 +11,10 @@
 #include "net/anet.h"
 #include "event/event.h"
 #include "service/service.h"
+#include "core/extern.h"
 
-extern NTServer g_server;
-extern ETLooper *g_el;
-extern dictType stackStringTableDictType;
+aeLooper *nt_el;
+NTServer nt_server;
 
 static void setProtocolError(NTSnode *sn, int pos);
 static void resetNTSnodeArgs(NTSnode *sn);
@@ -24,13 +24,13 @@ static void parseInputBufferStatus(NTSnode *sn);
 static void parseInputBufferString(NTSnode *sn);
 static void parseInputBufferArray(NTSnode *sn);
 static void parseInputBuffer(NTSnode *sn);
-static void readQueryFromNTSnode(ETLooper *el, int fd, void *privdata, int mask);
+static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask);
 static NTSnode* createNTSnode(int fd);
 static void acceptCommonHandler(int fd, int flags);
-static void acceptTcpHandler(ETLooper *el, int fd, void *privdata, int mask);
+static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask);
 static int listenToPort(int port, int *fds, int *count);
 static void prepareNTSnodeToWrite(NTSnode *sn);
-static void sendReplyToNTSnode(ETLooper *el, int fd, void *privdata, int mask);
+static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask);
 static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count);
 static NTSnode* snodeArgvClear(NTSnode *sn);
 static NTSnode* snodeArgvEmpty(NTSnode *sn);
@@ -84,11 +84,11 @@ static NTSnode* snodeArgvClear(NTSnode *sn) {
 static void prepareNTSnodeToWrite(NTSnode *sn) {
     if (sn->is_write_mod) return;
 
-    aeCreateFileEvent(g_el, sn->fd, AE_WRITABLE, sendReplyToNTSnode, sn);
+    aeCreateFileEvent(nt_el, sn->fd, AE_WRITABLE, sendReplyToNTSnode, sn);
     sn->is_write_mod = 1;
 }
 
-static void sendReplyToNTSnode(ETLooper *el, int fd, void *privdata, int mask) {
+static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
     int nwritten = 0;
     int bufpos = 0;
     NTSnode *sn = privdata;
@@ -103,7 +103,7 @@ static void sendReplyToNTSnode(ETLooper *el, int fd, void *privdata, int mask) {
     if (bufpos > 0) sdsrange(sn->writebuf, bufpos, -1);
 
     if (0 == sdslen(sn->writebuf)) {
-        aeDeleteFileEvent(g_el, sn->fd, AE_WRITABLE);
+        aeDeleteFileEvent(nt_el, sn->fd, AE_WRITABLE);
         sn->is_write_mod = 0;
 
         if (sn->flags & SNODE_CLOSE_AFTER_REPLY) NTFreeNTSnode(sn);
@@ -510,7 +510,7 @@ static void parseInputBuffer(NTSnode *sn) {
         if (NULL == sn->proc && sn->argc - sn->argc_remaining > 0) {
             dictEntry *de;
 
-            de = dictFind(g_server.services, sn->argv[0]);
+            de = dictFind(nt_server.services, sn->argv[0]);
             if (NULL == de) {
                 NTAddReplyError(sn, "service unrecognized");
                 setProtocolError(sn, 0);
@@ -541,7 +541,7 @@ static void parseInputBuffer(NTSnode *sn) {
 }
 
 
-static void readQueryFromNTSnode(ETLooper *el, int fd, void *privdata, int mask) {
+static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
     NTSnode *sn = (NTSnode*) privdata;
     int nread;
     NOTUSED(el);
@@ -555,7 +555,7 @@ static void readQueryFromNTSnode(ETLooper *el, int fd, void *privdata, int mask)
         sn->querybuf = sdsMakeRoomFor(sn->querybuf, sdslen(sn->querybuf) + TRV_NET_IOBUF_LEN +2);
     }
 
-    g_server.current_snode = sn;
+    nt_server.current_snode = sn;
 
     nread = read(fd, sn->querybuf+sdslen(sn->querybuf), TRV_NET_IOBUF_LEN);
     if (nread >= 0) {
@@ -592,9 +592,9 @@ static NTSnode* createNTSnode(int fd) {
 
     anetNonBlock(NULL,fd);
     anetEnableTcpNoDelay(NULL,fd);
-    if (g_server.tcpkeepalive)
-        anetKeepAlive(NULL,fd,g_server.tcpkeepalive);
-    if (aeCreateFileEvent(g_el,fd,AE_READABLE,
+    if (nt_server.tcpkeepalive)
+        anetKeepAlive(NULL,fd,nt_server.tcpkeepalive);
+    if (aeCreateFileEvent(nt_el,fd,AE_READABLE,
                 readQueryFromNTSnode, sn) == AE_ERR)
     {
         close(fd);
@@ -613,8 +613,8 @@ static NTSnode* createNTSnode(int fd) {
 
     sn->recv_stat = SNODE_RECV_STAT_ACCEPT;
 
-    g_server.stat_numconnections++;
-    dictAdd(g_server.snodes, sn->fds, sn);
+    nt_server.stat_numconnections++;
+    dictAdd(nt_server.snodes, sn->fds, sn);
 
     return sn;
 }
@@ -625,8 +625,8 @@ void NTFreeNTSnode(NTSnode *sn) {
     TrvLogD("Free NTSnode %d", sn->fd);
 
     if (-1 != sn->fd) {
-        aeDeleteFileEvent(g_el, sn->fd, AE_READABLE);
-        aeDeleteFileEvent(g_el, sn->fd, AE_WRITABLE);
+        aeDeleteFileEvent(nt_el, sn->fd, AE_READABLE);
+        aeDeleteFileEvent(nt_el, sn->fd, AE_WRITABLE);
         close(sn->fd);
     }
 
@@ -635,21 +635,21 @@ void NTFreeNTSnode(NTSnode *sn) {
     sdsfree(sn->querybuf);
     sdsfree(sn->writebuf);
 
-    dictDelete(g_server.snodes, sn->fds);
+    dictDelete(nt_server.snodes, sn->fds);
 
     zfree(sn);
 
-    g_server.stat_numconnections--;
+    nt_server.stat_numconnections--;
 }
 
 NTSnode *NTConnectNTSnode(char *addr, int port) {
     int fd;
     NTSnode *sn;
 
-    memset(g_server.neterr, 0, ANET_ERR_LEN);
-    fd = anetPeerSocket(g_server.neterr, 0, "0.0.0.0", AF_INET);
-    fd = anetPeerConnect(fd, g_server.neterr, addr, port);
-    //fd = anetPeerConnect(fd, g_server.neterr, addr, port);
+    memset(nt_server.neterr, 0, ANET_ERR_LEN);
+    fd = anetPeerSocket(nt_server.neterr, 0, "0.0.0.0", AF_INET);
+    fd = anetPeerConnect(fd, nt_server.neterr, addr, port);
+    //fd = anetPeerConnect(fd, nt_server.neterr, addr, port);
     if (ANET_ERR == fd) {
         TrvLogW("Unable to connect to %s", addr);
         return NULL;
@@ -668,14 +668,14 @@ static void acceptCommonHandler(int fd, int flags) {
         return;
     }
 
-    if (dictSize(g_server.snodes) > g_server.max_snodes) {
+    if (dictSize(nt_server.snodes) > nt_server.max_snodes) {
         char *err = "-ERR max number of snodes reached\r\n";
 
         /* That's a best effort error message, don't check write errors */
         if (write(sn->fd,err,strlen(err)) == -1) {
             /* Nothing to do, Just to avoid the warning... */
         }
-        g_server.stat_rejected_conn++;
+        nt_server.stat_rejected_conn++;
         NTFreeNTSnode(sn);
         return;
     }
@@ -684,7 +684,7 @@ static void acceptCommonHandler(int fd, int flags) {
 
 
 
-static void acceptTcpHandler(ETLooper *el, int fd, void *privdata, int mask) {
+static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask) {
     int cport, cfd, max = TRV_NET_MAX_ACCEPTS_PER_CALL;
     char cip[INET6_ADDRSTRLEN];
     NOTUSED(el);
@@ -692,10 +692,10 @@ static void acceptTcpHandler(ETLooper *el, int fd, void *privdata, int mask) {
     NOTUSED(privdata);
 
     while(max--) {
-        cfd = anetTcpAccept(g_server.neterr, fd, cip, sizeof(cip), &cport);
+        cfd = anetTcpAccept(nt_server.neterr, fd, cip, sizeof(cip), &cport);
         if (cfd == ANET_ERR) {
             if (errno != EWOULDBLOCK)
-                TrvLogW("Accepting snode connection: %s", g_server.neterr);
+                TrvLogW("Accepting snode connection: %s", nt_server.neterr);
             return;
         }
         TrvLogD("Accepted %s:%d", cip, cport);
@@ -707,32 +707,32 @@ static void acceptTcpHandler(ETLooper *el, int fd, void *privdata, int mask) {
 static int listenToPort() {
     int loopJ; 
 
-    g_server.ipfd_count = 0;
+    nt_server.ipfd_count = 0;
 
-    for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
-        g_server.ipfd[loopJ] = ANET_ERR;
+    for (loopJ = 0; loopJ < nt_server.ipfd_count; loopJ++) {
+        nt_server.ipfd[loopJ] = ANET_ERR;
     }
 
-    if (g_server.ipfd[0] != ANET_ERR) {
-        anetPeerListen(g_server.ipfd[0], g_server.neterr, g_server.tcp_backlog);
-        g_server.ipfd_count++;
+    if (nt_server.ipfd[0] != ANET_ERR) {
+        anetPeerListen(nt_server.ipfd[0], nt_server.neterr, nt_server.tcp_backlog);
+        nt_server.ipfd_count++;
     }
 
-    if (g_server.ipfd[1] != ANET_ERR) {
-        anetPeerListen(g_server.ipfd[1], g_server.neterr, g_server.tcp_backlog);
-        g_server.ipfd_count++;
+    if (nt_server.ipfd[1] != ANET_ERR) {
+        anetPeerListen(nt_server.ipfd[1], nt_server.neterr, nt_server.tcp_backlog);
+        nt_server.ipfd_count++;
     }
 
-    if (0 == g_server.ipfd_count) return ERRNO_ERR;
+    if (0 == nt_server.ipfd_count) return ERRNO_ERR;
 
-    for (loopJ = 0; loopJ < g_server.ipfd_count; loopJ++) {
-        if (aeCreateFileEvent(g_el, g_server.ipfd[loopJ], AE_READABLE,
+    for (loopJ = 0; loopJ < nt_server.ipfd_count; loopJ++) {
+        if (aeCreateFileEvent(nt_el, nt_server.ipfd[loopJ], AE_READABLE,
                     acceptTcpHandler,NULL) == AE_ERR) {
-            TrvLogE("Unrecoverable error creating g_server.ipfd file event.");
+            TrvLogE("Unrecoverable error creating nt_server.ipfd file event.");
         }
     }
 
-    TrvLogI("监听端口: %d", g_server.port);
+    TrvLogI("监听端口: %d", nt_server.port);
 
     return ERRNO_OK;
 }
@@ -740,7 +740,7 @@ static int listenToPort() {
 NTSnode* NTGetNTSnodeByFDS(const char *fds) {
     dictEntry *de;
 
-    de = dictFind(g_server.snodes, fds);
+    de = dictFind(nt_server.snodes, fds);
     if (NULL == de) {
         return NULL;
     }
@@ -748,26 +748,27 @@ NTSnode* NTGetNTSnodeByFDS(const char *fds) {
     return dictGetVal(de);
 }
 
-int NTInit(int listenPort) {
-    g_server.unixtime = -1;
-    g_server.max_snodes = TRV_NET_MAX_SNODE;
+int NTPrepare(int listenPort) {
+    nt_el = aeNewLooper(1024*1024);
+    nt_server.unixtime = -1;
+    nt_server.max_snodes = TRV_NET_MAX_SNODE;
 
-    g_server.bindaddr = "0.0.0.0";
-    g_server.port = listenPort;
-    g_server.tcp_backlog = TRV_NET_TCP_BACKLOG;
+    nt_server.bindaddr = "0.0.0.0";
+    nt_server.port = listenPort;
+    nt_server.tcp_backlog = TRV_NET_TCP_BACKLOG;
 
-    g_server.stat_numconnections = 0;
-    g_server.stat_rejected_conn = 0;
+    nt_server.stat_numconnections = 0;
+    nt_server.stat_rejected_conn = 0;
 
-    g_server.snodes = dictCreate(&stackStringTableDictType, NULL);
-    g_server.snode_max_querybuf_len = SNODE_MAX_QUERYBUF_LEN;
+    nt_server.snodes = dictCreate(&stackStringTableDictType, NULL);
+    nt_server.snode_max_querybuf_len = SNODE_MAX_QUERYBUF_LEN;
 
-    g_server.tcpkeepalive = TRV_NET_TCPKEEPALIVE;
+    nt_server.tcpkeepalive = TRV_NET_TCPKEEPALIVE;
 
-    g_server.ipfd[0] = anetPeerSocket(g_server.neterr, g_server.port, g_server.bindaddr, AF_INET);
-    g_server.ipfd[1] = anetPeerSocket(g_server.neterr, g_server.port, g_server.bindaddr, AF_INET6);
+    nt_server.ipfd[0] = anetPeerSocket(nt_server.neterr, nt_server.port, nt_server.bindaddr, AF_INET);
+    nt_server.ipfd[1] = anetPeerSocket(nt_server.neterr, nt_server.port, nt_server.bindaddr, AF_INET6);
 
-    if (listenPort <= 0 || ERRNO_OK != listenToPort(g_server.port, g_server.ipfd, &g_server.ipfd_count)) {
+    if (listenPort <= 0 || ERRNO_OK != listenToPort(nt_server.port, nt_server.ipfd, &nt_server.ipfd_count)) {
         TrvLogE("Listen to port err");
         return ERRNO_ERR;
     }

@@ -6,8 +6,6 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-int STInit();
-void STServerInit();
-void STClientInit();
+int STPrepare();
 
 #endif

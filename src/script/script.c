@@ -8,50 +8,7 @@
 #include "net/networking.h"
 #include "service/service.h"
 #include "ui/ui.h"
-
-extern config *g_conf;
-extern char g_basedir[];
-
-extern lua_State *g_srvLuaSt;
-extern sqlite3 *g_srvDB;
-extern char g_srvGalaxydir[ALLOW_PATH_SIZE];
-
-extern lua_State *g_cliLuaSt;
-extern sqlite3 *g_cliDB;
-extern char g_cliGalaxydir[ALLOW_PATH_SIZE];
-extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
-
-/* 基础部分初始化 */
-int STInit() {
-    struct configOption *confOpt;
-    char tmpstr[ALLOW_PATH_SIZE] = {""};
-
-    /* 游戏服务端初始化 */
-    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STServerInit();
-    }
-
-    /* 游戏客户端初始化 */
-    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STClientInit();
-    }
-
-    return ERRNO_OK;
-}
+#include "extern.h"
 
 static void STInitLua(lua_State **L, char *dir) {
     int errno;
@@ -77,7 +34,7 @@ static void STInitLua(lua_State **L, char *dir) {
 }
 
 /* 服务端模式初始化 */
-void STServerInit() {
+static void PrepareServer() {
     STInitLua(&g_srvLuaSt, g_srvGalaxydir);
 
     char *filepath = (char *)zmalloc(ALLOW_PATH_SIZE);
@@ -113,7 +70,7 @@ void STServerInit() {
 }
 
 /* 客户端模式初始化 */
-void STClientInit() {
+static void PrepareClient() {
     STInitLua(&g_cliLuaSt, g_cliGalaxydir);
     char tmpstr[64];
     char galaxiesSrvHost[128];
@@ -142,4 +99,36 @@ void STClientInit() {
     STLoginGalaxy(email, "traveller");
 
     TrvLogI("finshed");
+}
+
+/* 基础部分初始化 */
+int STPrepare() {
+    struct configOption *confOpt;
+    char tmpstr[ALLOW_PATH_SIZE] = {""};
+
+    /* 游戏服务端初始化 */
+    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
+    if (confOpt) {
+
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            TrvExit(0, "星系文件地址太长");
+        }
+        confOptToStr(confOpt, tmpstr);
+        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        PrepareServer();
+    }
+
+    /* 游戏客户端初始化 */
+    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
+    if (confOpt) {
+
+        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+            TrvExit(0, "星系文件地址太长");
+        }
+        confOptToStr(confOpt, tmpstr);
+        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
+        PrepareClient();
+    }
+
+    return ERRNO_OK;
 }
