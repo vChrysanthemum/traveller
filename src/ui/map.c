@@ -23,8 +23,7 @@ static void keyDownProcessor (int ch) {
         ui_env->snumber[ui_env->snumber_len] = 0;
 
         return;
-    }
-    else if(ui_env->snumber_len > 0) {
+    } else if(ui_env->snumber_len > 0) {
         ui_env->number = atoi(ui_env->snumber);
         ui_env->snumber_len = 0;
         ui_env->snumber[0] = 0;
@@ -33,17 +32,14 @@ static void keyDownProcessor (int ch) {
 
     if (KEY_UP == ui_env->ch || 'k' == ui_env->ch) {
         UIMoveUICursorUp(ui_env->number);
-    }
 
-    else if (KEY_DOWN == ui_env->ch || 'j' == ui_env->ch) {
+    } else if (KEY_DOWN == ui_env->ch || 'j' == ui_env->ch) {
         UIMoveUICursorDown(ui_env->number);
-    }
 
-    else if (KEY_LEFT == ui_env->ch || 'h' == ui_env->ch) {
+    } else if (KEY_LEFT == ui_env->ch || 'h' == ui_env->ch) {
         UIMoveUICursorLeft(ui_env->number);
-    }
 
-    else if (KEY_RIGHT == ui_env->ch || 'l' == ui_env->ch) {
+    } else if (KEY_RIGHT == ui_env->ch || 'l' == ui_env->ch) {
         UIMoveUICursorRight(ui_env->number);
     }
 
@@ -233,8 +229,7 @@ void UIMoveCurMapX(int x) {
     int _x = x;
     if (ui_curUIMap->addr_lt_x + x < 0) {
         _x = -1 * ui_curUIMap->addr_lt_x;
-    }
-    else if (ui_curUIMap->addr_rb_x + x >= ui_curUIMap->width-1) {
+    } else if (ui_curUIMap->addr_rb_x + x >= ui_curUIMap->width-1) {
         _x = ui_curUIMap->width - ui_curUIMap->addr_rb_x - 1;
     }
     //if (0 == _x) return;
@@ -245,12 +240,12 @@ void UIMoveCurMapX(int x) {
 
 void UIMoveCurMapY(int y) {
     int _y = y;
-    /* 到达上边界 */
     if (ui_curUIMap->addr_lt_y + y < 0) {
+        /* 到达上边界 */
         _y = -1 * ui_curUIMap->addr_lt_y;
-    }
-    /* 到达下边界 */
-    else if (ui_curUIMap->addr_rb_y + y >= ui_curUIMap->height-1) {
+
+    } else if (ui_curUIMap->addr_rb_y + y >= ui_curUIMap->height-1) {
+        /* 到达下边界 */
         _y = ui_curUIMap->height - ui_curUIMap->addr_rb_y - 1;
     }
     //if (0 == _y) return;

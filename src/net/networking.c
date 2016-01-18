@@ -59,8 +59,11 @@ static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count) {
 
     int loopJ;
 
-    if (NULL == sn->argv) sn->argv = zmalloc(sizeof(sds*) * count);
-    else sn->argv = zrealloc(sn->argv, sizeof(sds*) * count);
+    if (NULL == sn->argv) {
+        sn->argv = zmalloc(sizeof(sds*) * count);
+    } else {
+        sn->argv = zrealloc(sn->argv, sizeof(sds*) * count);
+    }
 
     for (loopJ = sn->argv_size; loopJ < count; loopJ++) {
         sn->argv[loopJ] = sdsempty();
@@ -198,8 +201,11 @@ static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
     sn->recv_type = ERRNO_NULL;
     sn->recv_parsing_stat = ERRNO_NULL;
 
-    if (NULL == sn->tmp_querybuf) sn->tmp_querybuf = sdsempty();
-    else sdsclear(sn->tmp_querybuf);
+    if (NULL == sn->tmp_querybuf) {
+        sn->tmp_querybuf = sdsempty();
+    } else {
+        sdsclear(sn->tmp_querybuf);
+    }
 
     sn->argc = 0;
     sn = snodeArgvClear(sn);
@@ -295,9 +301,8 @@ static void parseInputBufferStatus(NTSnode *sn) {
         sn = snodeArgvMakeRoomFor(sn, 1);
         sn = snodeArgvClear(sn);
         readlen = parseInputBufferGetSegment(sn, &(sn->argv[0]));
-    }
 
-    else if (SNODE_RECV_STAT_PARSING_ARGV_VALUE == sn->recv_parsing_stat) {
+    } else if (SNODE_RECV_STAT_PARSING_ARGV_VALUE == sn->recv_parsing_stat) {
         readlen = parseInputBufferGetSegment(sn, &(sn->argv[0]));
     }
 
@@ -357,8 +362,11 @@ static void parseInputBufferString(NTSnode *sn) {
             /* querybuf中有足够数据，则读取，并设置为读取完成 */
             sn->argv[0] = sdscatlen(sn->argv[0], sn->querybuf, sn->argv_remaining);
 
-            if (len == sn->argv_remaining) sdsclear(sn->querybuf);
-            else sdsrange(sn->querybuf, sn->argv_remaining, -1);
+            if (len == sn->argv_remaining) {
+                sdsclear(sn->querybuf);
+            } else {
+                sdsrange(sn->querybuf, sn->argv_remaining, -1);
+            }
 
             sn->argv_remaining = 0;
             sn->recv_parsing_stat = SNODE_RECV_STAT_PARSING_FINISHED;
@@ -448,8 +456,11 @@ PARSING_ARGV_START:
         /* querybuf中有足够数据，则读取，并设置为读取完成 */
         sn->argv[argJ] = sdscatlen(sn->argv[argJ], sn->querybuf, sn->argv_remaining);
 
-        if (len == sn->argv_remaining) sdsclear(sn->querybuf);
-        else sdsrange(sn->querybuf, sn->argv_remaining, -1);
+        if (len == sn->argv_remaining) {
+            sdsclear(sn->querybuf);
+        } else {
+            sdsrange(sn->querybuf, sn->argv_remaining, -1);
+        }
 
 
         sn->argv_remaining = 0;
@@ -500,11 +511,11 @@ static void parseInputBuffer(NTSnode *sn) {
 
     if (SNODE_RECV_TYPE_OK == sn->recv_type || SNODE_RECV_TYPE_ERR == sn->recv_type) {
         parseInputBufferStatus(sn);
-    }
-    else if (SNODE_RECV_TYPE_STRING == sn->recv_type) {
+
+    } else if (SNODE_RECV_TYPE_STRING == sn->recv_type) {
         parseInputBufferString(sn);
-    }
-    else if (SNODE_RECV_TYPE_ARRAY == sn->recv_type) {
+
+    } else if (SNODE_RECV_TYPE_ARRAY == sn->recv_type) {
         parseInputBufferArray(sn);
 
         if (NULL == sn->proc && sn->argc - sn->argc_remaining > 0) {
@@ -519,8 +530,7 @@ static void parseInputBuffer(NTSnode *sn) {
             sn->proc = dictGetVal(de);
             sn->recv_stat = SNODE_RECV_STAT_EXCUTING;
         }
-    }
-    else {
+    } else {
         NTAddReplyError(sn, "Protocol error: Unrecognized");
         setProtocolError(sn, 0);
         return;
@@ -530,8 +540,7 @@ static void parseInputBuffer(NTSnode *sn) {
         if (SNODE_RECV_STAT_PARSED == sn->recv_stat) {
             rePrepareNTSnodeToReadQuery(sn);
         }
-    }
-    else {
+    } else {
         sn->proc(sn);
 
         if (SNODE_RECV_STAT_EXCUTED == sn->recv_stat) {
@@ -566,14 +575,12 @@ static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask)
     if (-1 == nread) {
         if (EAGAIN == errno) {
             nread = 0;
-        } 
-        else {
+        }  else {
             TrvLogD("Reading from client: %s",strerror(errno));
             NTFreeNTSnode(sn);
         }
         return;
-    } 
-    else if (0 == nread) {
+    } else if (0 == nread) {
         NTFreeNTSnode(sn);
         return;
     }

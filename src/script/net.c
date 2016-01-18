@@ -65,8 +65,7 @@ int STConnectNTSnode(lua_State *L) {
 
     if (NULL == sn) {
         lua_pushnil(L);
-    }
-    else {
+    } else {
         lua_pushstring(L, sn->fds);
     }
 
