@@ -43,19 +43,20 @@
 #include "core/zmalloc.h"
 #include "core/util.h"
 #include "event/event.h"
+#include "net/networking.h"
 
 /* Include the best multiplexing layer supported by this system.
  * The following should be ordered by performances, descending. */
 #ifdef HAVE_EVPORT
-#include "event/ae_evport.c"
+#include "net/ae_evport.c"
 #else
     #ifdef HAVE_EPOLL
-    #include "event/ae_epoll.c"
+    #include "net/ae_epoll.c"
     #else
         #ifdef HAVE_KQUEUE
-        #include "event/ae_kqueue.c"
+        #include "net/ae_kqueue.c"
         #else
-        #include "event/ae_select.c"
+        #include "net/ae_select.c"
         #endif
     #endif
 #endif
