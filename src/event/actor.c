@@ -11,17 +11,6 @@ dictType ETKeyChannelDictType = {
     dictChannelDestructor       /* val destructor */
 };
 
-ETActor* ETCreateActor(ETFactoryActor *factoryActor) {
-    ETActor *actor = (ETActor*)zmalloc(sizeof(ETActor));
-    factoryActor->actor_list = listAddNodeTail(factoryActor->actor_list, actor);
-    return actor;
-}
-
-void ETFreeActor(void *_actor) {
-    ETActor *actor = (ETActor*)_actor;
-    zfree(actor);
-}
-
 ETActorEvent *ETNewActorEvent(void) {
     ETActorEvent *actorEvent = (ETActorEvent*)zmalloc(sizeof(ETActorEvent));
     memset(actorEvent, 0, sizeof(ETActorEvent));
@@ -56,8 +45,7 @@ ETFactoryActor* ETNewFactoryActor(void) {
     ETFactoryActor *factoryActor = (ETFactoryActor*)zmalloc(sizeof(ETFactoryActor));
     memset(factoryActor, 0, sizeof(ETFactoryActor));
 
-    factoryActor->actor_list = listCreate();
-    factoryActor->actor_list->free = ETFreeActor;
+    factoryActor->free_actor_list = listCreate();
 
     factoryActor->running_event_list = listCreate();
     factoryActor->running_event_list->free = ETFreeActorEvent;
@@ -71,12 +59,43 @@ ETFactoryActor* ETNewFactoryActor(void) {
 }
 
 void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
+    listIter *iter;
+    listNode *node;
+    iter = listGetIterator(factoryActor->free_actor_list, AL_START_HEAD);
+    while (NULL != (node = listNext(iter))) {
+        zfree(node->value);
+    }
+    listRelease(factoryActor->free_actor_list);
+
     listRelease(factoryActor->running_event_list);
     listRelease(factoryActor->waiting_event_list);
 
-    listRelease(factoryActor->actor_list);
-
     zfree(factoryActor);
+}
+
+ETActor* ETFactoryActoNewActor(ETFactoryActor *factoryActor) {
+    ETActor *actor;
+
+    if (0 == factoryActor->free_actor_list) {
+        for (int i = 0; i < 20; i++) {
+            actor = (ETActor*)zmalloc(sizeof(ETActor));
+            memset(actor, 0, sizeof(ETActor));
+
+            factoryActor->free_actor_list = listAddNodeTail(factoryActor->free_actor_list, actor);
+        }
+    }
+
+    listNode *ln = listFirst(factoryActor->free_actor_list);
+    actor = (ETActor*)ln->value;
+    listDelNode(factoryActor->free_actor_list, ln);
+
+    memset(actor, 0, sizeof(ETActor));
+
+    return actor;
+}
+
+void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor) {
+    listAddNodeTail(factoryActor->free_actor_list, actor);
 }
 
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {

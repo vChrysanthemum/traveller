@@ -35,14 +35,12 @@ typedef struct ETChannelActor {
 
 // 管理 Actor与ActorEvent
 typedef struct ETFactoryActor {
-    list *actor_list;
+    list *free_actor_list;
     list *running_event_list; // 正在处理中的 ActorEvent
     list *waiting_event_list; // 等待处理的 ActorEvent
     dict *channels;                 // 发布订阅频道 ETKeyChannelDictType
 } ETFactoryActor;
 
-ETActor* ETCreateActor(ETFactoryActor *factoryActor);
-void ETFreeActor(void *_actor);
 ETActorEvent* ETNewActorEvent(void);
 void ETFreeActorEvent(void *_actor);
 void dictChannelDestructor(void *privdata, void *val);
@@ -50,6 +48,8 @@ ETChannelActor* ETNewChannelActor(void);
 void ETFreeChannelActor(ETChannelActor *chanelActor);
 ETFactoryActor* ETNewFactoryActor(void);
 void ETFreeFactoryActor(ETFactoryActor *factoryActor);
+ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor);
+void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor);
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
 void* ETFactoryActorLoopEvent(ETFactoryActor *factoryActor);
 
