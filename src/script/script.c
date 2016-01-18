@@ -8,7 +8,7 @@
 #include "net/networking.h"
 #include "service/service.h"
 #include "ui/ui.h"
-#include "extern.h"
+#include "g_extern.h"
 
 static void STInitLua(lua_State **L, char *dir) {
     int errno;

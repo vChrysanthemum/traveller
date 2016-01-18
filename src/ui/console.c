@@ -1,6 +1,7 @@
 #include <string.h>
 #include "ui/ui.h"
-#include "extern.h"
+#include "g_extern.h"
+#include "ui/extern.h"
 
 static WINDOW   *win;
 static UICursor *cursor;

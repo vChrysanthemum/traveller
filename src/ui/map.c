@@ -5,7 +5,8 @@
 #include "core/frozen.h"
 #include "ui/ui.h"
 #include "ui/map.h"
-#include "extern.h"
+#include "g_extern.h"
+#include "ui/extern.h"
 
 extern UIWindow *ui_rootUIWindow;
 extern UIMap *ui_curUIMap;

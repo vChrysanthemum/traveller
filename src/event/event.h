@@ -9,7 +9,9 @@
 #include "core/adlist.h"
 #include "core/dict.h"
 
-#define ET_ACTOR_EVENT_TYPE_MSG 1
+#define ET_FACTOR_ACTOR_STAGE_INIT    0
+#define ET_FACTOR_ACTOR_STAGE_WAITING 1
+#define ET_FACTOR_ACTOR_STAGE_RUNNING 2
 
 /* Actor */
 
@@ -35,10 +37,16 @@ typedef struct ETChannelActor {
 
 // 管理 Actor与ActorEvent
 typedef struct ETFactoryActor {
+    int  stage;
     list *free_actor_list;
     list *running_event_list; // 正在处理中的 ActorEvent
     list *waiting_event_list; // 等待处理的 ActorEvent
-    dict *channels;                 // 发布订阅频道 ETKeyChannelDictType
+    dict *channels;           // 发布订阅频道 ETKeyChannelDictType
+
+    int             looper_stop;
+    pthread_cond_t  wait_event_cond;
+    pthread_mutex_t wait_event_mutex;
+    int             looper_tvp;
 } ETFactoryActor;
 
 ETActorEvent* ETNewActorEvent(void);
@@ -51,7 +59,8 @@ void ETFreeFactoryActor(ETFactoryActor *factoryActor);
 ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor);
 void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor);
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
-void* ETFactoryActorLoopEvent(ETFactoryActor *factoryActor);
+void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *event);
+void* ETFactoryActorLooper(ETFactoryActor *factoryActor);
 
 typedef struct ETDeviceJob {
     unsigned long         index;

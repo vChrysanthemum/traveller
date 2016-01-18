@@ -45,6 +45,8 @@
 #include "event/event.h"
 #include "net/networking.h"
 
+#include "g_extern.h"
+
 /* Include the best multiplexing layer supported by this system.
  * The following should be ordered by performances, descending. */
 #ifdef HAVE_EVPORT
@@ -453,8 +455,21 @@ int aeWait(int fd, int mask, long long milliseconds) {
 }
 
 void aeMain(aeLooper *eventLoop) {
+    listIter *iter;
+    listNode *node;
+    ETFactoryActor *factoryActor = g_netDevice->factory_actor;
     eventLoop->stop = 0;
     while (!eventLoop->stop) {
+
+        if (factoryActor->running_event_list->len > 0) {
+            iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
+            while (NULL != (node = listNext(iter))) {
+                ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
+
+                listDelNode(factoryActor->running_event_list, node);
+            }
+        }
+
         if (eventLoop->beforesleep != NULL)
             eventLoop->beforesleep(eventLoop);
         aeProcessEvents(eventLoop, AE_ALL_EVENTS);

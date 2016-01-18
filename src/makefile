@@ -10,14 +10,14 @@ travellerobjects = ./traveller.o \
 				   ./core/debug.o \
 				   ./core/sha1.o \
 				   ./core/crc64.o \
-				   ./net/anet.o ./net/ae.o ./net/networking.o \
-				   ./event/device.o ./event/actor.o \
-				   ./service/service.o ./service/test.o ./service/galaxies.o \
 				   ./script/script.o \
 				   ./script/citizen.o \
 				   ./script/galaxies.o \
 				   ./script/db.o \
 				   ./script/net.o \
+				   ./event/device.o ./event/actor.o \
+				   ./net/anet.o ./net/ae.o ./net/networking.o \
+				   ./service/service.o ./service/test.o ./service/galaxies.o \
 				   ./ui/ui.o \
 				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o
 

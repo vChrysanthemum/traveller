@@ -1,5 +1,12 @@
-#ifndef __EXTERN_H
-#define __EXTERN_H
+#ifndef __G_EXTERN_H
+#define __G_EXTERN_H
+
+#include "core/config.h"
+#include "event/event.h"
+#include "net/networking.h"
+
+#include "lua.h"
+#include "sqlite3.h"
 
 extern ETDevice *g_mainDevice;
 extern ETDevice *g_fooDevice;

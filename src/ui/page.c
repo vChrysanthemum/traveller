@@ -1,5 +1,6 @@
 #include "ui.h"
-#include "extern.h"
+#include "g_extern.h"
+#include "ui/extern.h"
 
 UIPage* UINewPage(char *title) {
     UIPage *page = (UIPage*)zmalloc(sizeof(UIPage));
