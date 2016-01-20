@@ -1,4 +1,3 @@
-#include <unistd.h>
 #include "core/util.h"
 #include "core/dict.h"
 #include "event/event.h"
@@ -46,8 +45,6 @@ ETFactoryActor* ETNewFactoryActor(void) {
     ETFactoryActor *factoryActor = (ETFactoryActor*)zmalloc(sizeof(ETFactoryActor));
     memset(factoryActor, 0, sizeof(ETFactoryActor));
 
-    factoryActor->stage = ET_FACTOR_ACTOR_STAGE_INIT;
-
     factoryActor->free_actor_list = listCreate();
 
     factoryActor->running_event_list = listCreate();
@@ -57,9 +54,6 @@ ETFactoryActor* ETNewFactoryActor(void) {
     factoryActor->waiting_event_list->free = ETFreeActorEvent;
 
     factoryActor->channels = dictCreate(&ETKeyChannelDictType, NULL);
-
-    pthread_cond_init(&factoryActor->wait_event_cond, NULL);
-    pthread_mutex_init(&factoryActor->wait_event_mutex, NULL);
 
     return factoryActor;
 }
@@ -75,9 +69,6 @@ void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
 
     listRelease(factoryActor->running_event_list);
     listRelease(factoryActor->waiting_event_list);
-
-    pthread_cond_destroy(&factoryActor->wait_event_cond);
-    pthread_mutex_destroy(&factoryActor->wait_event_mutex);
 
     zfree(factoryActor);
 }
@@ -109,7 +100,6 @@ void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor) {
 
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
     factoryActor->waiting_event_list = listAddNodeTail(factoryActor->waiting_event_list, actorEvent);
-    pthread_cond_signal(&factoryActor->wait_event_cond);
 }
 
 void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *event) {
@@ -138,39 +128,17 @@ void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *even
     }
 }
 
-static void FactoryActorWaitEvent(ETFactoryActor *factoryActor) {
-    if (0 == factoryActor->waiting_event_list->len) {
-        pthread_mutex_lock(&factoryActor->wait_event_mutex);
-        factoryActor->stage = ET_FACTOR_ACTOR_STAGE_WAITING;
-        pthread_cond_wait(&factoryActor->wait_event_cond, &factoryActor->wait_event_mutex);
-        pthread_mutex_unlock(&factoryActor->wait_event_mutex);
-    }
-
-    if (factoryActor->waiting_event_list->len > 20) {
-        return;
-    }
-
-    usleep(300);
-
-    factoryActor->stage = ET_FACTOR_ACTOR_STAGE_RUNNING;
-
-    return;
-}
-
-void* ETFactoryActorLooper(ETFactoryActor *factoryActor) {
+void ETDeviceFactoryActorLooper(ETDevice *device) {
+    ETFactoryActor *factoryActor = device->factory_actor;
     list *_l;
     listIter *iter;
     listNode *node;
-    while(0 == factoryActor->looper_stop) {
-
+    while(0 == device->looper_stop) {
         if (0 == factoryActor->running_event_list->len) {
-            FactoryActorWaitEvent(factoryActor);
-
             _l = factoryActor->running_event_list;
             factoryActor->running_event_list = factoryActor->waiting_event_list;
             factoryActor->waiting_event_list = _l;
         }
-
 
         iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
         while (NULL != (node = listNext(iter))) {
@@ -178,7 +146,20 @@ void* ETFactoryActorLooper(ETFactoryActor *factoryActor) {
 
             listDelNode(factoryActor->running_event_list, node);
         }
-    }
 
-    return 0;
+        _l = ETDevicePopEventList(device);
+        if (0 != _l) {
+            iter = listGetIterator(_l, AL_START_HEAD);
+            while (NULL != (node = listNext(iter))) {
+                ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
+
+                listDelNode(_l, node);
+            }
+            listRelease(_l);
+        }
+
+        if (0 == factoryActor->waiting_event_list->len) {
+            ETDeviceWaitEventList(device);
+        }
+    }
 }
