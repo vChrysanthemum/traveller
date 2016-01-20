@@ -9,10 +9,6 @@
 #include "core/adlist.h"
 #include "core/dict.h"
 
-#define ETDEVICE_STAGE_INIT     0
-#define ETDEVICE_STAGE_WAITING  1
-#define ETDEVICE_STAGE_RUNNING  2
-
 struct ETActor;
 typedef struct ETActor ETActor;
 typedef struct ETActor {
@@ -54,7 +50,6 @@ struct ETDevice;
 typedef struct ETDevice ETDevice;
 typedef void* (*ETDeviceLooper) (void* arg);
 typedef struct ETDevice {
-    int             stage;
     list            *jobs;
     pthread_mutex_t job_mutex;
     pthread_mutex_t actor_mutex;

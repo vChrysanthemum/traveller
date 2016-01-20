@@ -10,8 +10,6 @@ ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg) {
     ETDevice *device = (ETDevice*)zmalloc(sizeof(ETDevice));
     memset(device, 0, sizeof(ETDevice));
     
-    device->stage = ETDEVICE_STAGE_INIT;
-
     device->jobs = listCreate();
     device->jobs->free = ETFreeDeviceJob;
 
@@ -41,7 +39,6 @@ void ETFreeDevice(ETDevice *device) {
 }
 
 void ETDeviceStart(ETDevice *device) {
-    device->stage = ETDEVICE_STAGE_RUNNING;
     if (0 != device->looper) {
         pthread_create(&device->looper_ntid, 0, device->looper, device->looper_arg);
     }
