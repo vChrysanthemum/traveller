@@ -126,6 +126,7 @@ void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *even
             }
         }
     }
+    TrvLogD("hi");
 }
 
 void ETDeviceFactoryActorLooper(ETDevice *device) {

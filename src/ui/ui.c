@@ -5,7 +5,10 @@
 #include "core/adlist.h"
 #include "core/util.h"
 #include "core/sds.h"
+#include "event/event.h"
 #include "ui/ui.h"
+
+#include "g_extern.h"
 
 UIWindow *ui_rootUIWindow;
 UIMap *ui_curUIMap;
@@ -20,17 +23,49 @@ UIPage *ui_activePage;
 static list *keyDownProcessors;
 
 static void uiLoop() {
-    while(1) {
-        ui_env->ch = getch();
+    ETDevice *device = g_mainDevice;
+    ETFactoryActor *factoryActor = device->factory_actor;
+    list *_l;
+    listIter *iter;
+    listNode *node;
 
-        UIKeyDownProcessor proc;
-        listNode *node;
-        listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
-        while (NULL != (node = listNext(iter))) {
-            proc = (UIKeyDownProcessor)node->value;
-            proc(ui_env->ch);
+    while(1) {
+        halfdelay(2);
+        ui_env->ch = getch();
+        if (ERR != ui_env->ch) {
+            UIKeyDownProcessor proc;
+            listNode *node;
+            listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
+            while (NULL != (node = listNext(iter))) {
+                proc = (UIKeyDownProcessor)node->value;
+                proc(ui_env->ch);
+            }
+            listReleaseIterator(iter);
         }
-        listReleaseIterator(iter);
+
+        if (0 == factoryActor->running_event_list->len) {
+            _l = factoryActor->running_event_list;
+            factoryActor->running_event_list = factoryActor->waiting_event_list;
+            factoryActor->waiting_event_list = _l;
+        }
+
+        iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
+        while (NULL != (node = listNext(iter))) {
+            ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
+
+            listDelNode(factoryActor->running_event_list, node);
+        }
+
+        _l = ETDevicePopEventList(device);
+        if (0 != _l) {
+            iter = listGetIterator(_l, AL_START_HEAD);
+            while (NULL != (node = listNext(iter))) {
+                ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
+
+                listDelNode(_l, node);
+            }
+            listRelease(_l);
+        }
     }
 
     endwin();
