@@ -43,7 +43,7 @@ clean:
 	rm -f ./*.o ./*.a
 	rm -f ./core/*.o
 	rm -f ./net/*.o
-	rm -f ./ui/*.o ./ui/widget/*.o
+	rm -f ./ui/*.o
 	rm -f ./service/*.o
 	rm -f ./event/*.o
 	rm -f ./script/*.o

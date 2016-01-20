@@ -56,6 +56,7 @@ typedef struct {
 } UIConsoleCommand;
 
 typedef struct {
+    UIWindow         *tabuiwin;
     UIWindow         *uiwin;
     int              mode;
     UICursor         cursor;

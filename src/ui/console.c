@@ -3,18 +3,21 @@
 #include "g_extern.h"
 #include "ui/extern.h"
 
+static UIWindow *uiwin;
 static WINDOW   *win;
+static UIWindow *tabuiwin;
+static WINDOW   *tabwin;
 static UICursor *cursor;
 static UIConsoleCommand *cmd;
 
 static void renderTabs() {
-    wattron(win, COLOR_PAIR(CP_CONSOLE_TAB_BG));
+    wattron(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_BG));
     for (int i = 0; i < ui_width; i++) {
-        mvwaddch(win, 0, i, ' ');
+        mvwaddch(tabwin, 0, i, ' ');
     }
-    wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB_BG));
+    wattroff(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_BG));
 
-    wmove(win, 0, 0);
+    wmove(tabwin, 0, 0);
 
     listNode *node;
     UIPage *page;
@@ -23,19 +26,19 @@ static void renderTabs() {
         page = (UIPage*)node->value;
 
         if (page == ui_activePage) {
-            wattron(win, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
+            wattron(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
         } else {
-            wattron(win, COLOR_PAIR(CP_CONSOLE_TAB));
+            wattron(tabwin, COLOR_PAIR(CP_CONSOLE_TAB));
         }
 
-        wprintw(win, " ");
-        wprintw(win, page->title);
-        wprintw(win, " ");
+        wprintw(tabwin, " ");
+        wprintw(tabwin, page->title);
+        wprintw(tabwin, " ");
 
         if (page == ui_activePage) {
-            wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
+            wattroff(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
         } else {
-            wattroff(win, COLOR_PAIR(CP_CONSOLE_TAB));
+            wattroff(tabwin, COLOR_PAIR(CP_CONSOLE_TAB));
         }
     }
     listReleaseIterator(iter);
@@ -106,8 +109,9 @@ static void prepareCmdMode() {
 void UIinitConsole() {
     ui_console = (UIConsole*)zmalloc(sizeof(UIConsole));
 
-    ui_console->uiwin = UIcreateWindow(6, ui_width, ui_height-6, 0);
-    ui_console->cursor.y = 1;
+    ui_console->tabuiwin = UIcreateWindow(1, ui_width, ui_height-6, 0);
+    ui_console->uiwin = UIcreateWindow(5, ui_width, ui_height-5, 0);
+    ui_console->cursor.y = 0;
     ui_console->cursor.x = 0;
     ui_console->cmd.line = sdsempty();
     ui_console->cmd.header = sdsnew("野马号$");
@@ -115,16 +119,23 @@ void UIinitConsole() {
     memset(ui_console->cursor.utf8char, 0, 4*sizeof(char));
     ui_console->cursor.utf8charPoi = -1;
 
-    win = ui_console->uiwin->win;
+    uiwin = ui_console->uiwin;
+    win = uiwin->win;
+    tabuiwin = ui_console->tabuiwin;
+    tabwin = tabuiwin->win;
     cursor = &ui_console->cursor;
     cmd = &ui_console->cmd;
 
     prepareCmdMode();
     UISubscribeKeyDownEvent((UIKeyDownProcessor)keyDownProcessor);
 
+    wrefresh(tabwin);
     wrefresh(win);
 }
 
 void UIreRenderConsole() {
     renderTabs();
+
+    wrefresh(tabwin);
+    wrefresh(win);
 }

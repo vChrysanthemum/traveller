@@ -89,8 +89,6 @@ int UIInit() {
     ui_activePage = page;
     UIreRenderConsole();
 
-    wrefresh(ui_console->uiwin->win);
-
     uiLoop();
 
     return ERRNO_OK;
