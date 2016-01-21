@@ -129,35 +129,40 @@ void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *even
     TrvLogD("hi");
 }
 
-void ETDeviceFactoryActorLooper(ETDevice *device) {
+void ETDeviceFactoryActorLoopOnce(ETDevice *device) {
     ETFactoryActor *factoryActor = device->factory_actor;
     list *_l;
     listIter *iter;
     listNode *node;
-    while(0 == device->looper_stop) {
-        if (0 == factoryActor->running_event_list->len) {
-            _l = factoryActor->running_event_list;
-            factoryActor->running_event_list = factoryActor->waiting_event_list;
-            factoryActor->waiting_event_list = _l;
-        }
+    if (0 == factoryActor->running_event_list->len) {
+        _l = factoryActor->running_event_list;
+        factoryActor->running_event_list = factoryActor->waiting_event_list;
+        factoryActor->waiting_event_list = _l;
+    }
 
-        iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
+    iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
+    while (NULL != (node = listNext(iter))) {
+        ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
+
+        listDelNode(factoryActor->running_event_list, node);
+    }
+
+    _l = ETDevicePopEventList(device);
+    if (0 != _l) {
+        iter = listGetIterator(_l, AL_START_HEAD);
         while (NULL != (node = listNext(iter))) {
             ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
 
-            listDelNode(factoryActor->running_event_list, node);
+            listDelNode(_l, node);
         }
+        listRelease(_l);
+    }
+}
 
-        _l = ETDevicePopEventList(device);
-        if (0 != _l) {
-            iter = listGetIterator(_l, AL_START_HEAD);
-            while (NULL != (node = listNext(iter))) {
-                ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
-
-                listDelNode(_l, node);
-            }
-            listRelease(_l);
-        }
+void ETDeviceFactoryActorLooper(ETDevice *device) {
+    ETFactoryActor *factoryActor = device->factory_actor;
+    while(0 == device->looper_stop) {
+        ETDeviceFactoryActorLoopOnce(device);
 
         if (0 == factoryActor->waiting_event_list->len) {
             ETDeviceWaitEventList(device);

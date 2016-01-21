@@ -455,24 +455,15 @@ int aeWait(int fd, int mask, long long milliseconds) {
 }
 
 void aeMain(aeLooper *eventLoop) {
-    listIter *iter;
-    listNode *node;
-    ETFactoryActor *factoryActor = g_netDevice->factory_actor;
+    ETDevice *device = g_netDevice;
+
     eventLoop->stop = 0;
     while (!eventLoop->stop) {
-
-        if (factoryActor->running_event_list->len > 0) {
-            iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
-            while (NULL != (node = listNext(iter))) {
-                ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
-
-                listDelNode(factoryActor->running_event_list, node);
-            }
-        }
-
         if (eventLoop->beforesleep != NULL)
             eventLoop->beforesleep(eventLoop);
         aeProcessEvents(eventLoop, AE_ALL_EVENTS);
+
+        ETDeviceFactoryActorLoopOnce(device);
     }
 
     aeDeleteLooper(eventLoop);

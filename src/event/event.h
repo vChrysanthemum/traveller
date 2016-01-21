@@ -80,6 +80,7 @@ ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor);
 void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor); //回收Actor
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
 void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *event);
+void ETDeviceFactoryActorLoopOnce(ETDevice *device);
 void ETDeviceFactoryActorLooper(ETDevice *device);
 
 void ETFreeDeviceJob(void* _job);
