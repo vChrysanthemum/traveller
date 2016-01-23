@@ -1,26 +1,27 @@
-travellerobjects = ./traveller.o \
-				   ../deps/sqlite/sqlite3.o \
+baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./core/zmalloc.o \
-				   ./core/config.o \
-				   ./core/sds.o \
-				   ./core/util.o \
-				   ./core/adlist.o \
-				   ./core/dict.o \
-				   ./core/frozen.o \
-				   ./core/debug.o \
-				   ./core/sha1.o \
-				   ./core/crc64.o \
+				   ./core/config.o ./core/sds.o ./core/util.o ./core/adlist.o \
+				   ./core/dict.o ./core/frozen.o ./core/debug.o \
+				   ./core/sha1.o ./core/crc64.o \
+				   ./event/device.o ./event/actor.o \
+				   ./net/anet.o ./net/ae.o ./net/networking.o \
 				   ./script/script.o \
 				   ./script/citizen.o \
 				   ./script/galaxies.o \
 				   ./script/db.o \
 				   ./script/net.o \
-				   ./event/device.o ./event/actor.o \
-				   ./net/anet.o ./net/ae.o ./net/networking.o \
+
+travellerobjects := ./traveller.o $(baseobjects) \
 				   ./service/service.o ./service/test.o ./service/galaxies.o \
 				   ./ui/ui.o \
-				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o
+				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o 
 
+uitestobjects := ./uitests/main.o $(baseobjects) \
+					   ./service/service.o ./service/test.o ./service/galaxies.o \
+					   ./uitests/ui_test.o \
+					   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o 
+
+nouitestobjects = ./nouitests/case.o ./nouitests/ui_test.o
 
 ALL_INCS= -I ./ \
 		  -I ../deps/lua/src/ \
@@ -36,6 +37,12 @@ all:traveller
 traveller:$(travellerobjects)
 	$(CC) -o traveller $(travellerobjects) $(LIBRARY)  $(CFLAGS)
 
+uitest:$(uitestobjects)
+	$(CC) -o uitest $(uitestobjects) $(LIBRARY)  $(CFLAGS)
+
+nouitest:$(nouitestobjects)
+	$(CC) -o nouitest $(nouitestobjects) $(LIBRARY)  $(CFLAGS)
+
 %.o: %.c 
 	$(CC) -static -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o
 
@@ -47,4 +54,4 @@ clean:
 	rm -f ./service/*.o
 	rm -f ./event/*.o
 	rm -f ./script/*.o
-	rm ./traveller
+	rm ./traveller ./uitest ./nouitest

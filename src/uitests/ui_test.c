@@ -69,7 +69,9 @@ int UIInit() {
     keyDownProcessors = listCreate();
 
     ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
-    memset(ui_env, 0, sizeof(UIEnv));
+    ui_env->number = 1;
+    ui_env->snumber[0] = 0;
+    ui_env->snumber_len = 0;
 
     setlocale(LC_ALL, "");  
     initscr();
@@ -88,6 +90,13 @@ int UIInit() {
     top_panel(ui_console->uiwin->panel);
     update_panels();
     doupdate();
+
+    UIPage *page;
+    page = UINewPage("地图");
+    mvwprintw(page->uiwin->win, 2, 2, "");
+    UINewPage("飞船");
+    ui_activePage = page;
+    UIreRenderConsole();
 
     uiLoop();
 
