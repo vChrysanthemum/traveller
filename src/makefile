@@ -54,4 +54,6 @@ clean:
 	rm -f ./service/*.o
 	rm -f ./event/*.o
 	rm -f ./script/*.o
+	rm -f ./uitests/*.o
+	rm -f ./nouitests/*.o
 	rm -f ./traveller ./uitest ./nouitest
