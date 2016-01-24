@@ -133,3 +133,30 @@ int utf8StrWidth (char *str) {
 
     return result;
 }
+
+char* file_get_contents(char* path) {
+    FILE* fp;
+    long len;
+    char* ret;
+
+    fp = fopen(path, "r");
+    if (0 == fp) {
+        return 0;
+    }
+
+    fseek(fp, 0, SEEK_END);
+    len = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+
+    if (len < 0) {
+        ret = 0;
+    } else {
+        ret = zmalloc(len + 1);
+        memset(ret, 0, len + 1);
+        fread(ret, len, 1, fp);
+    }
+
+    fclose(fp);
+
+    return ret;
+}

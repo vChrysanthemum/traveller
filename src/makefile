@@ -5,7 +5,7 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./core/sha1.o ./core/crc64.o \
 				   ./event/device.o ./event/actor.o \
 				   ./net/anet.o ./net/ae.o ./net/networking.o \
-				   ./script/script.o \
+				   ./script/script.o ./script/util.o \
 				   ./script/citizen.o \
 				   ./script/galaxies.o \
 				   ./script/db.o \
@@ -54,4 +54,4 @@ clean:
 	rm -f ./service/*.o
 	rm -f ./event/*.o
 	rm -f ./script/*.o
-	rm ./traveller ./uitest ./nouitest
+	rm -f ./traveller ./uitest ./nouitest

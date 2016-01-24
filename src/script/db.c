@@ -1,14 +1,14 @@
 #include "core/util.h"
 #include "core/zmalloc.h"
+#include "script/script.h"
 #include "script/galaxies.h"
-#include "script/db.h"
 
 #include "lua.h"
 #include "sqlite3.h"
 
 extern sqlite3 *g_srvDB;
 
-sqlite3* STInitDB(char *filepath) {
+sqlite3* STinitDB(char *filepath) {
     int errno;
     sqlite3 *db;
 

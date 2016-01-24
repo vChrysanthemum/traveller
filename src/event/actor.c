@@ -14,6 +14,7 @@ dictType ETKeyChannelDictType = {
 ETActorEvent *ETNewActorEvent(void) {
     ETActorEvent *actorEvent = (ETActorEvent*)zmalloc(sizeof(ETActorEvent));
     memset(actorEvent, 0, sizeof(ETActorEvent));
+    actorEvent->channel = sdsempty();
 
     return actorEvent;
 }
@@ -30,15 +31,16 @@ void dictChannelDestructor(void *privdata, void *val) {
 }
 
 ETChannelActor *ETNewChannelActor(void) {
-    ETChannelActor *chanelActor = (ETChannelActor*)zmalloc(sizeof(ETChannelActor));
-    memset(chanelActor, 0, sizeof(ETChannelActor));
-    chanelActor->subscribers = listCreate();
-    return chanelActor;
+    ETChannelActor *channelActor = (ETChannelActor*)zmalloc(sizeof(ETChannelActor));
+    memset(channelActor, 0, sizeof(ETChannelActor));
+    channelActor->key = sdsempty();
+    channelActor->subscribers = listCreate();
+    return channelActor;
 }
 
-void ETFreeChannelActor(ETChannelActor *chanelActor) {
-    sdsfree(chanelActor->key);
-    listRelease(chanelActor->subscribers);
+void ETFreeChannelActor(ETChannelActor *channelActor) {
+    sdsfree(channelActor->key);
+    listRelease(channelActor->subscribers);
 }
 
 ETFactoryActor* ETNewFactoryActor(void) {
@@ -98,6 +100,10 @@ void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor) {
     listAddNodeTail(factoryActor->free_actor_list, actor);
 }
 
+void ETFactoryActorAppendChannel(ETFactoryActor *factoryActor, ETChannelActor *channel) {
+    dictAdd(factoryActor->channels, channel->key, channel);
+}
+
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
     factoryActor->waiting_event_list = listAddNodeTail(factoryActor->waiting_event_list, actorEvent);
 }
@@ -114,7 +120,7 @@ void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *even
         actor->proc(actor, event->mail_args, event->mail_argv);
     }
 
-    if (0 != event->channel) {
+    if (0 != sdslen(event->channel)) {
         chanDe = dictFind(factoryActor->channels, event->channel);
 
         if (NULL != chanDe) {

@@ -11,6 +11,7 @@
 #include "net/anet.h"
 #include "event/event.h"
 #include "service/service.h"
+#include "script/script.h"
 #include "core/extern.h"
 
 aeLooper *nt_el;
@@ -536,6 +537,16 @@ static void parseInputBuffer(NTSnode *sn) {
         return;
     }
 
+    if (SNODE_RECV_STAT_PARSED == sn->recv_stat &&
+            sdslen(sn->lua_cbk_url) > 0 &&
+            0 != sn->lua) {
+
+        STLuaCallback(sn);
+        sn->lua = 0;
+        sdsclear(sn->lua_cbk_url);
+        sdsclear(sn->lua_cbk_arg);
+    }
+
     if (NULL == sn->proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recv_stat) {
             rePrepareNTSnodeToReadQuery(sn);
@@ -589,8 +600,6 @@ static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask)
 
 
 static NTSnode* createNTSnode(int fd) {
-    TrvLogD("Create snode %d", fd);
-
     NTSnode *sn = zmalloc(sizeof(NTSnode));
 
     if (-1 == fd) {
@@ -610,7 +619,7 @@ static NTSnode* createNTSnode(int fd) {
     }
 
     sn->fd = fd;
-    sprintf(sn->fds, "%d", sn->fd);
+    sprintf(sn->fdstr, "%d", sn->fd);
     sn->tmp_querybuf = sdsempty();
     sn->querybuf = sdsempty();
     sn->writebuf = sdsempty();
@@ -620,8 +629,12 @@ static NTSnode* createNTSnode(int fd) {
 
     sn->recv_stat = SNODE_RECV_STAT_ACCEPT;
 
+    sn->lua = 0;
+    sn->lua_cbk_url = sdsempty();
+    sn->lua_cbk_arg = sdsempty();
+
     nt_server.stat_numconnections++;
-    dictAdd(nt_server.snodes, sn->fds, sn);
+    dictAdd(nt_server.snodes, sn->fdstr, sn);
 
     return sn;
 }
@@ -642,7 +655,10 @@ void NTFreeNTSnode(NTSnode *sn) {
     sdsfree(sn->querybuf);
     sdsfree(sn->writebuf);
 
-    dictDelete(nt_server.snodes, sn->fds);
+    sdsfree(sn->lua_cbk_url);
+    sdsfree(sn->lua_cbk_arg);
+
+    dictDelete(nt_server.snodes, sn->fdstr);
 
     zfree(sn);
 
@@ -705,7 +721,6 @@ static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask) {
                 TrvLogW("Accepting snode connection: %s", nt_server.neterr);
             return;
         }
-        TrvLogD("Accepted %s:%d", cip, cport);
         acceptCommonHandler(cfd,0);
     }
 }
@@ -744,10 +759,10 @@ static int listenToPort() {
     return ERRNO_OK;
 }
 
-NTSnode* NTGetNTSnodeByFDS(const char *fds) {
+NTSnode* NTGetNTSnodeByFDS(const char *fdstr) {
     dictEntry *de;
 
-    de = dictFind(nt_server.snodes, fds);
+    de = dictFind(nt_server.snodes, fdstr);
     if (NULL == de) {
         return NULL;
     }

@@ -73,11 +73,12 @@ ETActorEvent* ETNewActorEvent(void);
 void ETFreeActorEvent(void *_actor);
 void dictChannelDestructor(void *privdata, void *val);
 ETChannelActor* ETNewChannelActor(void);
-void ETFreeChannelActor(ETChannelActor *chanelActor);
+void ETFreeChannelActor(ETChannelActor *channelActor);
 ETFactoryActor* ETNewFactoryActor(void);
 void ETFreeFactoryActor(ETFactoryActor *factoryActor);
 ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor);
 void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor); //回收Actor
+void ETFactoryActorAppendChannel(ETFactoryActor *factoryActor, ETChannelActor *channel);
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
 void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *event);
 void ETDeviceFactoryActorLoopOnce(ETDevice *device);

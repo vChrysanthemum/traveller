@@ -7,6 +7,7 @@
 #include "core/dict.h"
 #include "event/event.h"
 #include "net/anet.h"
+#include "lua.h"
 
 /* networking，分装了所有的网络操作
  */
@@ -48,7 +49,7 @@ typedef struct NTSnode NTSnode;
 typedef struct NTSnode {
     int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
     int fd;
-    char fds[16];           // 字符串类型的fd 
+    char fdstr[16];           // 字符串类型的fd 
     int recv_stat;          // SNODE_RECV_STAT_ACCEPT ... 
     int recv_type;          // SNODE_RECV_TYPE_ERR ... 
     sds tmp_querybuf;       // 临时存放未解析完的argc 或 参数长度 
@@ -65,6 +66,11 @@ typedef struct NTSnode {
     time_t lastinteraction; // time of the last interaction, used for timeout 
 
     void (*proc) (NTSnode *sn);
+
+    lua_State *lua;
+    sds lua_cbk_url;
+    sds lua_cbk_arg;
+
     int is_write_mod;       // 是否已处于写数据模式，避免重复进入写数据模式 
 } NTSnode;
 
@@ -87,7 +93,7 @@ typedef struct NTServer {
     int stat_rejected_conn;
     int stat_numconnections;
 
-    dict *snodes;                   // key 是 fds 
+    dict *snodes;                   // key 是 fdstr 
     size_t snode_max_querybuf_len;  // Limit for client query buffer length 
 
     int tcpkeepalive;
@@ -109,7 +115,7 @@ void NTAddReplyRawSds(NTSnode *sn, sds data);
 void NTAddReplyString(NTSnode *sn, char *data);
 void NTAddReplyRawString(NTSnode *sn, char *data);
 void NTFreeNTSnode(NTSnode *sn);  // dangerous 
-NTSnode* NTGetNTSnodeByFDS(const char *fds);
+NTSnode* NTGetNTSnodeByFDS(const char *fdstr);
 
 
 #define AE_OK 0

@@ -84,4 +84,6 @@ int dictStringCompare(void *privdata, const void *key1,
         const void *key2);
 unsigned int dictStringCaseHash(const void *key);
 
+char* file_get_contents(char* path);
+
 #endif

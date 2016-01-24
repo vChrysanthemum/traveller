@@ -7,9 +7,16 @@ function citizen.checkIfLogin(connectId)
     return true
 end
 
-function PUBCitizenLogin(connectId, email, password)
+-- function PUBCitizenLogin(connectId, email, password)
+function CtrCitizenLogin(connectId, email, password)
+    LogI("hi")
+    LogI(connectId.. " connectId")
+    LogI(email.." email")
+    LogI(password.." password")
+
     if nil == email or nil == password then
-        NTAddReplyRawString(connectId, "-请输入用户名或密码\r\n")
+        NTAddReplyRawString(connectId, nil, nil, "-请输入用户名或密码\r\n")
+        return
     end
 
     local citizen = util.db:select(
@@ -18,13 +25,13 @@ function PUBCitizenLogin(connectId, email, password)
     {email=email, password=md5.sumhexa(password)})
 
     if not citizen[0] then
-        NTAddReplyRawString(connectId, "-用户名或密码错误哈哈哈\r\n")
+        NTAddReplyRawString(connectId, nil, nil, "-用户名或密码错误哈哈哈\r\n")
         return
     end
     citizen = citizen[0]
 
     loggedCitizens[connectId] = citizen
-    NTAddReplyRawString(connectId, "+登录成功\r\n")
+    NTAddReplyRawString(connectId, nil, nil, "+登录成功\r\n")
 
 end
 
