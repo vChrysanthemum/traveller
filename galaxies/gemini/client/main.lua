@@ -14,6 +14,8 @@ function CbkLogin(connectId, arg, netRecvType, ...)
     LogI(arg)
     LogI(netRecvType)
     LogI(...)
+    a = LoadView("main")
+    LogI(a)
 end
 
 function ServiceRouter(connectId, path, ...)

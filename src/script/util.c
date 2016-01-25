@@ -3,7 +3,7 @@
 const char* STgetGlobalString(lua_State *L, char *key) {
     const char *ret;
     lua_getglobal(L, key);
-    ret = lua_tostring(L, 1);
+    ret = lua_tostring(L, -1);
     return ret;
 }
 
@@ -17,7 +17,7 @@ int STLogI(lua_State *L) {
 int STLoadView(lua_State *L) {
     sds viewFullPath = sdsempty();
     char * viewPath = (char *)lua_tostring(L, 1);
-    viewFullPath = sdscatfmt("%s/view/%s.html", STgetGlobalString(L, "g_basedir"), viewPath);
+    viewFullPath = sdscatfmt(viewFullPath, "%s/view/%s.html", STgetGlobalString(L, "g_basedir"), viewPath);
 
     char *content = file_get_contents(viewFullPath);
     if (0 == content) {
