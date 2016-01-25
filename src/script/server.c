@@ -17,6 +17,8 @@ static void PrepareServer() {
     snprintf(filepath, ALLOW_PATH_SIZE, "%s/sqlite.db", g_srvGalaxydir);
     g_srvDB = STinitDB(filepath);
 
+    zfree(filepath);
+
     //初始化
     errno = lua_pcall(g_srvLuaSt, 0, 0, 0);
     if (errno) {
@@ -26,6 +28,4 @@ static void PrepareServer() {
     //调用init函数  
     lua_getglobal(g_srvLuaSt, "Init");
     lua_pcall(g_srvLuaSt, 0, 0, 0);
-
-    zfree(filepath);
 }

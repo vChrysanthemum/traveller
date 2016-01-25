@@ -541,7 +541,7 @@ static void parseInputBuffer(NTSnode *sn) {
             sdslen(sn->luaCbkUrl) > 0 &&
             0 != sn->lua) {
 
-        STLuaCallback(sn);
+        STLuaSrvCallback(sn);
         sn->lua = 0;
         sdsclear(sn->luaCbkUrl);
         sdsclear(sn->luaCbkArg);

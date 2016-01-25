@@ -7,8 +7,7 @@ function citizen.checkIfLogin(connectId)
     return true
 end
 
--- function PUBCitizenLogin(connectId, email, password)
-function CtrCitizenLogin(connectId, email, password)
+function CtrLogin(connectId, email, password)
     LogI("hi")
     LogI(connectId.. " connectId")
     LogI(email.." email")

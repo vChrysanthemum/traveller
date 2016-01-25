@@ -1,7 +1,6 @@
 #include "core/util.h"
 #include "core/zmalloc.h"
 #include "script/script.h"
-#include "script/galaxies.h"
 
 #include "lua.h"
 #include "sqlite3.h"

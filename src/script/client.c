@@ -46,19 +46,4 @@ static void PrepareClient() {
     //调用init函数  
     lua_getglobal(g_cliLuaSt, "Init");
     lua_pcall(g_cliLuaSt, 0, 0, 0);
-
-    lua_getglobal(g_cliLuaSt, "ServiceRouter");
-    lua_pushstring(g_cliLuaSt, "0");
-    lua_pushstring(g_cliLuaSt, "/index");
-    errno = lua_pcall(g_cliLuaSt, 2, 0, 0);
-    if (errno) {
-        TrvLogW("%s", lua_tostring(g_cliLuaSt, -1));
-    }
-
-    /*
-    char *email = "j@ioctl.cc";
-    STLoginGalaxy(email, "traveller");
-
-    TrvLogI("finshed");
-    */
 }

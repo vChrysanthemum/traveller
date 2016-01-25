@@ -9,32 +9,28 @@ package.path = package.path .. ';' .. g_basedir.."/?.lua;"
 local g_ServiceRouteTable = {}
 local g_SrvCallbackRouteTable = {}
 
-function CtrIndex(contectId, ...)
-    LogI("/login/"..contectId)
-    NTAddReplyMultiString(g_serverContenctId, "/login", nil, "galaxies", "j@ioctl", "fuckemail", "fuckpassword")
-end
-
-function CbkLogin(contectId, arg, netRecvType, ...)
+function CbkLogin(connectId, arg, netRecvType, ...)
     LogI("fuck logined")
     LogI(arg)
     LogI(netRecvType)
     LogI(...)
 end
 
-function ServiceRouter(contectId, path, ...)
+function ServiceRouter(connectId, path, ...)
     if (g_ServiceRouteTable[path]) then
-        g_ServiceRouteTable[path](contectId, ...)
+        g_ServiceRouteTable[path](connectId, ...)
     end
 end
 
-function SrvCallbackRouter(contectId, path, ...)
+function SrvCallbackRouter(connectId, path, ...)
     if (g_SrvCallbackRouteTable[path]) then
-        g_SrvCallbackRouteTable[path](contectId, ...)
+        g_SrvCallbackRouteTable[path](connectId, ...)
     end
 end
 
 function Init()
-    g_ServiceRouteTable["/index"] = CtrIndex
-
     g_SrvCallbackRouteTable["/login"] = CbkLogin
+
+    NTAddReplyMultiString(g_serverContenctId, "/login", nil, 
+    "galaxies", "/login", "j@ioctl", "fuckemail", "fuckpassword")
 end

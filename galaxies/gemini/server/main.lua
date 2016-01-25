@@ -13,15 +13,15 @@ function Init()
     md5 = require("md5")
     citizen = require("citizen")
 
-    g_ServiceRouteTable["/citizen/login"] = CtrCitizenLogin
+    g_ServiceRouteTable["/login"] = CtrLogin
 end
 
-function GalaxiesRouter(connectId, index, ...)
-    CtrCitizenLogin(connectId, ...)
+function ServiceRouter(connectId, path, ...)
+    LogI(path)
+    if (g_ServiceRouteTable[path]) then
+        g_ServiceRouteTable[path](connectId, ...)
+    end
 end
 
-function ServiceRouter(connectId, index, ...)
-end
-
-function SrvCallbackRouter(connectId, index, ...)
+function SrvCallbackRouter(connectId, path, ...)
 end

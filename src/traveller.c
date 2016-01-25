@@ -12,7 +12,6 @@
 #include "net/networking.h"
 #include "event/event.h"
 #include "script/script.h"
-#include "script/galaxies.h"
 #include "ui/ui.h"
 #include "ui/map.h"
 

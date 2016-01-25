@@ -7,7 +7,6 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./net/anet.o ./net/ae.o ./net/networking.o \
 				   ./script/script.o ./script/util.o \
 				   ./script/citizen.o \
-				   ./script/galaxies.o \
 				   ./script/db.o \
 				   ./script/net.o \
 

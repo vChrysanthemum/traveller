@@ -3,18 +3,20 @@
 #include "core/util.h"
 #include "net/networking.h"
 #include "service/service.h"
-#include "script/galaxies.h"
+#include "script/script.h"
 
-/* 向星系发送命令请求
+#include "g_extern.h"
+
+/* 星系接受命令
  * argv[0]
  */
 void SVGalaxies(NTSnode *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     int errno;
-    errno = STCallGalaxyFunc(sn);
+    errno = STLuaService(g_srvLuaSt, sn);
 
-    if(GALAXIES_LUA_CALL_ERRNO_OK != errno) {
+    if(LUA_SERVICE_ERRNO_OK != errno) {
         NTAddReplyError(sn, "galaxies service error");
         sn->flags = SNODE_CLOSE_AFTER_REPLY;
         NTSnodeServiceSetFinishedFlag(sn);

@@ -8,10 +8,14 @@
 #include "lualib.h"
 #include "sqlite3.h"
 
+#define LUA_SERVICE_ERRNO_OK         0
+#define LUA_SERVICE_ERRNO_INNERERR   502
+
 int STPrepare();
 sqlite3* STinitDB(char *filepath);
 
-int STLuaCallback(NTSnode *sn);
+int STLuaService(lua_State *L, NTSnode *sn);
+int STLuaSrvCallback(NTSnode *sn);
 
 #define STAddReplyHeader(L) \
     const char *fdstr;\
