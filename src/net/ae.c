@@ -192,17 +192,17 @@ static void aeGetTime(long *seconds, long *milliseconds)
 }
 
 static void aeAddMillisecondsToNow(long long milliseconds, long *sec, long *ms) {
-    long cur_sec, cur_ms, when_sec, when_ms;
+    long cur_sec, cur_ms, whenSec, whenMs;
 
     aeGetTime(&cur_sec, &cur_ms);
-    when_sec = cur_sec + milliseconds/1000;
-    when_ms = cur_ms + milliseconds%1000;
-    if (when_ms >= 1000) {
-        when_sec ++;
-        when_ms -= 1000;
+    whenSec = cur_sec + milliseconds/1000;
+    whenMs = cur_ms + milliseconds%1000;
+    if (whenMs >= 1000) {
+        whenSec ++;
+        whenMs -= 1000;
     }
-    *sec = when_sec;
-    *ms = when_ms;
+    *sec = whenSec;
+    *ms = whenMs;
 }
 
 long long aeCreateTimeEvent(aeLooper *eventLoop, long long milliseconds,
@@ -215,7 +215,7 @@ long long aeCreateTimeEvent(aeLooper *eventLoop, long long milliseconds,
     te = zmalloc(sizeof(*te));
     if (te == NULL) return AE_ERR;
     te->id = id;
-    aeAddMillisecondsToNow(milliseconds,&te->when_sec,&te->when_ms);
+    aeAddMillisecondsToNow(milliseconds,&te->whenSec,&te->whenMs);
     te->timeProc = proc;
     te->finalizerProc = finalizerProc;
     te->clientData = clientData;
@@ -263,9 +263,9 @@ static aeTimeEvent *aeSearchNearestTimer(aeLooper *eventLoop)
     aeTimeEvent *nearest = NULL;
 
     while(te) {
-        if (!nearest || te->when_sec < nearest->when_sec ||
-                (te->when_sec == nearest->when_sec &&
-                 te->when_ms < nearest->when_ms))
+        if (!nearest || te->whenSec < nearest->whenSec ||
+                (te->whenSec == nearest->whenSec &&
+                 te->whenMs < nearest->whenMs))
             nearest = te;
         te = te->next;
     }
@@ -290,7 +290,7 @@ static int processTimeEvents(aeLooper *eventLoop) {
     if (now < eventLoop->lastTime) {
         te = eventLoop->timeEventHead;
         while(te) {
-            te->when_sec = 0;
+            te->whenSec = 0;
             te = te->next;
         }
     }
@@ -307,8 +307,8 @@ static int processTimeEvents(aeLooper *eventLoop) {
             continue;
         }
         aeGetTime(&now_sec, &now_ms);
-        if (now_sec > te->when_sec ||
-            (now_sec == te->when_sec && now_ms >= te->when_ms))
+        if (now_sec > te->whenSec ||
+            (now_sec == te->whenSec && now_ms >= te->whenMs))
         {
             int retval;
 
@@ -329,7 +329,7 @@ static int processTimeEvents(aeLooper *eventLoop) {
              * deletion (putting references to the nodes to delete into
              * another linked list). */
             if (retval != AE_NOMORE) {
-                aeAddMillisecondsToNow(retval,&te->when_sec,&te->when_ms);
+                aeAddMillisecondsToNow(retval,&te->whenSec,&te->whenMs);
             } else {
                 aeDeleteTimeEvent(eventLoop, id);
             }
@@ -382,12 +382,12 @@ int aeProcessEvents(aeLooper *eventLoop, int flags)
              * timer to fire. */
             aeGetTime(&now_sec, &now_ms);
             tvp = &tv;
-            tvp->tv_sec = shortest->when_sec - now_sec;
-            if (shortest->when_ms < now_ms) {
-                tvp->tv_usec = ((shortest->when_ms+1000) - now_ms)*1000;
+            tvp->tv_sec = shortest->whenSec - now_sec;
+            if (shortest->whenMs < now_ms) {
+                tvp->tv_usec = ((shortest->whenMs+1000) - now_ms)*1000;
                 tvp->tv_sec --;
             } else {
-                tvp->tv_usec = (shortest->when_ms - now_ms)*1000;
+                tvp->tv_usec = (shortest->whenMs - now_ms)*1000;
             }
             if (tvp->tv_sec < 0) tvp->tv_sec = 0;
             if (tvp->tv_usec < 0) tvp->tv_usec = 0;

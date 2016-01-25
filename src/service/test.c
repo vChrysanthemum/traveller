@@ -5,7 +5,7 @@
 #include "service/service.h"
 
 void SVTest(NTSnode *sn) {
-    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
+    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     NTAddReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
     NTSnodeServiceSetFinishedFlag(sn);
@@ -17,14 +17,14 @@ void SVTest(NTSnode *sn) {
 }
 
 void SVMsg(NTSnode *sn) {
-    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
+    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     TrvLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
     NTSnodeServiceSetFinishedFlag(sn);
 }
 
 void SVClose(NTSnode *sn) {
-    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
+    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     TrvLogD("closed by other people");
     NTAddReplyMultiString(sn, 2, "msg", "21oi4oaiwef");

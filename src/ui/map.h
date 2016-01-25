@@ -27,39 +27,39 @@
 #define MAP_ADDR(x, y, width) (y * width + x)
 
 #define UIMoveUICursorLeft(count) do {\
-    ui_env->cursor_x -= count;\
-    if (ui_env->cursor_x < 0) {\
-        UIMoveCurMapX(ui_env->cursor_x);\
-        ui_env->cursor_x = 0;\
+    ui_env->cursorX -= count;\
+    if (ui_env->cursorX < 0) {\
+        UIMoveCurMapX(ui_env->cursorX);\
+        ui_env->cursorX = 0;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
 #define UIMoveUICursorRight(count) do {\
-    ui_env->cursor_x += count;\
-    if (ui_env->cursor_x > ui_rootUIWindow->width) {\
-        UIMoveCurMapX(ui_env->cursor_x - ui_rootUIWindow->width);\
-        ui_env->cursor_x = ui_rootUIWindow->width;\
+    ui_env->cursorX += count;\
+    if (ui_env->cursorX > ui_rootUIWindow->width) {\
+        UIMoveCurMapX(ui_env->cursorX - ui_rootUIWindow->width);\
+        ui_env->cursorX = ui_rootUIWindow->width;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
 #define UIMoveUICursorUp(count) do {\
-    ui_env->cursor_y -= count;\
-    if (ui_env->cursor_y < 0) {\
-        UIMoveCurMapY(ui_env->cursor_y);\
-        ui_env->cursor_y = 0;\
+    ui_env->cursorY -= count;\
+    if (ui_env->cursorY < 0) {\
+        UIMoveCurMapY(ui_env->cursorY);\
+        ui_env->cursorY = 0;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
 #define UIMoveUICursorDown(count) do {\
-    ui_env->cursor_y += count;\
-    if (ui_env->cursor_y > ui_rootUIWindow->height) {\
-        UIMoveCurMapY(ui_env->cursor_y - ui_rootUIWindow->height);\
-        ui_env->cursor_y = ui_rootUIWindow->height;\
+    ui_env->cursorY += count;\
+    if (ui_env->cursorY > ui_rootUIWindow->height) {\
+        UIMoveCurMapY(ui_env->cursorY - ui_rootUIWindow->height);\
+        ui_env->cursorY = ui_rootUIWindow->height;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);\
+    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
 /* 地图上的物体 */

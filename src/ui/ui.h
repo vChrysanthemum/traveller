@@ -28,11 +28,11 @@ typedef struct {
 
 typedef struct {
     int  ch;
-    int  cursor_y;
-    int  cursor_x;
+    int  cursorY;
+    int  cursorX;
     int  number;      //已输入的数字
     char snumber[8];  //已输入的数字
-    int  snumber_len;
+    int  snumberLen;
 } UIEnv;
 
 typedef struct {

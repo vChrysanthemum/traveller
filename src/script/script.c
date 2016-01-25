@@ -11,11 +11,11 @@
 int STLuaCallback(NTSnode *sn) {
     lua_getglobal(sn->lua, "SrvCallbackRouter");
     lua_pushstring(sn->lua, sn->fdstr);
-    lua_pushstring(sn->lua, sn->lua_cbk_url);
-    if (0 == sdslen(sn->lua_cbk_arg)) {
+    lua_pushstring(sn->lua, sn->luaCbkUrl);
+    if (0 == sdslen(sn->luaCbkArg)) {
         lua_pushnil(sn->lua);
     } else {
-        lua_pushstring(sn->lua, sn->lua_cbk_arg);
+        lua_pushstring(sn->lua, sn->luaCbkArg);
     }
     return lua_pcall(sn->lua, 3, 0, 0);
 }

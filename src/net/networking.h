@@ -27,7 +27,7 @@
 #define SNODE_RECV_STAT_PARSED   4  // 数据完成 
 #define SNODE_RECV_STAT_EXCUTING 5  // 正在执行中 
 #define SNODE_RECV_STAT_EXCUTED  6  // 命令执行完成 
-#define NTSnodeServiceSetFinishedFlag(sn) sn->recv_stat = SNODE_RECV_STAT_EXCUTED;
+#define NTSnodeServiceSetFinishedFlag(sn) sn->recvStat = SNODE_RECV_STAT_EXCUTED;
 
 /* 各个类型解析状态
  */
@@ -50,28 +50,28 @@ typedef struct NTSnode {
     int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
     int fd;
     char fdstr[16];           // 字符串类型的fd 
-    int recv_stat;          // SNODE_RECV_STAT_ACCEPT ... 
-    int recv_type;          // SNODE_RECV_TYPE_ERR ... 
-    sds tmp_querybuf;       // 临时存放未解析完的argc 或 参数长度 
+    int recvStat;          // SNODE_RECV_STAT_ACCEPT ... 
+    int recvType;          // SNODE_RECV_TYPE_ERR ... 
+    sds tmpQuerybuf;       // 临时存放未解析完的argc 或 参数长度 
     sds querybuf;           // 读取到的数据 
     sds writebuf;           // 等待发送的数据 
-    int recv_parsing_stat;
+    int recvParsingStat;
     int argc;
 
     sds *argv;
-    int argv_size;
+    int argvSize;
 
-    int argc_remaining;     // 还剩多少个argc没有解析完成 
-    int argv_remaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
+    int argcRemaining;     // 还剩多少个argc没有解析完成 
+    int argvRemaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
     time_t lastinteraction; // time of the last interaction, used for timeout 
 
     void (*proc) (NTSnode *sn);
 
     lua_State *lua;
-    sds lua_cbk_url;
-    sds lua_cbk_arg;
+    sds luaCbkUrl;
+    sds luaCbkArg;
 
-    int is_write_mod;       // 是否已处于写数据模式，避免重复进入写数据模式 
+    int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
 } NTSnode;
 
 #define SNODE_RECV_TYPE_ERR    -1 // -:ERR 
@@ -82,23 +82,23 @@ typedef struct NTSnode {
 typedef struct NTServer {
     time_t unixtime;        // Unix time sampled every cron cycle. 
 
-    int max_snodes;
+    int maxSnodes;
     char *bindaddr;
     int port;
-    int tcp_backlog;
+    int tcpBacklog;
     char neterr[ANET_ERR_LEN];   // Error buffer for anet.c 
     int ipfd[2];                 // 默认0:ipv4、1:ipv6 
-    int ipfd_count;              // 已绑定总量 
+    int ipfdCount;              // 已绑定总量 
 
-    int stat_rejected_conn;
-    int stat_numconnections;
+    int statRejectedConn;
+    int statNumConnections;
 
     dict *snodes;                   // key 是 fdstr 
-    size_t snode_max_querybuf_len;  // Limit for client query buffer length 
+    size_t snodeMaxQuerybufLen;  // Limit for client query buffer length 
 
     int tcpkeepalive;
 
-    NTSnode* current_snode;
+    NTSnode* currentSnode;
 
     dict* services;
 } NTServer;
@@ -154,8 +154,8 @@ typedef struct aeFileEvent {
 /* Time event structure */
 typedef struct aeTimeEvent {
     long long id; /* time event identifier. */
-    long when_sec; /* seconds */
-    long when_ms; /* milliseconds */
+    long whenSec; /* seconds */
+    long whenMs; /* milliseconds */
     aeTimeProc *timeProc;
     aeEventFinalizerProc *finalizerProc;
     void *clientData;

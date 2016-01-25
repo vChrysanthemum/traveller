@@ -71,7 +71,7 @@ int UIInit() {
     ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
     ui_env->number = 1;
     ui_env->snumber[0] = 0;
-    ui_env->snumber_len = 0;
+    ui_env->snumberLen = 0;
 
     setlocale(LC_ALL, "");  
     initscr();

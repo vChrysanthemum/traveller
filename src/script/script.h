@@ -34,8 +34,8 @@ int STLuaCallback(NTSnode *sn);
     }\
 \
     sn->lua = L;\
-    tmpstr = lua_tostring(L, 2); if (0 == tmpstr) sdsclear(sn->lua_cbk_url); else sn->lua_cbk_url = sdscpy(sn->lua_cbk_url, tmpstr);\
-    tmpstr = lua_tostring(L, 3); if (0 == tmpstr) sdsclear(sn->lua_cbk_arg); else sn->lua_cbk_arg = sdscpy(sn->lua_cbk_arg, tmpstr);
+    tmpstr = lua_tostring(L, 2); if (0 == tmpstr) sdsclear(sn->luaCbkUrl); else sn->luaCbkUrl = sdscpy(sn->luaCbkUrl, tmpstr);\
+    tmpstr = lua_tostring(L, 3); if (0 == tmpstr) sdsclear(sn->luaCbkArg); else sn->luaCbkArg = sdscpy(sn->luaCbkArg, tmpstr);
 
 const char* STgetGlobalString(lua_State *L, char *key);
 int STLogI(lua_State *L);

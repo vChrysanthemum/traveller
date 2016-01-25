@@ -43,7 +43,7 @@ int STCallGalaxyFunc(NTSnode *sn) {
 }
 
 static void STLoginGalaxyGetResult(NTSnode *sn) {
-    TrvLogW("%d %s", sn->recv_type, sn->argv[0]);
+    TrvLogW("%d %s", sn->recvType, sn->argv[0]);
 }
 
 int STLoginGalaxy(char *email, char *password) {

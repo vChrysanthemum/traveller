@@ -15,18 +15,18 @@ static void *g_tmpPtr;
 
 static void keyDownProcessor (int ch) {
     if ('0' <= ui_env->ch && ui_env->ch <= '9') {
-        if (ui_env->snumber_len > 6) {
+        if (ui_env->snumberLen > 6) {
             return;
         }
 
-        ui_env->snumber[ui_env->snumber_len] = ui_env->ch;
-        ui_env->snumber_len++;
-        ui_env->snumber[ui_env->snumber_len] = 0;
+        ui_env->snumber[ui_env->snumberLen] = ui_env->ch;
+        ui_env->snumberLen++;
+        ui_env->snumber[ui_env->snumberLen] = 0;
 
         return;
-    } else if(ui_env->snumber_len > 0) {
+    } else if(ui_env->snumberLen > 0) {
         ui_env->number = atoi(ui_env->snumber);
-        ui_env->snumber_len = 0;
+        ui_env->snumberLen = 0;
         ui_env->snumber[0] = 0;
     }
 
@@ -288,9 +288,9 @@ void UIInitMap() {
     UIDrawMap();
 
     /* 光标置中 */
-    ui_env->cursor_x = ui_rootUIWindow->width / 2;
-    ui_env->cursor_y = ui_rootUIWindow->height / 2;
-    wmove(ui_rootUIWindow->win, ui_env->cursor_y, ui_env->cursor_x);
+    ui_env->cursorX = ui_rootUIWindow->width / 2;
+    ui_env->cursorY = ui_rootUIWindow->height / 2;
+    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);
 
     refresh();
     wrefresh(ui_rootUIWindow->win);

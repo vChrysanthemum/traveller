@@ -47,13 +47,13 @@ ETFactoryActor* ETNewFactoryActor(void) {
     ETFactoryActor *factoryActor = (ETFactoryActor*)zmalloc(sizeof(ETFactoryActor));
     memset(factoryActor, 0, sizeof(ETFactoryActor));
 
-    factoryActor->free_actor_list = listCreate();
+    factoryActor->freeActorList = listCreate();
 
-    factoryActor->running_event_list = listCreate();
-    factoryActor->running_event_list->free = ETFreeActorEvent;
+    factoryActor->runningEventList = listCreate();
+    factoryActor->runningEventList->free = ETFreeActorEvent;
 
-    factoryActor->waiting_event_list = listCreate();
-    factoryActor->waiting_event_list->free = ETFreeActorEvent;
+    factoryActor->waitingEventList = listCreate();
+    factoryActor->waitingEventList->free = ETFreeActorEvent;
 
     factoryActor->channels = dictCreate(&ETKeyChannelDictType, NULL);
 
@@ -63,14 +63,14 @@ ETFactoryActor* ETNewFactoryActor(void) {
 void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
     listIter *iter;
     listNode *node;
-    iter = listGetIterator(factoryActor->free_actor_list, AL_START_HEAD);
+    iter = listGetIterator(factoryActor->freeActorList, AL_START_HEAD);
     while (NULL != (node = listNext(iter))) {
         zfree(node->value);
     }
-    listRelease(factoryActor->free_actor_list);
+    listRelease(factoryActor->freeActorList);
 
-    listRelease(factoryActor->running_event_list);
-    listRelease(factoryActor->waiting_event_list);
+    listRelease(factoryActor->runningEventList);
+    listRelease(factoryActor->waitingEventList);
 
     zfree(factoryActor);
 }
@@ -78,18 +78,18 @@ void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
 ETActor* ETFactoryActoNewActor(ETFactoryActor *factoryActor) {
     ETActor *actor;
 
-    if (0 == factoryActor->free_actor_list) {
+    if (0 == factoryActor->freeActorList) {
         for (int i = 0; i < 20; i++) {
             actor = (ETActor*)zmalloc(sizeof(ETActor));
             memset(actor, 0, sizeof(ETActor));
 
-            factoryActor->free_actor_list = listAddNodeTail(factoryActor->free_actor_list, actor);
+            factoryActor->freeActorList = listAddNodeTail(factoryActor->freeActorList, actor);
         }
     }
 
-    listNode *ln = listFirst(factoryActor->free_actor_list);
+    listNode *ln = listFirst(factoryActor->freeActorList);
     actor = (ETActor*)ln->value;
-    listDelNode(factoryActor->free_actor_list, ln);
+    listDelNode(factoryActor->freeActorList, ln);
 
     memset(actor, 0, sizeof(ETActor));
 
@@ -97,7 +97,7 @@ ETActor* ETFactoryActoNewActor(ETFactoryActor *factoryActor) {
 }
 
 void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor) {
-    listAddNodeTail(factoryActor->free_actor_list, actor);
+    listAddNodeTail(factoryActor->freeActorList, actor);
 }
 
 void ETFactoryActorAppendChannel(ETFactoryActor *factoryActor, ETChannelActor *channel) {
@@ -105,7 +105,7 @@ void ETFactoryActorAppendChannel(ETFactoryActor *factoryActor, ETChannelActor *c
 }
 
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
-    factoryActor->waiting_event_list = listAddNodeTail(factoryActor->waiting_event_list, actorEvent);
+    factoryActor->waitingEventList = listAddNodeTail(factoryActor->waitingEventList, actorEvent);
 }
 
 void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *event) {
@@ -117,7 +117,7 @@ void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *even
 
     if (0 != event->receiver) {
         actor = event->receiver;
-        actor->proc(actor, event->mail_args, event->mail_argv);
+        actor->proc(actor, event->mailArgs, event->mailArgv);
     }
 
     if (0 != sdslen(event->channel)) {
@@ -128,7 +128,7 @@ void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *even
             iterActor = listGetIterator(channel->subscribers, AL_START_HEAD);
             while (NULL != (nodeActor = listNext(iterActor))) {
                 actor = (ETActor*)nodeActor->value;
-                actor->proc(actor, event->mail_args, event->mail_argv);
+                actor->proc(actor, event->mailArgs, event->mailArgv);
             }
         }
     }
@@ -136,21 +136,21 @@ void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *even
 }
 
 void ETDeviceFactoryActorLoopOnce(ETDevice *device) {
-    ETFactoryActor *factoryActor = device->factory_actor;
+    ETFactoryActor *factoryActor = device->factoryActory;
     list *_l;
     listIter *iter;
     listNode *node;
-    if (0 == factoryActor->running_event_list->len) {
-        _l = factoryActor->running_event_list;
-        factoryActor->running_event_list = factoryActor->waiting_event_list;
-        factoryActor->waiting_event_list = _l;
+    if (0 == factoryActor->runningEventList->len) {
+        _l = factoryActor->runningEventList;
+        factoryActor->runningEventList = factoryActor->waitingEventList;
+        factoryActor->waitingEventList = _l;
     }
 
-    iter = listGetIterator(factoryActor->running_event_list, AL_START_HEAD);
+    iter = listGetIterator(factoryActor->runningEventList, AL_START_HEAD);
     while (NULL != (node = listNext(iter))) {
         ETFactoryActorProcessEvent(factoryActor, (ETActorEvent*)node->value);
 
-        listDelNode(factoryActor->running_event_list, node);
+        listDelNode(factoryActor->runningEventList, node);
     }
 
     _l = ETDevicePopEventList(device);
@@ -166,11 +166,11 @@ void ETDeviceFactoryActorLoopOnce(ETDevice *device) {
 }
 
 void ETDeviceFactoryActorLooper(ETDevice *device) {
-    ETFactoryActor *factoryActor = device->factory_actor;
-    while(0 == device->looper_stop) {
+    ETFactoryActor *factoryActor = device->factoryActory;
+    while(0 == device->looperStop) {
         ETDeviceFactoryActorLoopOnce(device);
 
-        if (0 == factoryActor->waiting_event_list->len) {
+        if (0 == factoryActor->waitingEventList->len) {
             ETDeviceWaitEventList(device);
         }
     }

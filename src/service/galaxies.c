@@ -9,7 +9,7 @@
  * argv[0]
  */
 void SVGalaxies(NTSnode *sn) {
-    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recv_parsing_stat) return;
+    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     int errno;
     errno = STCallGalaxyFunc(sn);

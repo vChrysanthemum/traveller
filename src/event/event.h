@@ -19,8 +19,8 @@ typedef struct ETActorEvent {
     ETActor *sender;
     ETActor *receiver;
     sds     channel;
-    int     mail_args;
-    void    **mail_argv;
+    int     mailArgs;
+    void    **mailArgv;
 } ETActorEvent;
 
 // 推送消息给订阅者，订阅者为 ETActor
@@ -31,19 +31,19 @@ typedef struct ETChannelActor {
 
 // 管理 Actor与ActorEvent
 typedef struct ETFactoryActor {
-    list *free_actor_list;
-    list *running_event_list; // 正在处理中的 ActorEvent
-    list *waiting_event_list; // 等待处理的 ActorEvent
+    list *freeActorList;
+    list *runningEventList; // 正在处理中的 ActorEvent
+    list *waitingEventList; // 等待处理的 ActorEvent
     dict *channels;           // 发布订阅频道 ETKeyChannelDictType
 } ETFactoryActor;
 
 typedef struct ETDeviceJob {
     unsigned long         index;
     pthread_t             ntid;
-    const pthread_attr_t  *pthread_attr;
-    void *(*start_routine) (void *);
+    const pthread_attr_t  *pthreadAttr;
+    void *(*startRoutine) (void *);
     void                  *arg;
-    void                  *exit_status;
+    void                  *exitStatus;
 } ETDeviceJob;
 
 struct ETDevice;
@@ -51,17 +51,17 @@ typedef struct ETDevice ETDevice;
 typedef void* (*ETDeviceLooper) (void* arg);
 typedef struct ETDevice {
     list            *jobs;
-    pthread_mutex_t job_mutex;
-    pthread_mutex_t actor_mutex;
-    pthread_mutex_t event_mutex;
-    pthread_mutex_t event_wait_mutex;
-    pthread_cond_t  event_wait_cond;
-    list            *waiting_event_list;
-    ETFactoryActor  *factory_actor;
-    pthread_t       looper_ntid;
+    pthread_mutex_t jobMutex;
+    pthread_mutex_t actorMutex;
+    pthread_mutex_t eventMutex;
+    pthread_mutex_t eventWaitMutex;
+    pthread_cond_t  eventWaitCond;
+    list            *waitingEventList;
+    ETFactoryActor  *factoryActory;
+    pthread_t       looperNtid;
     ETDeviceLooper  looper;
-    int             looper_stop;
-    void            *looper_arg;
+    int             looperStop;
+    void            *looperArg;
 } ETDevice;
 
 typedef struct ETDeviceStartJobParam {
@@ -89,7 +89,7 @@ ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg);
 void ETFreeDevice(ETDevice *device);
 void ETDeviceStart(ETDevice *device);
 pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,
-        void *(*start_routine) (void *), void *arg);
+        void *(*startRoutine) (void *), void *arg);
 void ETDeviceAppendEvent(ETDevice *device, ETActorEvent *event);
 list* ETDevicePopEventList(ETDevice *device); //弹出device上的事件
 void ETDeviceWaitEventList(ETDevice *device); //阻塞等待事件
