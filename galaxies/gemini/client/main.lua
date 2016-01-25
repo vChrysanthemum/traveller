@@ -14,9 +14,11 @@ function CtrIndex(contectId, ...)
     NTAddReplyMultiString(g_serverContenctId, "/login", nil, "galaxies", "j@ioctl", "fuckemail", "fuckpassword")
 end
 
-function CbkLogin(contectId, arg)
+function CbkLogin(contectId, arg, netRecvType, ...)
     LogI("fuck logined")
     LogI(arg)
+    LogI(netRecvType)
+    LogI(...)
 end
 
 function ServiceRouter(contectId, path, ...)

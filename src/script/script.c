@@ -17,7 +17,14 @@ int STLuaCallback(NTSnode *sn) {
     } else {
         lua_pushstring(sn->lua, sn->luaCbkArg);
     }
-    return lua_pcall(sn->lua, 3, 0, 0);
+
+    lua_pushnumber(sn->lua, sn->recvType);
+    int _m;
+    for (_m = 0; _m < sn->argvSize; _m++) {
+        lua_pushstring(sn->lua, sn->argv[_m]);
+    }
+
+    return lua_pcall(sn->lua, 3 + 1+sn->argvSize, 0, 0);
 }
 
 static void STInitLua(lua_State **L, char *dir) {
