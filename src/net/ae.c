@@ -358,8 +358,6 @@ int aeProcessEvents(aeLooper *eventLoop, int flags)
 {
     int processed = 0, numevents;
 
-    //强势插入actor事件处理
-
     /* Nothing to do? return ASAP */
     if (!(flags & AE_TIME_EVENTS) && !(flags & AE_FILE_EVENTS)) return 0;
 

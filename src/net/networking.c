@@ -38,19 +38,19 @@ static NTSnode* snodeArgvEmpty(NTSnode *sn);
 static NTSnode* snodeArgvFree(NTSnode *sn);
 
 static NTSnode* snodeArgvFree(NTSnode *sn) {
-    if (NULL == sn->argv) return sn;
+    if (0 == sn->argv) return sn;
 
     int loopJ;
     for (loopJ = 0; loopJ < sn->argvSize; loopJ++) {
         sdsfree(sn->argv[loopJ]);
     }
     zfree(sn->argv);
-    sn->argv = NULL;
+    sn->argv = 0;
     return sn;
 }
 
 static NTSnode* snodeArgvEmpty(NTSnode *sn) {
-    sn->argv = NULL;
+    sn->argv = 0;
     sn->argvSize = 0;
     return sn;
 }
@@ -60,7 +60,7 @@ static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count) {
 
     int loopJ;
 
-    if (NULL == sn->argv) {
+    if (0 == sn->argv) {
         sn->argv = zmalloc(sizeof(sds*) * count);
     } else {
         sn->argv = zrealloc(sn->argv, sizeof(sds*) * count);
@@ -100,7 +100,24 @@ static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
 
     while(bufpos < tmpsize) {
         nwritten = write(fd, sn->writebuf+bufpos, tmpsize-nwritten);
-        if (nwritten <= 0) break;
+        if (nwritten <= 0) {
+            if (EAGAIN == errno) {
+                nwritten = 0;
+            } else {
+                sn->recvType = SNODE_RECV_TYPE_HUP;
+                if (0 != sn->hupProc) {
+                    sn->hupProc(sn);
+                }
+                if (0 != sn->proc) {
+                    sn->proc(sn);
+                }
+                if (0 != sdslen(sn->luaCbkUrl)) {
+                    STLuaSrvCallback(sn);
+                }
+                NTFreeNTSnode(sn);
+                return;
+            }
+        }
         bufpos += nwritten;
     }
 
@@ -202,7 +219,7 @@ static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
     sn->recvType = ERRNO_NULL;
     sn->recvParsingStat = ERRNO_NULL;
 
-    if (NULL == sn->tmpQuerybuf) {
+    if (0 == sn->tmpQuerybuf) {
         sn->tmpQuerybuf = sdsempty();
     } else {
         sdsclear(sn->tmpQuerybuf);
@@ -213,7 +230,7 @@ static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
 
     sn->argcRemaining = 0;
     sn->argvRemaining = 0;
-    sn->proc = NULL;
+    sn->proc = 0;
 }
 
 static void resetNTSnodeArgs(NTSnode *sn) {
@@ -231,7 +248,7 @@ static void resetNTSnodeArgs(NTSnode *sn) {
 
     sn->argcRemaining = 0;
     sn->argvRemaining = 0;
-    sn->proc = NULL;
+    sn->proc = 0;
 }
 
 /* 移动 querybuf 到 target_addr 一直到遇到 \r\n，或者最后一个\n，
@@ -247,7 +264,7 @@ static int parseInputBufferGetSegment(NTSnode *sn, sds *target_addr) {
 
         newline = strchr(sn->querybuf, '\n');
         
-        if (NULL == newline) {
+        if (0 == newline) {
             *target_addr = sdscatsds(*target_addr, sn->querybuf);
             sdsclear(sn->querybuf);
             return readlen;
@@ -519,11 +536,11 @@ static void parseInputBuffer(NTSnode *sn) {
     } else if (SNODE_RECV_TYPE_ARRAY == sn->recvType) {
         parseInputBufferArray(sn);
 
-        if (NULL == sn->proc && sn->argc - sn->argcRemaining > 0) {
+        if (0 == sn->proc && sn->argc - sn->argcRemaining > 0) {
             dictEntry *de;
 
             de = dictFind(nt_server.services, sn->argv[0]);
-            if (NULL == de) {
+            if (0 == de) {
                 NTAddReplyError(sn, "service unrecognized");
                 setProtocolError(sn, 0);
                 return;
@@ -547,7 +564,7 @@ static void parseInputBuffer(NTSnode *sn) {
         sdsclear(sn->luaCbkArg);
     }
 
-    if (NULL == sn->proc) {
+    if (0 == sn->proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recvStat) {
             rePrepareNTSnodeToReadQuery(sn);
         }
@@ -603,19 +620,19 @@ static NTSnode* createNTSnode(int fd) {
     NTSnode *sn = zmalloc(sizeof(NTSnode));
 
     if (-1 == fd) {
-        return NULL;
+        return 0;
     }
 
-    anetNonBlock(NULL,fd);
-    anetEnableTcpNoDelay(NULL,fd);
+    anetNonBlock(0,fd);
+    anetEnableTcpNoDelay(0,fd);
     if (nt_server.tcpkeepalive)
-        anetKeepAlive(NULL,fd,nt_server.tcpkeepalive);
+        anetKeepAlive(0,fd,nt_server.tcpkeepalive);
     if (aeCreateFileEvent(nt_el,fd,AE_READABLE,
                 readQueryFromNTSnode, sn) == AE_ERR)
     {
         close(fd);
         zfree(sn);
-        return NULL;
+        return 0;
     }
 
     sn->fd = fd;
@@ -675,7 +692,7 @@ NTSnode *NTConnectNTSnode(char *addr, int port) {
     //fd = anetPeerConnect(fd, nt_server.neterr, addr, port);
     if (ANET_ERR == fd) {
         TrvLogW("Unable to connect to %s", addr);
-        return NULL;
+        return 0;
     }
     
     sn = createNTSnode(fd);
@@ -684,7 +701,7 @@ NTSnode *NTConnectNTSnode(char *addr, int port) {
 
 static void acceptCommonHandler(int fd, int flags) {
     NTSnode *sn;
-    if (NULL == (sn = createNTSnode(fd))) {
+    if (0 == (sn = createNTSnode(fd))) {
         TrvLogW("Error registering fd event for the new snode: %s (fd=%d)",
                 strerror(errno),fd);
         close(fd); /* May be already closed, just ignore errors */
@@ -749,7 +766,7 @@ static int listenToPort() {
 
     for (loopJ = 0; loopJ < nt_server.ipfdCount; loopJ++) {
         if (aeCreateFileEvent(nt_el, nt_server.ipfd[loopJ], AE_READABLE,
-                    acceptTcpHandler,NULL) == AE_ERR) {
+                    acceptTcpHandler,0) == AE_ERR) {
             TrvLogE("Unrecoverable error creating nt_server.ipfd file event.");
         }
     }
@@ -763,8 +780,8 @@ NTSnode* NTGetNTSnodeByFDS(const char *fdstr) {
     dictEntry *de;
 
     de = dictFind(nt_server.snodes, fdstr);
-    if (NULL == de) {
-        return NULL;
+    if (0 == de) {
+        return 0;
     }
 
     return dictGetVal(de);
@@ -782,7 +799,7 @@ int NTPrepare(int listenPort) {
     nt_server.statNumConnections = 0;
     nt_server.statRejectedConn = 0;
 
-    nt_server.snodes = dictCreate(&stackStringTableDictType, NULL);
+    nt_server.snodes = dictCreate(&stackStringTableDictType, 0);
     nt_server.snodeMaxQuerybufLen = SNODE_MAX_QUERYBUF_LEN;
 
     nt_server.tcpkeepalive = TRV_NET_TCPKEEPALIVE;

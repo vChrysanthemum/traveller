@@ -66,6 +66,7 @@ typedef struct NTSnode {
     time_t lastinteraction; // time of the last interaction, used for timeout 
 
     void (*proc) (NTSnode *sn);
+    void (*hupProc) (NTSnode *sn);
 
     lua_State *lua;
     sds luaCbkUrl;
@@ -74,6 +75,7 @@ typedef struct NTSnode {
     int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
 } NTSnode;
 
+#define SNODE_RECV_TYPE_HUP    -2 // 远程机器挂掉了
 #define SNODE_RECV_TYPE_ERR    -1 // -:ERR 
 #define SNODE_RECV_TYPE_OK     1  // +:OK 
 #define SNODE_RECV_TYPE_STRING 2
