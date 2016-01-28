@@ -48,7 +48,6 @@ sqlite3 *g_srvDB;
 char g_cliGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
 lua_State *g_cliLuaSt;
 sqlite3 *g_cliDB;
-NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 int main(int argc, char *argv[]) {
     struct configOption *confOpt;
@@ -122,8 +121,6 @@ int main(int argc, char *argv[]) {
 
     g_fooDevice = ETNewDevice(0, 0);
     ETDeviceStart(g_fooDevice);
-
-    //ETDeviceStartJob(g_netDevice, NULL, ETMainJobWraper, NULL);
 
     //开启界面，并阻塞在 uiLoop
     if (ERRNO_ERR == UIInit()) {

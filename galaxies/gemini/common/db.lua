@@ -1,16 +1,45 @@
-local util = {
-    db = {fuck = 321}
+local db = {
+    instance = nil,
+    dbpath = nil
 }
 
-function util.db:query(sql)
-    return DBQuery(sql)
+function db:SetConf(dbpath)
+    self.dbpath = dbpath
 end
 
-function util.db:escape(str)
+function db:Instance()
+    if nil ~= self.instance then
+        return self.instance
+    end
+
+    local obj = {
+        conn = nil,
+        dbpath = self.dbpath
+    }
+    self.__index = self
+    obj.__gc = function(p)
+        p:Close()
+    end
+    obj.conn = DBConnect(obj.dbpath)
+    assert(nil ~= obj.conn, "连接数据库失败")
+    self.instance = setmetatable(obj, self)
+
+    return self.instance
+end
+
+function db:escape(str)
     return "'" .. string.gsub(str, "'", "''") .. "'"
 end
 
-function util.db:create(tablename, data)
+function db:close()
+    DBClose(self.conn)
+end
+
+function db:Query(sql)
+    return DBQuery(self.conn, sql)
+end
+
+function db:Create(tablename, data)
     local sql = "INSERT INTO " .. tablename .. " "
     local pairs = pairs
     local columns = {}
@@ -23,10 +52,10 @@ function util.db:create(tablename, data)
     values = table.concat(values, ",")
 
     sql = sql .. "(".. columns ..") " .. "VALUES (".. values ..");"
-    return self:query(sql)
+    return self:Query(sql)
 end
 
-function util.db:update(tablename, data, where)
+function db:Update(tablename, data, where)
     local sql = "UPDATE " .. tablename .. " "
     local pairs = pairs
 
@@ -44,11 +73,10 @@ function util.db:update(tablename, data, where)
     sql_where = table.concat(sql_where, " AND ")
 
     sql = sql .. " SET " .. sql_data .. " WHERE " .. sql_where
-    return self:query(sql)
+    return self:Query(sql)
 end
 
-
-function util.db:delete(tablename, where)
+function db:Delete(tablename, where)
     local sql = "DELETE FROM " .. tablename .. " "
     local sql_where = {}
     for k, v in pairs(where) do
@@ -57,11 +85,10 @@ function util.db:delete(tablename, where)
     sql_where = table.concat(sql_where, " AND ")
 
     sql = sql .. " WHERE " .. sql_where
-    return self:query(sql)
+    return self:Query(sql)
 end
 
-
-function util.db:select(tablename, columns, where, orderby, limit)
+function db:Select(tablename, columns, where, orderby, limit)
     local sql = "SELECT " .. columns .. " FROM " .. tablename .. " "
     local sql_where = {}
     for k, v in pairs(where) do
@@ -86,7 +113,7 @@ function util.db:select(tablename, columns, where, orderby, limit)
 
 
     sql = sql .. " WHERE " .. sql_where .. sql_orderby .. sql_limit
-    return self:query(sql)
+    return self:Query(sql)
 end
 
-return util
+return db

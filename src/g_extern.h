@@ -23,12 +23,10 @@ extern config *g_conf;
 /* 服务端模式所需变量 */
 extern char g_srvGalaxydir[ALLOW_PATH_SIZE]; /* 需要加载的星系路径 */
 extern lua_State *g_srvLuaSt;
-extern sqlite3 *g_srvDB;
 
 /* 客户端模式所需变量 */
 extern char g_cliGalaxydir[ALLOW_PATH_SIZE]; /* 需要加载的星系路径 */
 extern lua_State *g_cliLuaSt;
 extern sqlite3 *g_cliDB;
-extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
 
 #endif

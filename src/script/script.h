@@ -11,8 +11,13 @@
 #define LUA_SERVICE_ERRNO_OK         0
 #define LUA_SERVICE_ERRNO_INNERERR   502
 
+#define STAssertLuaPCallSuccess(L, errno) do {\
+    if (0 != errno) {\
+        TrvExit(errno, "%s %d", lua_tostring(L, -1), errno);\
+    }\
+} while(0);
+
 int STPrepare();
-sqlite3* STinitDB(char *filepath);
 
 int STLuaService(lua_State *L, NTSnode *sn);
 int STLuaSrvCallback(NTSnode *sn);
@@ -48,6 +53,8 @@ int STAddReplyString(lua_State *L);
 int STAddReplyMultiString(lua_State *L);
 int STAddReplyRawString(lua_State *L);
 int STConnectNTSnode(lua_State *L);
+int STConnectDB(lua_State *L);
+int STCloseDB(lua_State *L);
 int STDBQuery(lua_State *L);
 
 #endif

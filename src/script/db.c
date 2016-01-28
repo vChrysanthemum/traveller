@@ -5,23 +5,51 @@
 #include "lua.h"
 #include "sqlite3.h"
 
-extern sqlite3 *g_srvDB;
-
-sqlite3* STinitDB(char *filepath) {
+// for lua
+// 连接db
+// @param filepath string
+int STConnectDB(lua_State *L) {
     int errno;
     sqlite3 *db;
 
+    const char *filepath = lua_tostring(L, 1);
+
     errno = sqlite3_open(filepath, &db);
-    if (errno) {
+    if (0 == errno) {
+        TrvLogI("%p", db);
+        lua_pushlightuserdata(L, db);
+    } else {
+        lua_pushnil(L);
         sqlite3_close(db);
-        TrvExit(0, "打开数据库失败，%s", filepath);
     }
 
-    return db;
+    return 1;
 }
 
+// for lua
+// 关闭db连接
+// @param db *db
+int STCloseDB(lua_State *L) {
+    int errno;
+    sqlite3 *db;
+    db = lua_touserdata(L, 1);
+    TrvAssert((0 != db), "STCloseDB error");
+
+    sqlite3_close(db);
+
+    return 1;
+}
+
+
+// for lua
+// 执行sql语句
+// @param db  *db
+// @param sql string
 int STDBQuery(lua_State *L) {
-    const char *sql = lua_tostring(L, 1);
+    sqlite3 *db = lua_touserdata(L, 1);
+    TrvAssert((0 != db), "STCloseDB error");
+
+    const char *sql = lua_tostring(L, 2);
     char **dbresult;
     char *errmsg;
     int errno, nrow, ncolumn, loopI, loopJ, index;
@@ -29,7 +57,7 @@ int STDBQuery(lua_State *L) {
     if (NULL == sql) return 0;
 
     errno = sqlite3_get_table(
-            g_srvDB,
+            db,
             sql,
             &dbresult,
             &nrow,

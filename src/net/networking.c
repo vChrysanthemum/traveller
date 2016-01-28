@@ -311,7 +311,7 @@ static int parseInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num
 static void parseInputBufferStatus(NTSnode *sn) {
     int readlen = 0;
 
-    TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat);
+    TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat, "parseInputBufferStatus error");
 
     if (SNODE_RECV_STAT_PARSING_START == sn->recvParsingStat) {
         sn->recvParsingStat = SNODE_RECV_STAT_PARSING_ARGV_VALUE;
@@ -336,7 +336,7 @@ static void parseInputBufferStatus(NTSnode *sn) {
 static void parseInputBufferString(NTSnode *sn) {
     int readlen = 0, len;
 
-    TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat);
+    TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat, "parseInputBufferString error");
 
     if (SNODE_RECV_STAT_PARSING_START == sn->recvParsingStat) {
         sdsclear(sn->tmpQuerybuf);
@@ -398,7 +398,7 @@ static void parseInputBufferString(NTSnode *sn) {
 static void parseInputBufferArray(NTSnode *sn) {
     int readlen = 0, len, argJ;
 
-    TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat);
+    TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat, "parseInputBufferArray error");
 
     if (SNODE_RECV_STAT_PARSING_START == sn->recvParsingStat) {
         sdsclear(sn->tmpQuerybuf);

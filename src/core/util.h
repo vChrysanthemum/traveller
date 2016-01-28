@@ -43,12 +43,12 @@ extern FILE* g_logF;
 #define TrvLogN(FMT, ...) TrvLog(TrvLog_NOTICE, FMT, ##__VA_ARGS__)
 #define TrvLogI(FMT, ...) TrvLog(TrvLog_INFO, FMT, ##__VA_ARGS__)
 
-#ifdef IS_DEBUG
-#include <assert.h>
-#define TrvAssert(condition) assert(condition);
-#else
-#define TrvAssert(condition) {}
-#endif
+#define TrvAssert(condition, FMT, ...) do {\
+    if (!(condition)) {\
+        TrvLogI(FMT, ##__VA_ARGS__);\
+        exit(-1);\
+    }\
+} while(0);
 
 
 #define run_with_period(_ms_) if ((_ms_ <= 1000/server.hz) || !(server.cronloops%((_ms_)/(1000/server.hz))))

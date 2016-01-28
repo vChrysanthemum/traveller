@@ -25,7 +25,7 @@ int STLuaService(lua_State *L, NTSnode *sn) {
 
     errno = lua_pcall(L, argc+1, 0, 0);
 
-    if (errno) {
+    if (0 != errno) {
         TrvLogW("%s", lua_tostring(L, -1));
         return LUA_SERVICE_ERRNO_INNERERR;
     }
@@ -57,13 +57,12 @@ static void STInitLua(lua_State **L, char *dir) {
     luaL_openlibs(*L);
     /*
     luaopen_base(*L);
+    */
     luaopen_table(*L);
     luaopen_string(*L);
     luaopen_math(*L);
-    */
 
-    lua_pushstring(*L, dir);
-    lua_setglobal(*L, "g_basedir");
+    lua_pushstring(*L, dir);lua_setglobal(*L, "g_basedir");
 
     lua_register(*L, "LogI",                    STLogI);
     lua_register(*L, "LoadView",                STLoadView);
@@ -71,11 +70,41 @@ static void STInitLua(lua_State **L, char *dir) {
     lua_register(*L, "NTAddReplyString",        STAddReplyString);
     lua_register(*L, "NTAddReplyRawString",     STAddReplyRawString);
     lua_register(*L, "NTAddReplyMultiString",   STAddReplyMultiString);
+    lua_register(*L, "DBConnect", STConnectDB);
+    lua_register(*L, "DBClose", STCloseDB);
     lua_register(*L, "DBQuery", STDBQuery);
 }
 
-#include "script/client.c"
-#include "script/server.c"
+//初始化 STServer
+static void PrepareSTServer(lua_State **L, char *STServerDir) {
+    int errno;
+    STInitLua(L, STServerDir);
+
+    char *filepath = (char *)zmalloc(ALLOW_PATH_SIZE);
+    memset(filepath, 0, ALLOW_PATH_SIZE);
+
+    snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", STServerDir);
+    errno = luaL_loadfile(*L, filepath);
+    if (errno) {
+        TrvExit(0, "%s", lua_tostring(*L, -1));
+    }
+    zfree(filepath);
+
+    //初始化
+    errno = lua_pcall(*L, 0, 0, 0);
+    if (errno) {
+        TrvExit(0, "%s", lua_tostring(*L, -1));
+    }
+
+    lua_settop(*L, 0);
+    //调用init函数  
+    lua_getglobal(*L, "Init");
+    for (int i = 0; i < g_conf->contentsCount; i++) {
+        lua_pushstring(*L, g_conf->contents[i]);
+    }
+    errno = lua_pcall(*L, g_conf->contentsCount, 0, 0);
+    STAssertLuaPCallSuccess(*L, errno);
+}
 
 /* 基础部分初始化 */
 int STPrepare() {
@@ -91,7 +120,7 @@ int STPrepare() {
         }
         confOptToStr(confOpt, tmpstr);
         snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        PrepareServer();
+        PrepareSTServer(&g_srvLuaSt, g_srvGalaxydir);
     }
 
     /* 游戏客户端初始化 */
@@ -103,7 +132,7 @@ int STPrepare() {
         }
         confOptToStr(confOpt, tmpstr);
         snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        PrepareClient();
+        PrepareSTServer(&g_cliLuaSt, g_cliGalaxydir);
     }
 
     return ERRNO_OK;
