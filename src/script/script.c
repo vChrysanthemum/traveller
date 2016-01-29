@@ -1,5 +1,5 @@
 #include "core/util.h"
-#include "core/config.h"
+#include "core/ini.h"
 #include "core/zmalloc.h"
 #include "script/script.h"
 #include "net/networking.h"
@@ -108,11 +108,11 @@ static void PrepareSTServer(lua_State **L, char *STServerDir) {
 
 /* 基础部分初始化 */
 int STPrepare() {
-    struct configOption *confOpt;
+    struct IniOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
 
     /* 游戏服务端初始化 */
-    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
+    confOpt = IniGet(g_conf, "galaxies_server", "relative_path");
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {
@@ -124,7 +124,7 @@ int STPrepare() {
     }
 
     /* 游戏客户端初始化 */
-    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
+    confOpt = IniGet(g_conf, "galaxies_client", "relative_path");
     if (confOpt) {
 
         if (confOpt->valueLen > ALLOW_PATH_SIZE) {

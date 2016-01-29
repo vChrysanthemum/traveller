@@ -1,32 +1,29 @@
-/*
- * ConfigParser https://github.com/vChrysanthemum/ConfigParser
- */
-#ifndef _CORE_CONFIG_H
-#define _CORE_CONFIG_H
+#ifndef _CORE_INI_H
+#define _CORE_INI_H
 #include <sys/types.h>
 
 #define HAVE_BACKTRACE 1
 
-typedef struct configOption {
+typedef struct IniOption {
     char *section;
     int sectionLen;
     char *key;
     int keyLen;
     char *value;
     int valueLen;
-} configOption;
+} IniOption;
 
-typedef struct config {
+typedef struct Ini {
     char **contents;
     int contentsCount;
-    struct configOption **options;
+    struct IniOption **options;
     int optionsCount;
-} config;
+} Ini;
 
-config *initConfig();
-void configRead(config *conf, char *path);
-configOption *configGet(config *conf, char *section, char *option);
-void releaseConfig(config **conf);
+Ini *InitIni();
+void IniRead(Ini *conf, char *path);
+IniOption *IniGet(Ini *conf, char *section, char *option);
+void ReleaseIni(Ini **conf);
 
 #define confOptToStr(confOpt, result) do {\
     memcpy(result, confOpt->value, confOpt->valueLen);\

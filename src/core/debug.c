@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include "core/platform.h"
-#include "core/config.h"
+#include "core/ini.h"
 #include "core/util.h"
 #include "core/debug.h"
 #include "core/sds.h"

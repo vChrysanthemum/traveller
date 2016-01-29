@@ -1,6 +1,6 @@
 baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./core/zmalloc.o \
-				   ./core/config.o ./core/sds.o ./core/util.o ./core/adlist.o \
+				   ./core/ini.o ./core/sds.o ./core/util.o ./core/adlist.o \
 				   ./core/dict.o ./core/frozen.o ./core/debug.o \
 				   ./core/sha1.o ./core/crc64.o \
 				   ./event/device.o ./event/actor.o \

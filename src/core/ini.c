@@ -1,12 +1,9 @@
-/*
- * ConfigParser https://github.com/vChrysanthemum/ConfigParser
- */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "core/util.h"
-#include "core/config.h"
+#include "core/ini.h"
 #include "core/zmalloc.h"
 
 static void skipWhitespaces(char **ptr)  {
@@ -99,9 +96,9 @@ static int parseOptionValueAndSkip(char **ptr) {
     return n;
 }
 
-static int configGetReturnId(config *conf, char *section, char *option) {
+static int IniGetId(Ini *conf, char *section, char *option) {
     int j;
-    configOption* opt;
+    IniOption* opt;
     for (j = 0; j < conf->optionsCount; j++) {
         opt = conf->options[j];
 
@@ -120,21 +117,21 @@ static int configGetReturnId(config *conf, char *section, char *option) {
 }
 
 
-config *initConfig() {
-    config *conf;
-    conf = zmalloc(sizeof(config));
-    memset(conf, 0, sizeof(config));
+Ini *InitIni() {
+    Ini *conf;
+    conf = zmalloc(sizeof(Ini));
+    memset(conf, 0, sizeof(Ini));
     return conf;
 }
 
-void configRead(config *conf, char *path) {
+void IniRead(Ini *conf, char *path) {
     FILE* fp; 
     long len;
     char *content, *ptr;
     int currentContentId, sectionLen=0, id;
     char* section = NULL;
     char tmpSection[512] = "", tmpOption[512] = "";
-    configOption *opt = NULL;
+    IniOption *opt = NULL;
 
     fp = fopen(path, "r");
     if (fp == NULL) {
@@ -161,7 +158,7 @@ void configRead(config *conf, char *path) {
     ptr = content;
 
     while (0 != *ptr) {
-        opt = (configOption*)zmalloc(sizeof(configOption));
+        opt = (IniOption*)zmalloc(sizeof(IniOption));
 
         skipCommenting(&ptr);
 
@@ -194,10 +191,10 @@ void configRead(config *conf, char *path) {
         strncpy(tmpOption, opt->key, opt->keyLen);
         tmpOption[opt->keyLen] = '\0';
 
-        id = configGetReturnId(conf, tmpSection, tmpOption);
+        id = IniGetId(conf, tmpSection, tmpOption);
         if (id < 0) {
             conf->optionsCount += 1;
-            conf->options = (configOption**)realloc(conf->options, sizeof(configOption**) * conf->optionsCount);
+            conf->options = (IniOption**)realloc(conf->options, sizeof(IniOption**) * conf->optionsCount);
             conf->options[conf->optionsCount-1] = opt;
         } else {
             free(conf->options[id]);
@@ -207,15 +204,15 @@ void configRead(config *conf, char *path) {
     }
 }
 
-configOption* configGet(config *conf, char *section, char *option) {
-    int j = configGetReturnId(conf, section, option);
+IniOption* IniGet(Ini *conf, char *section, char *option) {
+    int j = IniGetId(conf, section, option);
     if (-1 == j) {
         return NULL;
     }
     return conf->options[j];
 }
 
-void releaseConfig(config **conf) {
+void ReleaseIni(Ini **conf) {
     int j;
     for (j = 0; j < (*conf)->contentsCount; j++) {
         free((*conf)->options[j]);

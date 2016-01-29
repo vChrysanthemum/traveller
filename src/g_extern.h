@@ -1,7 +1,7 @@
 #ifndef __G_EXTERN_H
 #define __G_EXTERN_H
 
-#include "core/config.h"
+#include "core/ini.h"
 #include "event/event.h"
 #include "net/networking.h"
 
@@ -16,7 +16,7 @@ extern char g_basedir[ALLOW_PATH_SIZE]; /* 绝对路径为 $(traveller)/src */
 extern char *g_logdir;
 extern FILE* g_logF;
 extern int g_logFInt;
-extern config *g_conf;
+extern Ini *g_conf;
 
 /* UI部分 */
 

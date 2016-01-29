@@ -5,7 +5,7 @@
 #include <locale.h>
 
 #include "core/errors.h"
-#include "core/config.h"
+#include "core/ini.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
 #include "core/debug.h"
@@ -37,7 +37,7 @@ char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 char *g_logdir;
 FILE* g_logF;
 int g_logFInt;
-config *g_conf;
+ini *g_conf;
 
 /* 服务端模式所需变量 */
 char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
@@ -50,7 +50,7 @@ lua_State *g_cliLuaSt;
 sqlite3 *g_cliDB;
 
 int main(int argc, char *argv[]) {
-    struct configOption *confOpt;
+    struct IniOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
     int listenPort;
 
@@ -67,18 +67,18 @@ int main(int argc, char *argv[]) {
         TrvExit(0, "获取当前路径失败");
     }
 
-    g_conf = initConfig();
+    g_conf = InitIni();
 
     snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../conf/default.conf", g_basedir);
-    configRead(g_conf, tmpstr);
+    IniRead(g_conf, tmpstr);
 
-    if (argc > 1) configRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
+    if (argc > 1) IniRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
     if (NULL == g_conf->contents) {
         TrvExit(0, "请选择配置文件");
     }
 
-    confOpt = configGet(g_conf, "traveller", "log_dir");
+    confOpt = IniGet(g_conf, "traveller", "log_dir");
     if (confOpt) {
         g_logdir = (char *)zmalloc(confOpt->valueLen+1);
         snprintf(g_logdir, ALLOW_PATH_SIZE, "%.*s", confOpt->valueLen, confOpt->value);
@@ -86,7 +86,7 @@ int main(int argc, char *argv[]) {
         g_logFInt = fileno(g_logF);
     }
 
-    confOpt = configGet(g_conf, "net_server", "port");
+    confOpt = IniGet(g_conf, "net_server", "port");
 
     if (NULL != confOpt) {
 

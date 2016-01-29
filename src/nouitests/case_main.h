@@ -74,7 +74,7 @@ int main(int argc, char** argv)
  * The file linux_threads.c is also
  * Copyright (c) 1998 by Fergus Henderson.  All rights reserved.
 
- * The files Makefile.am, and configure.in are
+ * The files Makefile.am, and iniure.in are
  * Copyright (c) 2001 by Red Hat Inc. All rights reserved.
 
  * Several files supporting GNU-style builds are copyrighted by the Free
