@@ -112,7 +112,7 @@ static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
                     sn->proc(sn);
                 }
                 if (0 != sdslen(sn->luaCbkUrl)) {
-                    STLuaSrvCallback(sn);
+                    STScriptServiceCallback(sn);
                 }
                 NTFreeNTSnode(sn);
                 return;
@@ -558,7 +558,7 @@ static void parseInputBuffer(NTSnode *sn) {
             sdslen(sn->luaCbkUrl) > 0 &&
             0 != sn->lua) {
 
-        STLuaSrvCallback(sn);
+        STScriptServiceCallback(sn);
         sn->lua = 0;
         sdsclear(sn->luaCbkUrl);
         sdsclear(sn->luaCbkArg);

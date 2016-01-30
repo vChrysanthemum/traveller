@@ -26,26 +26,11 @@ static void STInitScriptLua(STScript *script) {
     lua_register(L, "NTAddReplyString",        STAddReplyString);
     lua_register(L, "NTAddReplyRawString",     STAddReplyRawString);
     lua_register(L, "NTAddReplyMultiString",   STAddReplyMultiString);
-    lua_register(L, "DBConnect", STConnectDB);
-    lua_register(L, "DBClose", STCloseDB);
-    lua_register(L, "DBQuery", STDBQuery);
+    lua_register(L, "DBConnect",               STConnectDB);
+    lua_register(L, "DBClose",                 STCloseDB);
+    lua_register(L, "DBQuery",                 STDBQuery);
 
-    script->L = L;
-}
-
-STScript* STNewScript(char *basedir) {
-    STScript *script = (STScript*)zmalloc(sizeof(STScript));
-    memset(script, 0, sizeof(STScript));
-    script->basedir = sdsnew(basedir);
-    STInitScriptLua(script);
-    return script;
-}
-
-//初始化 STScript
-static void STScriptInit(STScript *script) {
     int errno;
-
-    lua_State *L = script->L;
 
     sds filepath = sdscatprintf(sdsempty(), "%s/main.lua", script->basedir);
     errno = luaL_loadfile(L, filepath);
@@ -68,6 +53,17 @@ static void STScriptInit(STScript *script) {
     }
     errno = lua_pcall(L, g_conf->contentsCount, 0, 0);
     STAssertLuaPCallSuccess(L, errno);
+
+    script->L = L;
+}
+
+
+STScript* STNewScript(char *basedir) {
+    STScript *script = (STScript*)zmalloc(sizeof(STScript));
+    memset(script, 0, sizeof(STScript));
+    script->basedir = sdsnew(basedir);
+    STInitScriptLua(script);
+    return script;
 }
 
 void STFreeScript(void *_script) {
@@ -104,7 +100,7 @@ int STScriptService(STScript *script, NTSnode *sn) {
     return LUA_SERVICE_ERRNO_OK;
 }
 
-int STLuaSrvCallback(NTSnode *sn) {
+int STScriptServiceCallback(NTSnode *sn) {
     lua_getglobal(sn->lua, "SrvCallbackRouter");
     lua_pushstring(sn->lua, sn->fdstr);
     lua_pushstring(sn->lua, sn->luaCbkUrl);
@@ -158,7 +154,6 @@ int STPrepare() {
         dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
 
         script = STNewScript(dir);
-        STScriptInit(script);
 
         g_scripts = listAddNodeTail(g_scripts, script);
 

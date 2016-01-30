@@ -29,7 +29,7 @@ void STFreeScript(void *script);
 int STPrepare();
 
 int STScriptService(STScript *script, NTSnode *sn);
-int STLuaSrvCallback(NTSnode *sn);
+int STScriptServiceCallback(NTSnode *sn);
 
 #define STAddReplyHeader(L) \
     const char *fdstr;\

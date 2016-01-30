@@ -100,14 +100,14 @@ int main(int argc, char *argv[]) {
         TrvExit(0, "初始化UI失败");
     }
 
-    g_mainDevice = ETNewDevice(0, 0);
-    ETDeviceStart(g_mainDevice);
-
     g_netDevice = ETNewDevice(aeMainDeviceWrap, nt_el);
     ETDeviceStart(g_netDevice);
 
     g_fooDevice = ETNewDevice(0, 0);
     ETDeviceStart(g_fooDevice);
+
+    g_mainDevice = ETNewDevice(0, 0);
+    ETDeviceStart(g_mainDevice);
 
     //开启界面，并阻塞在 uiLoop
     if (ERRNO_ERR == UIInit()) {
