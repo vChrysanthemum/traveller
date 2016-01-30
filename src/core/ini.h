@@ -1,29 +1,34 @@
 #ifndef _CORE_INI_H
 #define _CORE_INI_H
+
 #include <sys/types.h>
+
+#include "core/sds.h"
+#include "core/dict.h"
+#include "core/adlist.h"
 
 #define HAVE_BACKTRACE 1
 
 typedef struct IniOption {
-    char *section;
-    int sectionLen;
-    char *key;
-    int keyLen;
-    char *value;
-    int valueLen;
+    sds key;
+    sds value;
 } IniOption;
+
+typedef struct IniSection {
+    sds  key;
+    dict *options;
+} IniSection;
 
 typedef struct Ini {
     char **contents;
     int contentsCount;
-    struct IniOption **options;
-    int optionsCount;
+    dict *sections;
 } Ini;
 
 Ini *InitIni();
 void IniRead(Ini *conf, char *path);
-IniOption *IniGet(Ini *conf, char *section, char *option);
-void ReleaseIni(Ini **conf);
+sds IniGet(Ini *conf, char *sectionKey, char *optionKey);
+void FreeIni(Ini *conf);
 
 #define confOptToStr(confOpt, result) do {\
     memcpy(result, confOpt->value, confOpt->valueLen);\

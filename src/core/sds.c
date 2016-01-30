@@ -71,6 +71,21 @@ sds sdsempty(void) {
     return sdsnewlen("",0);
 }
 
+char* stringnewlen(const char *init, size_t initlen) {
+    char *ret;
+    ret = (char*)zmalloc(initlen+1);
+    if (initlen > 0) {
+        memcpy(ret, init, initlen);
+    }
+    ret[initlen] = '\0';
+    return ret;
+}
+
+char* stringnew(const char *init) {
+    //asert NULL != init 
+    return stringnewlen(init, strlen(init));
+}
+
 /* Create a new sds string starting from a null termined C string. */
 sds sdsnew(const char *init) {
     size_t initlen = (init == NULL) ? 0 : strlen(init);
@@ -653,6 +668,18 @@ int sdscmp(const sds s1, const sds s2) {
 
     l1 = sdslen(s1);
     l2 = sdslen(s2);
+    minlen = (l1 < l2) ? l1 : l2;
+    cmp = memcmp(s1,s2,minlen);
+    if (cmp == 0) return l1-l2;
+    return cmp;
+}
+
+int sdscmpstr(const sds s1, const char *s2) {
+    size_t l1, l2, minlen;
+    int cmp;
+
+    l1 = sdslen(s1);
+    l2 = strlen(s2);
     minlen = (l1 < l2) ? l1 : l2;
     cmp = memcmp(s1,s2,minlen);
     if (cmp == 0) return l1-l2;

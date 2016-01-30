@@ -39,16 +39,6 @@ FILE* g_logF;
 int g_logFInt;
 ini *g_conf;
 
-/* 服务端模式所需变量 */
-char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
-lua_State *g_srvLuaSt;
-sqlite3 *g_srvDB;
-
-/* 客户端模式所需变量 */
-char g_cliGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
-lua_State *g_cliLuaSt;
-sqlite3 *g_cliDB;
-
 int main(int argc, char *argv[]) {
     struct IniOption *confOpt;
     char tmpstr[ALLOW_PATH_SIZE] = {""};

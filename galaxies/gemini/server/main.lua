@@ -19,7 +19,7 @@ end
 
 function Init(...)
     local confStrList = {...}
-    g_conf = ini.LoadConf(confStrList, "galaxies_server")
+    g_conf = ini.LoadConf(confStrList, "script:server")
 
     db:SetConf(g_basedir.."/sqlite.db")
     g_db = db:Instance()

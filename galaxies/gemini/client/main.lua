@@ -29,8 +29,8 @@ end
 
 function Init(...)
     local confStrList = {...}
-    g_conf = ini.LoadConf(confStrList, "galaxies_client")
-    assert(nil ~= g_conf, "找不到配置: galaxies_client")
+    g_conf = ini.LoadConf(confStrList, "script:client")
+    assert(nil ~= g_conf, "找不到配置:script:client")
 
     assert(nil ~= g_conf["galaxies_server_host"], "请配置 galaxies_server_host")
     assert(nil ~= g_conf["galaxies_server_port"], "请配置 galaxies_server_port")
@@ -43,5 +43,5 @@ function Init(...)
     g_SrvCallbackRouteTable["/login"] = CbkLogin
 
     NTAddReplyMultiString(g_serverContenctId, "/login", nil, 
-    "galaxies", "/login", "j@ioctl", "fuckemail", "fuckpassword")
+    "script", "/login", "j@ioctl", "fuckemail", "fuckpassword")
 end

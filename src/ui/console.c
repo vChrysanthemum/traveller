@@ -19,11 +19,11 @@ static void renderTabs() {
 
     wmove(tabwin, 0, 0);
 
-    listNode *node;
+    listNode *ln;
     UIPage *page;
-    listIter *iter = listGetIterator(ui_pages, AL_START_HEAD);
-    while (NULL != (node = listNext(iter))) {
-        page = (UIPage*)node->value;
+    listIter *li = listGetIterator(ui_pages, AL_START_HEAD);
+    while (NULL != (ln = listNext(li))) {
+        page = (UIPage*)ln->value;
 
         if (page == ui_activePage) {
             wattron(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
@@ -41,7 +41,7 @@ static void renderTabs() {
             wattroff(tabwin, COLOR_PAIR(CP_CONSOLE_TAB));
         }
     }
-    listReleaseIterator(iter);
+    listReleaseIterator(li);
 
     wmove(win, cursor->y, cursor->x);
 }

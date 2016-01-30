@@ -14,11 +14,42 @@ dictType stackStringTableDictType = {
     NULL                       /* val destructor */
 };
 
+dictType sdskvDictType = {
+    dictSdsHash,               /* hash function */
+    NULL,                      /* key dup */
+    NULL,                      /* val dup */
+    dictSdsKeyCompare,         /* key compare */
+    dictSdsDestructor,         /* key destructor */
+    dictSdsDestructor,         /* val destructor */
+};
+
 /*====================== Hash table type implementation  ==================== */
 
 /* This is a hash table type that uses the SDS dynamic strings library as
  *  * keys and radis objects as values (objects can hold SDS strings,
  *   * lists, sets). */
+
+unsigned int dictStringHash(const void *key) {
+    return dictGenHashFunction((unsigned char*)key, strlen((char*)key));
+}
+
+int dictStringCompare(void *privdata, const void *key1,
+        const void *key2)
+{
+    int l1,l2;
+    DICT_NOTUSED(privdata);
+
+    l1 = strlen((char*)key1);
+    l2 = strlen((char*)key2);
+    if (l1 != l2) return 0;
+    return memcmp(key1, key2, l1) == 0;
+}
+
+void dictStringDestructor(void *privdata, void *val)
+{
+    DICT_NOTUSED(privdata);
+    zfree(val);
+}
 
 unsigned int dictSdsHash(const void *key) {
     return dictGenHashFunction((unsigned char*)key, sdslen((char*)key));
@@ -42,9 +73,8 @@ void dictListDestructor(void *privdata, void *val)
 
 void dictSdsDestructor(void *privdata, void *val)
 {
-        DICT_NOTUSED(privdata);
-
-            sdsfree(val);
+    DICT_NOTUSED(privdata);
+    sdsfree(val);
 }
 
 int dictSdsKeyCompare(void *privdata, const void *key1,
@@ -67,12 +97,6 @@ int dictSdsKeyCaseCompare(void *privdata, const void *key1,
 
 unsigned int dictStringCaseHash(const void *key) {
     return dictGenCaseHashFunction((unsigned char*)key, strlen((char*)key));
-}
-
-int dictStringCompare(void *privdata, const void *key1,
-        const void *key2) {
-    NOTUSED(privdata);
-    return strcmp(key1, key2) == 0;
 }
 
 sds fileGetContent(char *path) {

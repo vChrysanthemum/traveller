@@ -4,9 +4,60 @@
 
 #include "core/util.h"
 #include "core/ini.h"
+#include "core/dict.h"
 #include "core/zmalloc.h"
 
-static void skipWhitespaces(char **ptr)  {
+static IniOption* NewOption() {
+    IniOption *option = (IniOption*)zmalloc(sizeof(IniOption));
+    option->key = sdsempty();
+    option->value = sdsempty();
+    return option;
+}
+
+static void dictFreeOption(void *privdata, void *_option) {
+    DICT_NOTUSED(privdata);
+    IniOption *option = (IniOption*)_option;
+
+    sdsfree(option->key);
+    sdsfree(option->value);
+    zfree(option);
+}
+
+static dictType sectionOptionDictType = {
+    dictStringHash,            /* hash function */
+    NULL,                      /* key dup */
+    NULL,                      /* val dup */
+    dictStringCompare,         /* key compare */
+    dictStringDestructor,      /* key destructor */
+    dictFreeOption,            /* val destructor */
+};
+
+static void dictFreeSection(void *privdata, void* _section) {
+    DICT_NOTUSED(privdata);
+    IniSection *section = (IniSection*)_section;
+
+    sdsfree(section->key);
+    dictRelease(section->options);
+    zfree(section);
+}
+
+dictType sectionDictType = {
+    dictStringHash,            /* hash function */
+    NULL,                      /* key dup */
+    NULL,                      /* val dup */
+    dictStringCompare,         /* key compare */
+    dictStringDestructor,      /* key destructor */
+    dictFreeSection,           /* val destructor */
+};
+
+static IniSection* NewSection() {
+    IniSection *section = (IniSection*)zmalloc(sizeof(IniSection));
+    section->key = sdsempty();
+    section->options = dictCreate(&sectionOptionDictType, NULL);
+    return section;
+}
+
+static inline void skipWhitespaces(char **ptr)  {
     while( 0 != **ptr && (' ' == **ptr || '\t' == **ptr || '\r' == **ptr || '\n' == **ptr)) {
         (*ptr)++;
     }
@@ -96,31 +147,24 @@ static int parseOptionValueAndSkip(char **ptr) {
     return n;
 }
 
-static int IniGetId(Ini *conf, char *section, char *option) {
-    int j;
-    IniOption* opt;
-    for (j = 0; j < conf->optionsCount; j++) {
-        opt = conf->options[j];
+static inline IniSection* MustGetSection(Ini *conf, char *key) {
+    IniSection *section = (IniSection*)dictFetchValue(conf->sections, key);
 
-        if (strlen(section) != opt->sectionLen) {
-            continue;
-        }
-
-        if (0 == strncmp(opt->section, section, opt->sectionLen)) {
-            if (0 == strncmp(opt->key, option, opt->keyLen)) {
-                return j;
-            }
-        }
+    if (0 == section) {
+        section = NewSection();
+        section->key = sdscat(section->key, key);
+        dictAdd(conf->sections, stringnew(key), section);
     }
 
-    return -1;
+    return section;
 }
 
 
 Ini *InitIni() {
     Ini *conf;
-    conf = zmalloc(sizeof(Ini));
+    conf = (Ini*)zmalloc(sizeof(Ini));
     memset(conf, 0, sizeof(Ini));
+    conf->sections = dictCreate(&sectionDictType, 0);
     return conf;
 }
 
@@ -128,10 +172,11 @@ void IniRead(Ini *conf, char *path) {
     FILE* fp; 
     long len;
     char *content, *ptr;
-    int currentContentId, sectionLen=0, id;
-    char* section = NULL;
-    char tmpSection[512] = "", tmpOption[512] = "";
-    IniOption *opt = NULL;
+    sds sectionKey = sdsempty();
+    char *optionKey = 0, *optionValue = 0;
+    int sectionKeyLen = 0, optionKeyLen = 0, optionValueLen = 0;
+    IniOption *option = 0;
+    IniSection *section = 0;
 
     fp = fopen(path, "r");
     if (fp == NULL) {
@@ -152,14 +197,11 @@ void IniRead(Ini *conf, char *path) {
 
     conf->contentsCount += 1;
     conf->contents = (char **)realloc(conf->contents, sizeof(char **) * conf->contentsCount);
-    currentContentId = conf->contentsCount - 1;
-    conf->contents[currentContentId] = content;
+    conf->contents[conf->contentsCount-1] = content;
 
     ptr = content;
 
     while (0 != *ptr) {
-        opt = (IniOption*)zmalloc(sizeof(IniOption));
-
         skipCommenting(&ptr);
 
         if (0 == *ptr) {
@@ -168,56 +210,55 @@ void IniRead(Ini *conf, char *path) {
 
         if ('[' == *ptr) {
             ptr++;//skip [
-            section = ptr;
-            sectionLen = parseSection(ptr);
-            ptr += sectionLen;
+
+            sectionKeyLen = parseSection(ptr);
+            sectionKey = sdscpylen(sectionKey, ptr, sectionKeyLen);
+            section = MustGetSection(conf, sectionKey);
+
+            ptr += sectionKeyLen;
             ptr++;//skip ]
             skipCommenting(&ptr);
+
         }
 
-        opt->section = section;
-        opt->sectionLen = sectionLen;
+        skipWhitespaces(&ptr);
+        optionKey = ptr;
+        optionKeyLen= parseOptionKeyAndSkip(&ptr);
 
         skipWhitespaces(&ptr);
-        opt->key = ptr;
-        opt->keyLen = parseOptionKeyAndSkip(&ptr);
+        optionValue = ptr;
+        optionValueLen = parseOptionValueAndSkip(&ptr);
 
-        skipWhitespaces(&ptr);
-        opt->value = ptr;
-        opt->valueLen = parseOptionValueAndSkip(&ptr);
-
-        strncpy(tmpSection, section, sectionLen);
-        tmpSection[sectionLen] = '\0';
-        strncpy(tmpOption, opt->key, opt->keyLen);
-        tmpOption[opt->keyLen] = '\0';
-
-        id = IniGetId(conf, tmpSection, tmpOption);
-        if (id < 0) {
-            conf->optionsCount += 1;
-            conf->options = (IniOption**)realloc(conf->options, sizeof(IniOption**) * conf->optionsCount);
-            conf->options[conf->optionsCount-1] = opt;
-        } else {
-            free(conf->options[id]);
-            conf->options[id] = opt;
+        if (0 != section) {
+            option = NewOption();
+            option->key = sdscpylen(option->key, optionKey, optionKeyLen);
+            option->value = sdscpylen(option->value, optionValue, optionValueLen);
+            dictReplace(section->options, stringnewlen(optionKey, optionKeyLen), option);
         }
-
     }
+
+    sdsfree(sectionKey);
 }
 
-IniOption* IniGet(Ini *conf, char *section, char *option) {
-    int j = IniGetId(conf, section, option);
-    if (-1 == j) {
-        return NULL;
+sds IniGet(Ini *conf, char *sectionKey, char *optionKey) {
+    IniSection *section = (IniSection*)dictFetchValue(conf->sections, sectionKey);
+    if (0 == section) {
+        return 0;
     }
-    return conf->options[j];
+
+    IniOption *option = (IniOption*)dictFetchValue(section->options, optionKey);
+    if (0 == option) {
+        return 0;
+    }
+
+    return option->value;
 }
 
-void ReleaseIni(Ini **conf) {
+void FreeIni(Ini *conf) {
     int j;
-    for (j = 0; j < (*conf)->contentsCount; j++) {
-        free((*conf)->options[j]);
-        free((*conf)->contents[j]);
+    for (j = 0; j < conf->contentsCount; j++) {
+        free(conf->contents[j]);
     }
-    free(*conf);
-    *conf = NULL;
+    dictRelease(conf->sections);
+    free(conf);
 }

@@ -20,9 +20,8 @@
 #include <fcntl.h>
 #endif /* HAVE_BACKTRACE */
 
+#include "g_extern.h"
 
-extern FILE* g_logF;
-extern int g_logFInt;
 
 static void sigtermHandler(int sig) {
     NOTUSED(sig);
@@ -215,7 +214,7 @@ void logStackTrace(ucontext_t *uc) {
     int log_to_stdout = '\0';
 
     /* Open the log file in append mode. */
-    fd = g_logFInt;
+    fd = g_log.fd;
 
     /* Generate the stack trace */
     trace_size = backtrace(trace, 100);

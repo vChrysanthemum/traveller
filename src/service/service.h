@@ -2,6 +2,7 @@
 #define __NETCMD_NETCMD_H
 
 #include "net/networking.h"
+#include "script/script.h"
 
 typedef struct SVServiceRouter {
     char *key;
@@ -9,9 +10,9 @@ typedef struct SVServiceRouter {
     int argc;
 } SVServiceRouter;
 
-void SVInit();
-
-void SVGalaxies(NTSnode *sn); // 发送给星系的命令 
+void SVSubscribeScriptCmd(STScript *script);
+void SVPrepare();
+void SVScript(NTSnode *sn); //出发脚本服务
 void SVMsg(NTSnode *sn);
 void SVTest(NTSnode *sn);
 void SVClose(NTSnode *sn);

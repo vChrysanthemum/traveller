@@ -4,6 +4,8 @@
 #include "service/service.h"
 #include "net/extern.h"
 
+list *sv_scriptCmdSubscriber;
+
 dictType serviceTableDictType = {
     dictSdsCaseHash,           /* hash function */
     NULL,                      /* key dup */
@@ -14,13 +16,19 @@ dictType serviceTableDictType = {
 };
 
 SVServiceRouter SVServiceRouterTable[] = {
-    {"galaxies", SVGalaxies, 0},
+    {"script", SVScript, 0},
     {"test", SVTest, 0},
     {"msg", SVMsg, 0},
     {"close", SVClose, 0}
 };
 
-void SVInit() {
+void SVSubscribeScriptCmd(STScript *script) {
+    listAddNodeTail(sv_scriptCmdSubscriber, script);
+}
+
+void SVPrepare() {
+    sv_scriptCmdSubscriber = listCreate();
+
     int loopJ, tmpsize;
 
     nt_server.services = dictCreate(&serviceTableDictType, NULL);

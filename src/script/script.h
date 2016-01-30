@@ -17,9 +17,18 @@
     }\
 } while(0);
 
+typedef struct STScript {
+    int       isSubscribeNet;
+    sds       basedir;
+    lua_State *L;
+} STScript;
+
+STScript* STNewScript(char *basedir);
+void STFreeScript(void *script);
+
 int STPrepare();
 
-int STLuaService(lua_State *L, NTSnode *sn);
+int STScriptService(STScript *script, NTSnode *sn);
 int STLuaSrvCallback(NTSnode *sn);
 
 #define STAddReplyHeader(L) \

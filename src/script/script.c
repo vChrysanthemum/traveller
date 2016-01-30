@@ -7,12 +7,83 @@
 #include "ui/ui.h"
 #include "g_extern.h"
 
-int STLuaService(lua_State *L, NTSnode *sn) {
+static void STInitScriptLua(STScript *script) {
+    lua_State *L;
+    L = luaL_newstate();
+    luaL_openlibs(L);
+    /*
+    luaopen_base(L);
+    */
+    luaopen_table(L);
+    luaopen_string(L);
+    luaopen_math(L);
+
+    lua_pushstring(L, script->basedir);lua_setglobal(L, "g_basedir");
+
+    lua_register(L, "LogI",                    STLogI);
+    lua_register(L, "LoadView",                STLoadView);
+    lua_register(L, "NTConnectNTSnode",        STConnectNTSnode);
+    lua_register(L, "NTAddReplyString",        STAddReplyString);
+    lua_register(L, "NTAddReplyRawString",     STAddReplyRawString);
+    lua_register(L, "NTAddReplyMultiString",   STAddReplyMultiString);
+    lua_register(L, "DBConnect", STConnectDB);
+    lua_register(L, "DBClose", STCloseDB);
+    lua_register(L, "DBQuery", STDBQuery);
+
+    script->L = L;
+}
+
+STScript* STNewScript(char *basedir) {
+    STScript *script = (STScript*)zmalloc(sizeof(STScript));
+    memset(script, 0, sizeof(STScript));
+    script->basedir = sdsnew(basedir);
+    STInitScriptLua(script);
+    return script;
+}
+
+//初始化 STScript
+static void STScriptInit(STScript *script) {
+    int errno;
+
+    lua_State *L = script->L;
+
+    sds filepath = sdscatprintf(sdsempty(), "%s/main.lua", script->basedir);
+    errno = luaL_loadfile(L, filepath);
+    if (errno) {
+        TrvExit(0, "%s", lua_tostring(L, -1));
+    }
+    sdsfree(filepath);
+
+    //初始化
+    errno = lua_pcall(L, 0, 0, 0);
+    if (errno) {
+        TrvExit(0, "%s", lua_tostring(L, -1));
+    }
+
+    lua_settop(L, 0);
+    //调用init函数  
+    lua_getglobal(L, "Init");
+    for (int i = 0; i < g_conf->contentsCount; i++) {
+        lua_pushstring(L, g_conf->contents[i]);
+    }
+    errno = lua_pcall(L, g_conf->contentsCount, 0, 0);
+    STAssertLuaPCallSuccess(L, errno);
+}
+
+void STFreeScript(void *_script) {
+    STScript *script = _script;
+    sdsfree(script->basedir);
+    lua_close(script->L);
+    zfree(script);
+}
+
+int STScriptService(STScript *script, NTSnode *sn) {
     int errno;
     char **argv = &(sn->argv[1]);
     int argc = sn->argc - 1;
     char *funcName = *argv;
     int _m;
+    lua_State *L = script->L;
 
     lua_getglobal(L, "ServiceRouter");
     lua_pushstring(L, sn->fdstr);
@@ -52,88 +123,53 @@ int STLuaSrvCallback(NTSnode *sn) {
     return lua_pcall(sn->lua, 3 + 1+sn->argvSize, 0, 0);
 }
 
-static void STInitLua(lua_State **L, char *dir) {
-    *L = luaL_newstate();
-    luaL_openlibs(*L);
-    /*
-    luaopen_base(*L);
-    */
-    luaopen_table(*L);
-    luaopen_string(*L);
-    luaopen_math(*L);
-
-    lua_pushstring(*L, dir);lua_setglobal(*L, "g_basedir");
-
-    lua_register(*L, "LogI",                    STLogI);
-    lua_register(*L, "LoadView",                STLoadView);
-    lua_register(*L, "NTConnectNTSnode",        STConnectNTSnode);
-    lua_register(*L, "NTAddReplyString",        STAddReplyString);
-    lua_register(*L, "NTAddReplyRawString",     STAddReplyRawString);
-    lua_register(*L, "NTAddReplyMultiString",   STAddReplyMultiString);
-    lua_register(*L, "DBConnect", STConnectDB);
-    lua_register(*L, "DBClose", STCloseDB);
-    lua_register(*L, "DBQuery", STDBQuery);
-}
-
-//初始化 STServer
-static void PrepareSTServer(lua_State **L, char *STServerDir) {
-    int errno;
-    STInitLua(L, STServerDir);
-
-    char *filepath = (char *)zmalloc(ALLOW_PATH_SIZE);
-    memset(filepath, 0, ALLOW_PATH_SIZE);
-
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", STServerDir);
-    errno = luaL_loadfile(*L, filepath);
-    if (errno) {
-        TrvExit(0, "%s", lua_tostring(*L, -1));
-    }
-    zfree(filepath);
-
-    //初始化
-    errno = lua_pcall(*L, 0, 0, 0);
-    if (errno) {
-        TrvExit(0, "%s", lua_tostring(*L, -1));
-    }
-
-    lua_settop(*L, 0);
-    //调用init函数  
-    lua_getglobal(*L, "Init");
-    for (int i = 0; i < g_conf->contentsCount; i++) {
-        lua_pushstring(*L, g_conf->contents[i]);
-    }
-    errno = lua_pcall(*L, g_conf->contentsCount, 0, 0);
-    STAssertLuaPCallSuccess(*L, errno);
-}
-
 /* 基础部分初始化 */
 int STPrepare() {
-    struct IniOption *confOpt;
-    char tmpstr[ALLOW_PATH_SIZE] = {""};
+    g_scripts = listCreate();
+    g_scripts->free = STFreeScript;
 
-    /* 游戏服务端初始化 */
-    confOpt = IniGet(g_conf, "galaxies_server", "relative_path");
-    if (confOpt) {
+    sds value;
+    sds dir = sdsempty();
 
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
+    char *header = "script:";
+    int headerLen = strlen(header);
+
+    STScript *script;
+
+    IniSection *section;
+    dictEntry *de;
+    dictIterator *di = dictGetIterator(g_conf->sections);
+    while ((de = dictNext(di)) != NULL) {
+        section = (IniSection*)dictGetVal(de);
+        if (sdslen(section->key) < headerLen) {
+            continue;
         }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        PrepareSTServer(&g_srvLuaSt, g_srvGalaxydir);
-    }
 
-    /* 游戏客户端初始化 */
-    confOpt = IniGet(g_conf, "galaxies_client", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
+        if (0 != memcmp(section->key, header, headerLen)) {
+            continue;
         }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        PrepareSTServer(&g_cliLuaSt, g_cliGalaxydir);
+
+        value = IniGet(g_conf, section->key, "basedir");
+        if (0 == value) {
+            TrvExit(0, "%s 缺失脚本路径", section->key);
+        }
+
+        sdsclear(dir); 
+        dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
+
+        script = STNewScript(dir);
+        STScriptInit(script);
+
+        g_scripts = listAddNodeTail(g_scripts, script);
+
+        value = IniGet(g_conf, section->key, "is_subscribe_net");
+        if (0 != value && 0 == sdscmpstr(value, "1")) {
+            SVSubscribeScriptCmd(script);
+        }
     }
+    dictReleaseIterator(di);
+
+    sdsfree(dir);
 
     return ERRNO_OK;
 }

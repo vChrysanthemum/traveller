@@ -16,7 +16,6 @@ int STConnectDB(lua_State *L) {
 
     errno = sqlite3_open(filepath, &db);
     if (0 == errno) {
-        TrvLogI("%p", db);
         lua_pushlightuserdata(L, db);
     } else {
         lua_pushnil(L);

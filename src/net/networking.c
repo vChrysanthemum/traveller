@@ -812,7 +812,7 @@ int NTPrepare(int listenPort) {
         return ERRNO_ERR;
     }
 
-    SVInit();
+    SVPrepare();
 
     return ERRNO_OK;
 }

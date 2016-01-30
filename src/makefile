@@ -10,14 +10,14 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./script/net.o \
 
 travellerobjects := ./traveller.o $(baseobjects) \
-				   ./service/service.o ./service/test.o ./service/galaxies.o \
+				   ./service/service.o ./service/test.o ./service/script.o \
 				   ./ui/ui.o \
 				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o 
 
 uitestobjects := ./uitests/main.o $(baseobjects) \
-					   ./service/service.o ./service/test.o ./service/galaxies.o \
-					   ./uitests/ui_test.o \
-					   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o 
+				 ./service/service.o ./service/test.o ./service/script.o \
+				 ./uitests/ui_test.o \
+				 ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o 
 
 nouitestobjects = ./nouitests/case.o ./nouitests/ui_test.o
 

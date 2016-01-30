@@ -34,29 +34,19 @@ ETDevice *g_fooDevice;
 ETDevice *g_netDevice;
 
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
-char *g_logdir;
-FILE* g_logF;
-int g_logFInt;
+Log g_log;
 Ini *g_conf;
 
-/* 服务端模式所需变量 */
-char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
-lua_State *g_srvLuaSt;
-sqlite3 *g_srvDB;
-
-/* 客户端模式所需变量 */
-char g_cliGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
-lua_State *g_cliLuaSt;
-sqlite3 *g_cliDB;
+list *g_scripts;
 
 int main(int argc, char *argv[]) {
-    struct IniOption *confOpt;
+    sds value;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
     int listenPort;
 
-    g_logdir = NULL;
-    g_logF = stderr;
-    g_logFInt = STDERR_FILENO;
+    g_log.dir = 0;
+    g_log.f = stderr;
+    g_log.fd = STDERR_FILENO;
 
     setlocale(LC_ALL,"");
 
@@ -78,24 +68,21 @@ int main(int argc, char *argv[]) {
         TrvExit(0, "请选择配置文件");
     }
 
-    confOpt = IniGet(g_conf, "traveller", "log_dir");
-    if (confOpt) {
-        g_logdir = (char *)zmalloc(confOpt->valueLen+1);
-        snprintf(g_logdir, ALLOW_PATH_SIZE, "%.*s", confOpt->valueLen, confOpt->value);
-        g_logF = fopen(g_logdir, "a+");
-        g_logFInt = fileno(g_logF);
+    value = IniGet(g_conf, "traveller", "log_dir");
+    if (0 != value) {
+        g_log.dir = stringnewlen(value, sdslen(value));
+        g_log.f = fopen(g_log.dir, "a+");
+        g_log.fd = fileno(g_log.f);
     }
 
-    confOpt = IniGet(g_conf, "net_server", "port");
+    value = IniGet(g_conf, "traveller", "listen_port");
 
-    if (NULL != confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+    if (0 != value) {
+        if (sdslen(value) > ALLOW_PATH_SIZE) {
             TrvExit(0, "监听端口太大");
         }
 
-        confOptToStr(confOpt, tmpstr);
-        listenPort = atoi(tmpstr);
+        listenPort = atoi(value);
     }
     else listenPort = -1; /* 输入一个不正常的监听端口，意味着不监听 */
 
