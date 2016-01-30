@@ -48,21 +48,46 @@ static void STInitScriptLua(STScript *script) {
     lua_settop(L, 0);
     //调用init函数  
     lua_getglobal(L, "Init");
-    for (int i = 0; i < g_conf->contentsCount; i++) {
-        lua_pushstring(L, g_conf->contents[i]);
+
+    IniOption *iniOption;
+    dictEntry *de;
+    dictIterator *di = dictGetIterator(script->iniSection->options);
+    lua_newtable(L);
+    while ((de = dictNext(di)) != NULL) {
+        iniOption = (IniOption*)dictGetVal(de);
+
+        lua_pushstring(L, iniOption->key);
+        lua_pushstring(L, iniOption->value);
+        lua_settable(L, -3);
     }
-    errno = lua_pcall(L, g_conf->contentsCount, 0, 0);
+    dictReleaseIterator(di);
+
+    errno = lua_pcall(L, 1, 0, 0);
     STAssertLuaPCallSuccess(L, errno);
 
     script->L = L;
 }
 
 
-STScript* STNewScript(char *basedir) {
+STScript* STNewScript(IniSection *iniSection) {
     STScript *script = (STScript*)zmalloc(sizeof(STScript));
     memset(script, 0, sizeof(STScript));
-    script->basedir = sdsnew(basedir);
+    
+    script->iniSection = iniSection;
+
+    sds value;
+    sds dir = sdsempty();
+
+    value = IniGet(g_conf, script->iniSection->key, "basedir");
+    if (0 == value) {
+        TrvExit(0, "%s 缺失脚本路径", script->iniSection->key);
+    }
+    dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
+    script->basedir = sdsnew(dir);
+
     STInitScriptLua(script);
+
+    sdsfree(dir);
     return script;
 }
 
@@ -125,7 +150,6 @@ int STPrepare() {
     g_scripts->free = STFreeScript;
 
     sds value;
-    sds dir = sdsempty();
 
     char *header = "script:";
     int headerLen = strlen(header);
@@ -145,15 +169,7 @@ int STPrepare() {
             continue;
         }
 
-        value = IniGet(g_conf, section->key, "basedir");
-        if (0 == value) {
-            TrvExit(0, "%s 缺失脚本路径", section->key);
-        }
-
-        sdsclear(dir); 
-        dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
-
-        script = STNewScript(dir);
+        script = STNewScript(section);
 
         g_scripts = listAddNodeTail(g_scripts, script);
 
@@ -163,8 +179,6 @@ int STPrepare() {
         }
     }
     dictReleaseIterator(di);
-
-    sdsfree(dir);
 
     return ERRNO_OK;
 }

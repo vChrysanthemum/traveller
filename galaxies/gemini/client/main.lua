@@ -1,10 +1,13 @@
 package.path = package.path .. ';' .. g_basedir.."/?.lua;" .. g_basedir.."/../common/?.lua"
 
+--[
+-- g_basedir
+-- g_conf
+--] 
+
 local g_serverContenctId = nil
 local g_ServiceRouteTable = {}
 local g_SrvCallbackRouteTable = {}
-
-local ini = require "ini"
 
 function CbkLogin(connectId, arg, netRecvType, ...)
     LogI("fuck logined")
@@ -27,11 +30,11 @@ function SrvCallbackRouter(connectId, path, ...)
     end
 end
 
-function Init(...)
-    local confStrList = {...}
-    g_conf = ini.LoadConf(confStrList, "script:client")
-    assert(nil ~= g_conf, "找不到配置:script:client")
+function Init(conf)
+    g_conf = conf
+    assert(nil ~= g_conf, "找不到配置: script:client")
 
+    LogI(g_conf)
     assert(nil ~= g_conf["galaxies_server_host"], "请配置 galaxies_server_host")
     assert(nil ~= g_conf["galaxies_server_port"], "请配置 galaxies_server_port")
 

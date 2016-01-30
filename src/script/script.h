@@ -18,12 +18,13 @@
 } while(0);
 
 typedef struct STScript {
-    int       isSubscribeNet;
-    sds       basedir;
-    lua_State *L;
+    int        isSubscribeNet;
+    sds        basedir;
+    IniSection *iniSection;
+    lua_State  *L;
 } STScript;
 
-STScript* STNewScript(char *basedir);
+STScript* STNewScript(IniSection *iniSection);
 void STFreeScript(void *script);
 
 int STPrepare();
