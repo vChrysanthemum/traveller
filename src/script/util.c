@@ -19,12 +19,12 @@ int STLoadView(lua_State *L) {
     char * viewPath = (char *)lua_tostring(L, 1);
     viewFullPath = sdscatfmt(viewFullPath, "%s/view/%s.html", STgetGlobalString(L, "g_basedir"), viewPath);
 
-    char *content = file_get_contents(viewFullPath);
+    sds content = file_get_contents(viewFullPath);
     if (0 == content) {
         lua_pushnil(L);
     } else {
         lua_pushstring(L, content);
-        zfree(content);
+        sdsfree(content);
     }
 
     return 1;

@@ -158,10 +158,10 @@ int utf8StrWidth (char *str) {
     return result;
 }
 
-char* file_get_contents(char* path) {
+sds file_get_contents(char* path) {
     FILE* fp;
     long len;
-    char* ret;
+    sds ret;
 
     fp = fopen(path, "r");
     if (0 == fp) {
@@ -175,8 +175,7 @@ char* file_get_contents(char* path) {
     if (len < 0) {
         ret = 0;
     } else {
-        ret = zmalloc(len + 1);
-        memset(ret, 0, len + 1);
+        ret = sdsnewlen(0, len + 1);
         fread(ret, len, 1, fp);
     }
 

@@ -169,31 +169,19 @@ Ini *InitIni() {
 }
 
 void IniRead(Ini *conf, char *path) {
-    FILE* fp; 
-    long len;
-    char *content, *ptr;
+    sds content;
+    char *ptr;
     sds sectionKey = sdsempty();
     char *optionKey = 0, *optionValue = 0;
     int sectionKeyLen = 0, optionKeyLen = 0, optionValueLen = 0;
     IniOption *option = 0;
     IniSection *section = 0;
 
-    fp = fopen(path, "r");
-    if (fp == NULL) {
-        return;
-    }   
+    content = file_get_contents(path);
 
-    fseek(fp, 0, SEEK_END);
-    len = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-
-    if (len <= 0) {
+    if (0 == content) {
         return;
     }
-
-    content = zmalloc(len + 1);
-    memset(content, 0, len + 1);
-    fread(content, len, 1, fp);
 
     conf->contentsCount += 1;
     conf->contents = (char **)realloc(conf->contents, sizeof(char **) * conf->contentsCount);

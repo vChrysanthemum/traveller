@@ -20,7 +20,7 @@ typedef struct IniSection {
 } IniSection;
 
 typedef struct Ini {
-    char **contents;
+    sds *contents;
     int contentsCount;
     dict *sections;
 } Ini;
