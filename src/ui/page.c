@@ -21,6 +21,9 @@ void UIFreePage(UIPage *page) {
 void* UILoadPageActor(ETActor *actor, int args, void **argv) {
     UIPage *page = (UIPage*)argv[0];
     TrvLogI("%s", page->content);
+    page->uiwin = UIcreateWindow(20, ui_width, 0, 0);
+    wprintw(page->uiwin->win, page->content);
+    wrefresh(page->uiwin->win);
 
     return 0;
 }
