@@ -11,4 +11,6 @@ extern int ui_width, ui_height; //屏幕宽度、高度
 extern list *ui_pages;
 extern UIPage *ui_activePage;
 
+ETDevice *ui_device;
+
 #endif

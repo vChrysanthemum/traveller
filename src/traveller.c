@@ -90,24 +90,28 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
 
+    g_mainDevice = ETNewDevice(0, 0);
+    g_fooDevice = ETNewDevice(0, 0);
+
+    //初始化UI
+    if (ERRNO_ERR == UIPrepare()) {
+        TrvExit(0, "初始化UI失败");
+    }
+
     //开启网络
     if (ERRNO_ERR == NTPrepare(listenPort)) {
         TrvExit(0, "初始化网络失败");
     }
+    g_netDevice = ETNewDevice(aeMainDeviceWrap, nt_el);
 
     //开启脚本支持
     if (ERRNO_ERR == STPrepare()) {
-        TrvExit(0, "初始化UI失败");
+        TrvExit(0, "初始化脚本失败");
     }
 
-    g_netDevice = ETNewDevice(aeMainDeviceWrap, nt_el);
-    ETDeviceStart(g_netDevice);
-
-    g_fooDevice = ETNewDevice(0, 0);
-    ETDeviceStart(g_fooDevice);
-
-    g_mainDevice = ETNewDevice(0, 0);
     ETDeviceStart(g_mainDevice);
+    ETDeviceStart(g_fooDevice);
+    ETDeviceStart(g_netDevice);
 
     //开启界面，并阻塞在 uiLoop
     if (ERRNO_ERR == UIInit()) {

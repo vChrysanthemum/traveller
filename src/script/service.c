@@ -29,7 +29,9 @@ int STScriptService(STScript *script, NTSnode *sn) {
 }
 
 int STScriptServiceCallback(NTSnode *sn) {
-    lua_getglobal(sn->lua, "SrvCallbackRouter");
+    int errno;
+
+    lua_getglobal(sn->lua, "ServiceCallbackRouter");
     lua_pushstring(sn->lua, sn->fdstr);
     lua_pushstring(sn->lua, sn->luaCbkUrl);
     if (0 == sdslen(sn->luaCbkArg)) {
@@ -39,10 +41,17 @@ int STScriptServiceCallback(NTSnode *sn) {
     }
 
     lua_pushnumber(sn->lua, sn->recvType);
-    int _m;
-    for (_m = 0; _m < sn->argvSize; _m++) {
-        lua_pushstring(sn->lua, sn->argv[_m]);
+
+    for (int i = 0; i < sn->argvSize; i++) {
+        lua_pushstring(sn->lua, sn->argv[i]);
     }
 
-    return lua_pcall(sn->lua, 3 + 1+sn->argvSize, 0, 0);
+    errno = lua_pcall(sn->lua, 4+sn->argvSize, 0, 0);
+
+    if (0 != errno) {
+        TrvLogW("%s", lua_tostring(sn->lua, -1));
+        return LUA_SERVICE_ERRNO_INNERERR;
+    }
+
+    return LUA_SERVICE_ERRNO_OK;
 }

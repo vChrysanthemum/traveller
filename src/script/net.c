@@ -10,7 +10,7 @@
 // @param callbackurl   string     接受到远程服务器结果后的回调函数
 // @param callbackarg   string     回调函数所需参数
 // @param data          string...
-int STAddReplyString(lua_State *L) {
+int STNTAddReplyString(lua_State *L) {
     STAddReplyHeader(L);
     char *replyStr;
     
@@ -27,7 +27,7 @@ int STAddReplyString(lua_State *L) {
 // @param callbackurl   string
 // @param callbackarg   string
 // @param argv...       string...
-int STAddReplyMultiString(lua_State *L) {
+int STNTAddReplyMultiString(lua_State *L) {
     STAddReplyHeader(L);
 
     char **replyArr;
@@ -56,7 +56,7 @@ int STAddReplyMultiString(lua_State *L) {
 // @param callbackurl   string
 // @param callbackarg   string
 // @param data          string...
-int STAddReplyRawString(lua_State *L) {
+int STNTAddReplyRawString(lua_State *L) {
     STAddReplyHeader(L);
     char *replyStr;
      
@@ -72,7 +72,7 @@ int STAddReplyRawString(lua_State *L) {
 // 连接远程机器
 // @param host string  远程机器地址
 // @param port number
-int STConnectNTSnode(lua_State *L) {
+int STNTConnectSnode(lua_State *L) {
     char *host;
     int port;
     NTSnode *sn;

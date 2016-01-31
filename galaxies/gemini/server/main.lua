@@ -7,6 +7,7 @@ package.path = package.path .. ';' .. g_basedir.."/?.lua;" .. g_basedir.."/../co
 
 local g_db
 local g_ServiceRouteTable = {}
+local g_ServiceCallbackRouteTable = {}
 
 local md5 = require "md5"
 local db = require "db"
@@ -17,7 +18,10 @@ function ServiceRouter(connectId, path, ...)
     end
 end
 
-function SrvCallbackRouter(connectId, path, ...)
+function ServiceCallbackRouter(connectId, path, ...)
+    if (g_ServiceCallbackRouteTable[path]) then
+        g_ServiceCallbackRouteTable[path](connectId, ...)
+    end
 end
 
 function Init(conf)
@@ -28,6 +32,9 @@ function Init(conf)
     g_db = db:Instance()
     assert(nil ~= g_db, "连接数据库失败")
 
+    local CtrMain = require "ctr/main"
     local CtrCitizen = require "ctr/citizen"
+
+    g_ServiceRouteTable["/index"] = CtrMain.Index
     g_ServiceRouteTable["/login"] = CtrCitizen.Login
 end

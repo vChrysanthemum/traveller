@@ -5,7 +5,7 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./core/sha1.o ./core/crc64.o \
 				   ./event/device.o ./event/actor.o \
 				   ./net/anet.o ./net/ae.o ./net/networking.o \
-				   ./script/script.o ./script/service.o ./script/util.o \
+				   ./script/script.o ./script/service.o ./script/util.o ./script/ui.o \
 				   ./script/db.o \
 				   ./script/net.o \
 

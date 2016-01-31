@@ -20,6 +20,8 @@ int ui_width, ui_height; //屏幕宽度、高度
 list *ui_pages;
 UIPage *ui_activePage;
 
+ETDevice *ui_device;
+
 static list *keyDownProcessors;
 
 static void uiLoop() {
@@ -63,7 +65,18 @@ int UIUnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     return ERRNO_OK;
 }
 
-int UIInit() {
+static void UIPrepareLoadPageActor() {
+    ETFactoryActor *factoryActor = ui_device->factoryActor;
+    ETChannelActor *channelActor = ETNewChannelActor();
+    channelActor->key = stringnew("/loadpage");
+    ETFactoryActorAppendChannel(factoryActor, channelActor);
+
+    ETActor *actor = ETFactoryActorNewActor(factoryActor);
+    actor->proc = UILoadPageActor;
+    ETSubscribeChannel(actor, channelActor);
+}
+
+int UIPrepare() {
     ui_panels = listCreate();
     ui_pages = listCreate();
     keyDownProcessors = listCreate();
@@ -71,7 +84,15 @@ int UIInit() {
     ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
     memset(ui_env, 0, sizeof(UIEnv));
 
-    setlocale(LC_ALL, "");  
+    setlocale(LC_ALL, "");
+
+    ui_device = g_mainDevice;
+    UIPrepareLoadPageActor();
+
+    return ERRNO_OK;
+}
+
+int UIInit() {
     initscr();
     clear();
     cbreak();

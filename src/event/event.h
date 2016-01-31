@@ -12,6 +12,7 @@
 struct ETActor;
 typedef struct ETActor ETActor;
 typedef struct ETActor {
+    list *channels;
     void* (*proc)(ETActor *actor, int args, void **argv);
 } ETActor;
 
@@ -19,18 +20,22 @@ typedef struct ETActorEvent {
     ETActor *sender;
     ETActor *receiver;
     sds     channel;
+
+    // 信件由收件人回收
+    // TODO: 考虑有多个人收件
     int     mailArgs;
     void    **mailArgv;
 } ETActorEvent;
 
 // 推送消息给订阅者，订阅者为 ETActor
 typedef struct ETChannelActor {
-    sds  key;
+    char *key;
     list *subscribers; //ETActor
 } ETChannelActor;
 
 // 管理 Actor与ActorEvent
 typedef struct ETFactoryActor {
+    list *freeActorEventList;
     list *freeActorList;
     list *runningEventList; // 正在处理中的 ActorEvent
     list *waitingEventList; // 等待处理的 ActorEvent
@@ -57,7 +62,7 @@ typedef struct ETDevice {
     pthread_mutex_t eventWaitMutex;
     pthread_cond_t  eventWaitCond;
     list            *waitingEventList;
-    ETFactoryActor  *factoryActory;
+    ETFactoryActor  *factoryActor;
     pthread_t       looperNtid;
     ETDeviceLooper  looper;
     int             looperStop;
@@ -69,18 +74,26 @@ typedef struct ETDeviceStartJobParam {
     ETDeviceJob *job;
 } ETDeviceStartJobParam;
 
-ETActorEvent* ETNewActorEvent(void);
-void ETFreeActorEvent(void *_actor);
 void dictChannelDestructor(void *privdata, void *val);
-ETChannelActor* ETNewChannelActor(void);
-void ETFreeChannelActor(ETChannelActor *channelActor);
+
 ETFactoryActor* ETNewFactoryActor(void);
 void ETFreeFactoryActor(ETFactoryActor *factoryActor);
-ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor);
-void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor); //回收Actor
-void ETFactoryActorAppendChannel(ETFactoryActor *factoryActor, ETChannelActor *channel);
+
+ETActorEvent* ETFactoryActorNewEvent(ETFactoryActor *factoryActor);
+void ETFactoryActorRecycleEvent(ETFactoryActor *factoryActor,  ETActorEvent *actorEvent);
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
-void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *event);
+void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
+
+ETChannelActor* ETNewChannelActor(void);
+void ETFreeChannelActor(ETChannelActor *channelActor);
+void ETFactoryActorAppendChannel(ETFactoryActor *factoryActor, ETChannelActor *channel);
+void ETFactoryActorRemoveChannel(ETFactoryActor *factoryActor, ETChannelActor *channel);
+void ETSubscribeChannel(ETActor *actor, ETChannelActor *channelActor);
+void ETUnSubscribeChannel(ETActor *actor, ETChannelActor *channelActor);
+
+ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor);
+void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor); //回收Actor 
+
 void ETDeviceFactoryActorLoopOnce(ETDevice *device);
 void ETDeviceFactoryActorLooper(ETDevice *device);
 

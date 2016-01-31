@@ -7,6 +7,8 @@
 #include "ui/ui.h"
 #include "g_extern.h"
 
+ETDevice *st_device;
+
 static void STInitScriptLua(STScript *script) {
     lua_State *L;
     L = luaL_newstate();
@@ -22,13 +24,14 @@ static void STInitScriptLua(STScript *script) {
 
     lua_register(L, "LogI",                    STLogI);
     lua_register(L, "LoadView",                STLoadView);
-    lua_register(L, "NTConnectNTSnode",        STConnectNTSnode);
-    lua_register(L, "NTAddReplyString",        STAddReplyString);
-    lua_register(L, "NTAddReplyRawString",     STAddReplyRawString);
-    lua_register(L, "NTAddReplyMultiString",   STAddReplyMultiString);
-    lua_register(L, "DBConnect",               STConnectDB);
-    lua_register(L, "DBClose",                 STCloseDB);
+    lua_register(L, "NTConnectNTSnode",        STNTConnectSnode);
+    lua_register(L, "NTAddReplyString",        STNTAddReplyString);
+    lua_register(L, "NTAddReplyRawString",     STNTAddReplyRawString);
+    lua_register(L, "NTAddReplyMultiString",   STNTAddReplyMultiString);
+    lua_register(L, "DBConnect",               STDBConnect);
+    lua_register(L, "DBClose",                 STDBClose);
     lua_register(L, "DBQuery",                 STDBQuery);
+    lua_register(L, "UILoadPage",              STUILoadPage);
 
     int errno;
 
@@ -100,6 +103,7 @@ void STFreeScript(void *_script) {
 
 /* 基础部分初始化 */
 int STPrepare() {
+    st_device = g_netDevice;
     g_scripts = listCreate();
     g_scripts->free = STFreeScript;
 

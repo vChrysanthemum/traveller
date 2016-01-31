@@ -59,12 +59,13 @@ int STScriptServiceCallback(NTSnode *sn);
 const char* STgetGlobalString(lua_State *L, char *key);
 int STLogI(lua_State *L);
 int STLoadView(lua_State *L);
-int STAddReplyString(lua_State *L);
-int STAddReplyMultiString(lua_State *L);
-int STAddReplyRawString(lua_State *L);
-int STConnectNTSnode(lua_State *L);
-int STConnectDB(lua_State *L);
-int STCloseDB(lua_State *L);
+int STNTAddReplyString(lua_State *L);
+int STNTAddReplyMultiString(lua_State *L);
+int STNTAddReplyRawString(lua_State *L);
+int STNTConnectSnode(lua_State *L);
+int STDBConnect(lua_State *L);
+int STDBClose(lua_State *L);
 int STDBQuery(lua_State *L);
+int STUILoadPage(lua_State *L);
 
 #endif

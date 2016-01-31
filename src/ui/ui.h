@@ -43,12 +43,17 @@ typedef struct {
     WINDOW *win;
     PANEL  *panel;
 } UIWindow;
+UIWindow* UIcreateWindow(int height, int width, int starty, int startx);
+void UIFreeWindow(UIWindow* win);
 
 typedef struct {
-    int      id;
     sds      title;
+    sds      content;
     UIWindow *uiwin;
 } UIPage;
+UIPage *UINewPage();
+void UIFreePage(UIPage *page);
+void* UILoadPageActor(ETActor *actor, int args, void **argv);
 
 typedef struct {
     sds line;
@@ -63,8 +68,7 @@ typedef struct {
     UIConsoleCommand cmd;
 } UIConsole;
 
-UIPage* UINewPage(char *title);
-UIWindow* UIcreateWindow(int height, int width, int starty, int startx);
+int UIPrepare();
 int UIInit();
 
 void UIinitColor();

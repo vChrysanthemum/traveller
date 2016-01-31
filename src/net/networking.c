@@ -127,7 +127,9 @@ static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
         aeDeleteFileEvent(nt_el, sn->fd, AE_WRITABLE);
         sn->isWriteMod = 0;
 
-        if (sn->flags & SNODE_CLOSE_AFTER_REPLY) NTFreeNTSnode(sn);
+        if (sn->flags & SNODE_CLOSE_AFTER_REPLY) {
+            NTFreeNTSnode(sn);
+        }
     }
 }
 
@@ -540,14 +542,11 @@ static void parseInputBuffer(NTSnode *sn) {
             dictEntry *de;
 
             de = dictFind(nt_server.services, sn->argv[0]);
-            if (0 == de) {
-                NTAddReplyError(sn, "service unrecognized");
-                setProtocolError(sn, 0);
-                return;
+            if (0 != de) {
+                sn->proc = dictGetVal(de);
             }
-            sn->proc = dictGetVal(de);
-            sn->recvStat = SNODE_RECV_STAT_EXCUTING;
         }
+
     } else {
         NTAddReplyError(sn, "Protocol error: Unrecognized");
         setProtocolError(sn, 0);

@@ -7,15 +7,13 @@ package.path = package.path .. ';' .. g_basedir.."/?.lua;" .. g_basedir.."/../co
 
 local g_serverContenctId = nil
 local g_ServiceRouteTable = {}
-local g_SrvCallbackRouteTable = {}
+local g_ServiceCallbackRouteTable = {}
 
 function CbkLogin(connectId, arg, netRecvType, ...)
     LogI("fuck logined")
     LogI(arg)
     LogI(netRecvType)
     LogI(...)
-    a = LoadView("main")
-    LogI(a)
 end
 
 function ServiceRouter(connectId, path, ...)
@@ -24,9 +22,9 @@ function ServiceRouter(connectId, path, ...)
     end
 end
 
-function SrvCallbackRouter(connectId, path, ...)
-    if (g_SrvCallbackRouteTable[path]) then
-        g_SrvCallbackRouteTable[path](connectId, ...)
+function ServiceCallbackRouter(connectId, path, ...)
+    if (g_ServiceCallbackRouteTable[path]) then
+        g_ServiceCallbackRouteTable[path](connectId, ...)
     end
 end
 
@@ -34,7 +32,6 @@ function Init(conf)
     g_conf = conf
     assert(nil ~= g_conf, "找不到配置: script:client")
 
-    LogI(g_conf)
     assert(nil ~= g_conf["galaxies_server_host"], "请配置 galaxies_server_host")
     assert(nil ~= g_conf["galaxies_server_port"], "请配置 galaxies_server_port")
 
@@ -43,8 +40,15 @@ function Init(conf)
 
     LogI("连接星系成功")
 
-    g_SrvCallbackRouteTable["/login"] = CbkLogin
+    local CtrMain = require "ctr/main"
 
-    NTAddReplyMultiString(g_serverContenctId, "/login", nil, 
-    "script", "/login", "j@ioctl", "fuckemail", "fuckpassword")
+    g_ServiceCallbackRouteTable["/index"] = CtrMain.CbkIndex
+    g_ServiceCallbackRouteTable["/login"] = CbkLogin
+
+    NTAddReplyMultiString(g_serverContenctId, "/index", nil, "script", "/index")
+    
+    --[
+    --NTAddReplyMultiString(g_serverContenctId, "/login", nil, 
+    --"script", "/login", "j@ioctl", "fuckemail", "fuckpassword")
+    --]
 end

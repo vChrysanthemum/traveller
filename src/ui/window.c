@@ -16,5 +16,8 @@ UIWindow* UIcreateWindow(int height, int width, int starty, int startx) {
     return win;
 }
 
-void UIUpdateWindow() {
+void UIFreeWindow(UIWindow *win) {
+    del_panel(win->panel);
+    delwin(win->win);
+    zfree(win);
 }

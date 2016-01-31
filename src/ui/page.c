@@ -2,16 +2,25 @@
 #include "g_extern.h"
 #include "ui/extern.h"
 
-UIPage* UINewPage(char *title) {
+UIPage *UINewPage() {
     UIPage *page = (UIPage*)zmalloc(sizeof(UIPage));
-    page->id = ui_pages->len + 1;
-    page->title = sdsnew(title);
-
-    page->uiwin = UIcreateWindow(
-            ui_height - ui_console->uiwin->height,
-            ui_width, 0, 0);
-
-    ui_pages = listAddNodeTail(ui_pages, page);
-
+    memset(page, 0, sizeof(UIPage));
+    page->title = sdsempty();
+    page->content = sdsempty();
     return page;
+}
+
+void UIFreePage(UIPage *page) {
+    sdsfree(page->title);
+    sdsfree(page->content);
+    UIFreeWindow(page->uiwin);
+    zfree(page);
+    return;
+}
+
+void* UILoadPageActor(ETActor *actor, int args, void **argv) {
+    UIPage *page = (UIPage*)argv[0];
+    TrvLogI("%s", page->content);
+
+    return 0;
 }

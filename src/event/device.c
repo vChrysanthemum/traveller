@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include "core/util.h"
 #include "event/event.h"
 
 void ETFreeDeviceJob(void* _job) {
@@ -13,7 +14,7 @@ ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg) {
     device->jobs = listCreate();
     device->jobs->free = ETFreeDeviceJob;
 
-    device->factoryActory = ETNewFactoryActor();
+    device->factoryActor = ETNewFactoryActor();
     pthread_mutex_init(&device->jobMutex, 0);
     pthread_mutex_init(&device->actorMutex, 0);
     pthread_mutex_init(&device->eventMutex, 0);
@@ -29,7 +30,7 @@ ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg) {
 }
 
 void ETFreeDevice(ETDevice *device) {
-    ETFreeFactoryActor(device->factoryActory);
+    ETFreeFactoryActor(device->factoryActor);
     pthread_mutex_destroy(&device->jobMutex);
     pthread_mutex_destroy(&device->actorMutex);
     pthread_mutex_destroy(&device->eventMutex);
@@ -70,7 +71,7 @@ pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,
 
     pthread_mutex_lock(&device->jobMutex);
     device->jobs = listAddNodeTail(device->jobs, job);
-    job->index = device->jobs->len - 1;
+    job->index = listLength(device->jobs) - 1;
     pthread_mutex_unlock(&device->jobMutex);
 
     ETDeviceStartJobParam param = {device, job};
@@ -84,7 +85,7 @@ void ETDeviceAppendEvent(ETDevice *device, ETActorEvent *event) {
     pthread_mutex_lock(&device->eventWaitMutex);
 
     pthread_mutex_lock(&device->eventMutex);
-    listAddNodeTail(device->waitingEventList, event);
+    device->waitingEventList = listAddNodeTail(device->waitingEventList, event);
 
     pthread_mutex_unlock(&device->eventMutex);
 
@@ -95,7 +96,7 @@ void ETDeviceAppendEvent(ETDevice *device, ETActorEvent *event) {
 list* ETDevicePopEventList(ETDevice *device) {
     list* _l;
 
-    if (0 == device->waitingEventList->len) {
+    if (0 == listLength(device->waitingEventList)) {
         return 0;
     }
 
@@ -109,12 +110,13 @@ list* ETDevicePopEventList(ETDevice *device) {
 
 void ETDeviceWaitEventList(ETDevice *device) {
     pthread_mutex_lock(&device->eventWaitMutex);
-    if (0 == device->waitingEventList->len) {
+    if (0 == listLength(device->waitingEventList)) {
         pthread_cond_wait(&device->eventWaitCond, &device->eventWaitMutex);
     }
     pthread_mutex_unlock(&device->eventWaitMutex);
 
-    if (device->waitingEventList->len < 20) {
+    if (listLength(device->waitingEventList) < 20) {
         usleep(300);
     }
+    TrvLogI("%lu", listLength(device->waitingEventList));
 }
