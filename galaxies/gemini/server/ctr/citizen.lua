@@ -4,11 +4,11 @@ local g_db = nil
 local md5 = require "md5"
 local db = require "db"
 
-function CtrCitizen.Login(connectId, email, password)
+function CtrCitizen.Login(connectId, argv)
     LogI("hi")
     LogI(connectId.. " connectId")
-    LogI(email.." email")
-    LogI(password.." password")
+    LogI(argv["email"].." email")
+    LogI(argv["password"].." password")
 
     g_db = db:Instance()
 

@@ -13,12 +13,16 @@ int STScriptService(STScript *script, NTSnode *sn) {
     lua_pushstring(L, sn->fdstr);
     lua_pushstring(L, funcName);
 
+    lua_newtable(L);
+
     /* 从argv[1]开始，既忽略funcName */
-    for (_m = 1; _m < argc; _m++) {
+    for (_m = 1; _m < argc; _m += 2) {
         lua_pushstring(L, argv[_m]);
+        lua_pushstring(L, argv[_m+1]);
+        lua_settable(L, -3);
     }
 
-    errno = lua_pcall(L, argc+1, 0, 0);
+    errno = lua_pcall(L, 3, 0, 0);
 
     if (0 != errno) {
         TrvLogW("%s", lua_tostring(L, -1));

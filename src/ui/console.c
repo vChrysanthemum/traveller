@@ -114,7 +114,7 @@ void UIinitConsole() {
     ui_console->cursor.y = 0;
     ui_console->cursor.x = 0;
     ui_console->cmd.line = sdsempty();
-    ui_console->cmd.header = sdsnew("野马号$");
+    ui_console->cmd.header = sdsnew("大乔木号$");
 
     memset(ui_console->cursor.utf8char, 0, 4*sizeof(char));
     ui_console->cursor.utf8charPoi = -1;

@@ -9,9 +9,9 @@ local g_serverContenctId = nil
 local g_ServiceRouteTable = {}
 local g_ServiceCallbackRouteTable = {}
 
-function CbkLogin(connectId, arg, netRecvType, ...)
+function CbkLogin(connectId, scriptArg, netRecvType, ...)
     LogI("fuck logined")
-    LogI(arg)
+    LogI(scriptArg)
     LogI(netRecvType)
     LogI(...)
 end
@@ -46,9 +46,13 @@ function Init(conf)
     g_ServiceCallbackRouteTable["/login"] = CbkLogin
 
     NTAddReplyMultiString(g_serverContenctId, "/index", nil, "script", "/index")
-    
+
     --[
-    --NTAddReplyMultiString(g_serverContenctId, "/login", nil, 
-    --"script", "/login", "j@ioctl", "fuckemail", "fuckpassword")
+    --NTAddReplyMultiString(g_serverContenctId, "/login", nil, "script", "/login", 
+    --"email", "j@ioctl", 
+    --"password", "fuckpassword")
     --]
+
+    return
+    
 end
