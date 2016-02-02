@@ -48,7 +48,7 @@ int STScriptServiceCallback(NTSnode *sn) {
 
     lua_newtable(L);
 
-    for (int i = 0; i < sn->argvSize; i++) {
+    for (int i = 1; i < sn->argvSize; i += 2) {
         lua_pushstring(L, sn->argv[i]);
         lua_pushstring(L, sn->argv[i+1]);
         lua_settable(L, -3);
