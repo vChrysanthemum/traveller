@@ -37,11 +37,11 @@ int STScriptServiceCallback(NTSnode *sn) {
 
     lua_getglobal(sn->lua, "ServiceCallbackRouter");
     lua_pushstring(sn->lua, sn->fdstr);
-    lua_pushstring(sn->lua, sn->luaCbkUrl);
-    if (0 == sdslen(sn->luaCbkArg)) {
+    lua_pushstring(sn->lua, sn->ScriptServiceCallbackUrl);
+    if (0 == sdslen(sn->ScriptServiceCallbackArg)) {
         lua_pushnil(sn->lua);
     } else {
-        lua_pushstring(sn->lua, sn->luaCbkArg);
+        lua_pushstring(sn->lua, sn->ScriptServiceCallbackArg);
     }
 
     lua_pushnumber(sn->lua, sn->recvType);

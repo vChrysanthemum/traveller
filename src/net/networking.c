@@ -111,7 +111,7 @@ static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
                 if (0 != sn->proc) {
                     sn->proc(sn);
                 }
-                if (0 != sdslen(sn->luaCbkUrl)) {
+                if (0 != sdslen(sn->ScriptServiceCallbackUrl)) {
                     STScriptServiceCallback(sn);
                 }
                 NTFreeNTSnode(sn);
@@ -554,13 +554,13 @@ static void parseInputBuffer(NTSnode *sn) {
     }
 
     if (SNODE_RECV_STAT_PARSED == sn->recvStat &&
-            sdslen(sn->luaCbkUrl) > 0 &&
+            sdslen(sn->ScriptServiceCallbackUrl) > 0 &&
             0 != sn->lua) {
 
         STScriptServiceCallback(sn);
         sn->lua = 0;
-        sdsclear(sn->luaCbkUrl);
-        sdsclear(sn->luaCbkArg);
+        sdsclear(sn->ScriptServiceCallbackUrl);
+        sdsclear(sn->ScriptServiceCallbackArg);
     }
 
     if (0 == sn->proc) {
@@ -646,8 +646,8 @@ static NTSnode* createNTSnode(int fd) {
     sn->recvStat = SNODE_RECV_STAT_ACCEPT;
 
     sn->lua = 0;
-    sn->luaCbkUrl = sdsempty();
-    sn->luaCbkArg = sdsempty();
+    sn->ScriptServiceCallbackUrl = sdsempty();
+    sn->ScriptServiceCallbackArg = sdsempty();
 
     nt_server.statNumConnections++;
     dictAdd(nt_server.snodes, sn->fdstr, sn);
@@ -671,8 +671,8 @@ void NTFreeNTSnode(NTSnode *sn) {
     sdsfree(sn->querybuf);
     sdsfree(sn->writebuf);
 
-    sdsfree(sn->luaCbkUrl);
-    sdsfree(sn->luaCbkArg);
+    sdsfree(sn->ScriptServiceCallbackUrl);
+    sdsfree(sn->ScriptServiceCallbackArg);
 
     dictDelete(nt_server.snodes, sn->fdstr);
 

@@ -69,8 +69,8 @@ typedef struct NTSnode {
     void (*hupProc) (NTSnode *sn);
 
     lua_State *lua;
-    sds luaCbkUrl;
-    sds luaCbkArg;
+    sds ScriptServiceCallbackUrl;
+    sds ScriptServiceCallbackArg;
 
     int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
 } NTSnode;
