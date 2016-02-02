@@ -27,5 +27,7 @@ int STLoadView(lua_State *L) {
         sdsfree(content);
     }
 
+    sdsfree(viewFullPath);
+
     return 1;
 }
