@@ -553,8 +553,19 @@ static void parseInputBuffer(NTSnode *sn) {
         return;
     }
 
+    // 如果有在等待数据的回调函数，则在这里处理，并完成网络请求
+    if (SNODE_RECV_STAT_PARSED == sn->recvStat) {
+        if (0 != sn->responseProc) {
+            sn->responseProc(sn);
+            rePrepareNTSnodeToReadQuery(sn);
+            return;
+        }
+    }
+
+    // 如果没有等待数据的回调函数，则认为是一个新的命令
     if (0 == sn->proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recvStat) {
+            NTAddReplyError(sn, "command not found");
             rePrepareNTSnodeToReadQuery(sn);
         }
     } else {
@@ -607,6 +618,7 @@ static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask)
 
 static NTSnode* createNTSnode(int fd) {
     NTSnode *sn = zmalloc(sizeof(NTSnode));
+    memset(sn, 0, sizeof(NTSnode));
 
     if (-1 == fd) {
         return 0;
@@ -634,6 +646,8 @@ static NTSnode* createNTSnode(int fd) {
     resetNTSnodeArgs(sn);
 
     sn->recvStat = SNODE_RECV_STAT_ACCEPT;
+    
+    sn->responseProc = 0;
 
     sn->lua = 0;
     sn->luaCbkUrl = sdsempty();
