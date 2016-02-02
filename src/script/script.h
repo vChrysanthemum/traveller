@@ -53,8 +53,8 @@ int STScriptServiceCallback(NTSnode *sn);
     }\
 \
     sn->lua = L;\
-    tmpstr = lua_tostring(L, 2); if (0 == tmpstr) sdsclear(sn->ScriptServiceCallbackUrl); else sn->ScriptServiceCallbackUrl = sdscpy(sn->ScriptServiceCallbackUrl, tmpstr);\
-    tmpstr = lua_tostring(L, 3); if (0 == tmpstr) sdsclear(sn->ScriptServiceCallbackArg); else sn->ScriptServiceCallbackArg = sdscpy(sn->ScriptServiceCallbackArg, tmpstr);
+    tmpstr = lua_tostring(L, 2); if (0 == tmpstr) sdsclear(sn->luaCbkUrl); else sn->luaCbkUrl = sdscpy(sn->luaCbkUrl, tmpstr);\
+    tmpstr = lua_tostring(L, 3); if (0 == tmpstr) sdsclear(sn->luaCbkArg); else sn->luaCbkArg = sdscpy(sn->luaCbkArg, tmpstr);
 
 const char* STgetGlobalString(lua_State *L, char *key);
 int STLogI(lua_State *L);
