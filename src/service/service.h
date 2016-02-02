@@ -12,7 +12,8 @@ typedef struct SVServiceRouter {
 
 void SVSubscribeScriptCmd(STScript *script);
 void SVPrepare();
-void SVScript(NTSnode *sn); //出发脚本服务
+void SVScript(NTSnode *sn); //触发脚本服务
+void SVScriptCallback(NTSnode *sn);
 void SVMsg(NTSnode *sn);
 void SVTest(NTSnode *sn);
 void SVClose(NTSnode *sn);

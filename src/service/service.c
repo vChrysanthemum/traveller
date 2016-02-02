@@ -16,10 +16,11 @@ dictType serviceTableDictType = {
 };
 
 SVServiceRouter SVServiceRouterTable[] = {
-    {"script", SVScript, 0},
-    {"test", SVTest, 0},
-    {"msg", SVMsg, 0},
-    {"close", SVClose, 0}
+    {"script",      SVScript, 0},
+    {"scriptcbk",   SVScriptCallback, 0},
+    {"test",        SVTest, 0},
+    {"msg",         SVMsg, 0},
+    {"close",       SVClose, 0}
 };
 
 void SVSubscribeScriptCmd(STScript *script) {

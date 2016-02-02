@@ -65,12 +65,14 @@ typedef struct NTSnode {
     int argvRemaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
     time_t lastinteraction; // time of the last interaction, used for timeout 
 
-    void (*proc) (NTSnode *sn);
-    void (*hupProc) (NTSnode *sn); //如果远程机器挂掉了，需要调用的函数
+    void (*waitResultProc) (NTSnode *sn); //在等待远程机器发来结果的回调函数
 
     lua_State *lua;
     sds luaCbkUrl;
     sds luaCbkArg;
+
+    void (*proc) (NTSnode *sn);
+    void (*hupProc) (NTSnode *sn); //如果远程机器挂掉了，需要调用的函数
 
     int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
 } NTSnode;

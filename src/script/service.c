@@ -6,7 +6,6 @@ int STScriptService(STScript *script, NTSnode *sn) {
     char **argv = &(sn->argv[1]);
     int argc = sn->argc - 1;
     char *funcName = *argv;
-    int _m;
     lua_State *L = script->L;
 
     lua_getglobal(L, "ServiceRouter");
@@ -16,9 +15,9 @@ int STScriptService(STScript *script, NTSnode *sn) {
     lua_newtable(L);
 
     /* 从argv[1]开始，既忽略funcName */
-    for (_m = 1; _m < argc; _m += 2) {
-        lua_pushstring(L, argv[_m]);
-        lua_pushstring(L, argv[_m+1]);
+    for (int i = 1; i < argc; i += 2) {
+        lua_pushstring(L, argv[i]);
+        lua_pushstring(L, argv[i+1]);
         lua_settable(L, -3);
     }
 
@@ -34,26 +33,31 @@ int STScriptService(STScript *script, NTSnode *sn) {
 
 int STScriptServiceCallback(NTSnode *sn) {
     int errno;
+    lua_State *L = sn->lua;
 
-    lua_getglobal(sn->lua, "ServiceCallbackRouter");
-    lua_pushstring(sn->lua, sn->fdstr);
-    lua_pushstring(sn->lua, sn->luaCbkUrl);
+    lua_getglobal(L, "ServiceCallbackRouter");
+    lua_pushstring(L, sn->fdstr);
+    lua_pushstring(L, sn->luaCbkUrl);
     if (0 == sdslen(sn->luaCbkArg)) {
-        lua_pushnil(sn->lua);
+        lua_pushnil(L);
     } else {
-        lua_pushstring(sn->lua, sn->luaCbkArg);
+        lua_pushstring(L, sn->luaCbkArg);
     }
 
-    lua_pushnumber(sn->lua, sn->recvType);
+    lua_pushnumber(L, sn->recvType);
+
+    lua_newtable(L);
 
     for (int i = 0; i < sn->argvSize; i++) {
-        lua_pushstring(sn->lua, sn->argv[i]);
+        lua_pushstring(L, sn->argv[i]);
+        lua_pushstring(L, sn->argv[i+1]);
+        lua_settable(L, -3);
     }
 
-    errno = lua_pcall(sn->lua, 4+sn->argvSize, 0, 0);
+    errno = lua_pcall(L, 5, 0, 0);
 
     if (0 != errno) {
-        TrvLogW("%s", lua_tostring(sn->lua, -1));
+        TrvLogW("%s", lua_tostring(L, -1));
         return LUA_SERVICE_ERRNO_INNERERR;
     }
 

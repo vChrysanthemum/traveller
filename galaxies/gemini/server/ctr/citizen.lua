@@ -13,7 +13,7 @@ function CtrCitizen.Login(connectId, argv)
     g_db = db:Instance()
 
     if nil == email or nil == password then
-        NTAddReplyRawString(connectId, nil, nil, "-请输入用户名或密码\r\n")
+        NTAddReplyMultiString(connectId, nil, nil, "scriptcbk", "err", "请输入用户名或密码")
         return
     end
 
@@ -23,13 +23,13 @@ function CtrCitizen.Login(connectId, argv)
     {email=email, password=md5.sumhexa(password)})
 
     if not citizen[0] then
-        NTAddReplyRawString(connectId, nil, nil, "-用户名或密码错误哈哈哈\r\n")
+        NTAddReplyMultiString(connectId, nil, nil, "scriptcbk", "err", "用户名或密码错误哈哈哈")
         return
     end
     citizen = citizen[0]
 
     g_loggedCitizens[connectId] = citizen
-    NTAddReplyRawString(connectId, nil, nil, "+登录成功\r\n")
+    NTAddReplyMultiString(connectId, nil, nil, "scriptcbk", "msg", "登录成功")
 
 end
 

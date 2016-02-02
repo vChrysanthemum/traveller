@@ -553,16 +553,6 @@ static void parseInputBuffer(NTSnode *sn) {
         return;
     }
 
-    if (SNODE_RECV_STAT_PARSED == sn->recvStat &&
-            sdslen(sn->luaCbkUrl) > 0 &&
-            0 != sn->lua) {
-
-        STScriptServiceCallback(sn);
-        sn->lua = 0;
-        sdsclear(sn->luaCbkUrl);
-        sdsclear(sn->luaCbkArg);
-    }
-
     if (0 == sn->proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recvStat) {
             rePrepareNTSnodeToReadQuery(sn);

@@ -8,9 +8,6 @@
 #include "g_extern.h"
 #include "service/extern.h"
 
-/* 星系接受命令
- * argv[0]
- */
 void SVScript(NTSnode *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
@@ -26,10 +23,28 @@ void SVScript(NTSnode *sn) {
         errno = STScriptService(script, sn);
 
         if(LUA_SERVICE_ERRNO_OK != errno) {
-            NTAddReplyError(sn, "script service error");
+            NTAddReplyError(sn, "script error");
             sn->flags = SNODE_CLOSE_AFTER_REPLY;
             NTSnodeServiceSetFinishedFlag(sn);
             break;
+        }
+    }
+
+    NTSnodeServiceSetFinishedFlag(sn);
+}
+
+void SVScriptCallback(NTSnode *sn) {
+    if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
+
+    if (sdslen(sn->luaCbkUrl) > 0 && 0 != sn->lua) {
+        int errno;
+        errno = STScriptServiceCallback(sn);
+        sn->lua = 0;
+        sdsclear(sn->luaCbkUrl);
+        sdsclear(sn->luaCbkArg);
+
+        if(LUA_SERVICE_ERRNO_OK != errno) {
+            NTAddReplyError(sn, "script callback error");
         }
     }
 
