@@ -101,5 +101,6 @@ sds sdsMakeRoomFor(sds s, size_t addlen);
 void sdsIncrLen(sds s, int incr);
 sds sdsRemoveFreeSpace(sds s);
 size_t sdsAllocSize(sds s);
+int itoa(int v, char *s);
 
 #endif

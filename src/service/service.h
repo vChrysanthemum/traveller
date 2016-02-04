@@ -10,7 +10,7 @@ typedef struct SVServiceRouter {
     int argc;
 } SVServiceRouter;
 
-void SVSubscribeScriptCmd(STScript *script);
+void SVSubscribeScriptService(STScript *script);
 void SVPrepare();
 void SVScript(NTSnode *sn); //触发脚本服务
 void SVScriptCallback(NTSnode *sn);

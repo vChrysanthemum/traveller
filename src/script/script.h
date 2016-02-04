@@ -8,8 +8,8 @@
 #include "lualib.h"
 #include "sqlite3.h"
 
-#define LUA_SERVICE_ERRNO_OK         0
-#define LUA_SERVICE_ERRNO_INNERERR   502
+#define SCRIPT_SERVICE_ERRNO_OK         0
+#define SCRIPT_SERVICE_ERRNO_INNERERR   502
 
 #define STAssertLuaPCallSuccess(L, errno) do {\
     if (0 != errno) {\
@@ -29,12 +29,8 @@ void STFreeScript(void *script);
 
 int STPrepare();
 
-int STScriptService(STScript *script, NTSnode *sn);
-int STScriptServiceCallback(NTSnode *sn);
-
 #define STAddReplyHeader(L) \
     const char *fdstr;\
-    const char *tmpstr;\
     int argc;\
     NTSnode *sn;\
 \
@@ -47,18 +43,17 @@ int STScriptServiceCallback(NTSnode *sn);
     fdstr = lua_tostring(L, 1);\
     sn = NTGetNTSnodeByFDS(fdstr);\
     if (NULL == sn) {\
-        TrvLogI("shit %s", fdstr);\
+        TrvLogI("找不到链接: %s", fdstr);\
         lua_pushnumber(L, -2);\
         return 1;\
     }\
 \
-    sn->lua = L;\
-    tmpstr = lua_tostring(L, 2); if (0 == tmpstr) sdsclear(sn->luaCbkUrl); else sn->luaCbkUrl = sdscpy(sn->luaCbkUrl, tmpstr);\
-    tmpstr = lua_tostring(L, 3); if (0 == tmpstr) sdsclear(sn->luaCbkArg); else sn->luaCbkArg = sdscpy(sn->luaCbkArg, tmpstr);
 
 const char* STgetGlobalString(lua_State *L, char *key);
 int STLogI(lua_State *L);
 int STLoadView(lua_State *L);
+int STNTScriptServiceRequest(lua_State *L);
+int STNTScriptServiceResponse(lua_State *L);
 int STNTAddReplyString(lua_State *L);
 int STNTAddReplyMultiString(lua_State *L);
 int STNTAddReplyRawString(lua_State *L);

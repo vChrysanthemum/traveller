@@ -9,22 +9,15 @@ local g_serverContenctId = nil
 local g_ServiceRouteTable = {}
 local g_ServiceCallbackRouteTable = {}
 
-function CbkLogin(connectId, scriptArg, netRecvType, ...)
-    LogI("fuck logined")
-    LogI(scriptArg)
-    LogI(netRecvType)
-    LogI(...)
-end
-
-function ServiceRouter(connectId, path, ...)
+function ServiceRouter(connectId, path, requestId, argv)
     if (g_ServiceRouteTable[path]) then
-        g_ServiceRouteTable[path](connectId, ...)
+        g_ServiceRouteTable[path](connectId, requestId, argv)
     end
 end
 
-function ServiceCallbackRouter(connectId, path, ...)
-    if (g_ServiceCallbackRouteTable[path]) then
-        g_ServiceCallbackRouteTable[path](connectId, ...)
+function ServiceCallbackRouter(connectId, cbkUrl, cbkArg, argv)
+    if (g_ServiceCallbackRouteTable[cbkUrl]) then
+        g_ServiceCallbackRouteTable[cbkUrl](connectId, cbkArg, argv)
     end
 end
 
@@ -41,17 +34,16 @@ function Init(conf)
     LogI("连接星系成功")
 
     local CtrMain = require "ctr/main"
+    local CtrCitizen = require "ctr/citizen"
 
     g_ServiceCallbackRouteTable["/index"] = CtrMain.CbkIndex
-    g_ServiceCallbackRouteTable["/login"] = CbkLogin
+    g_ServiceCallbackRouteTable["/login"] = CtrCitizen.CbkLogin
 
-    NTAddReplyMultiString(g_serverContenctId, "/index", nil, "script", "/index")
+    NTScriptServiceRequest(g_serverContenctId, "/index", "/index", nil)
 
-    --[
-    --NTAddReplyMultiString(g_serverContenctId, "/login", nil, "script", "/login", 
-    --"email", "j@ioctl", 
-    --"password", "fuckpassword")
-    --]
+    NTScriptServiceRequest(g_serverContenctId, "/login", "/login", nil,
+    "email", "j@ioctl", 
+    "password", "fuckpassword")
 
     return
     

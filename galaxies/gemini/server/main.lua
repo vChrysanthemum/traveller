@@ -12,15 +12,15 @@ local g_ServiceCallbackRouteTable = {}
 local md5 = require "md5"
 local db = require "db"
 
-function ServiceRouter(connectId, path, argv)
+function ServiceRouter(connectId, path, requestId, argv)
     if (g_ServiceRouteTable[path]) then
-        g_ServiceRouteTable[path](connectId, argv)
+        g_ServiceRouteTable[path](connectId, requestId, argv)
     end
 end
 
-function ServiceCallbackRouter(connectId, path, argv)
+function ServiceCallbackRouter(connectId, cbkUrl, cbkArg, argv)
     if (g_ServiceCallbackRouteTable[path]) then
-        g_ServiceCallbackRouteTable[path](connectId, argv)
+        g_ServiceCallbackRouteTable[cbkUrl](connectId, cbkArg, argv)
     end
 end
 

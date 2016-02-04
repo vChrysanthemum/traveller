@@ -4,7 +4,7 @@ local g_db = nil
 local md5 = require "md5"
 local db = require "db"
 
-function CtrCitizen.Login(connectId, argv)
+function CtrCitizen.Login(connectId, requestId, argv)
     LogI("hi")
     LogI(connectId.. " connectId")
     LogI(argv["email"].." email")
@@ -13,7 +13,7 @@ function CtrCitizen.Login(connectId, argv)
     g_db = db:Instance()
 
     if nil == email or nil == password then
-        NTAddReplyMultiString(connectId, nil, nil, "scriptcbk", "err", "请输入用户名或密码")
+        NTScriptServiceResponse(connectId, requestId, "err", "请输入用户名或密码")
         return
     end
 
@@ -23,13 +23,13 @@ function CtrCitizen.Login(connectId, argv)
     {email=email, password=md5.sumhexa(password)})
 
     if not citizen[0] then
-        NTAddReplyMultiString(connectId, nil, nil, "scriptcbk", "err", "用户名或密码错误哈哈哈")
+        NTScriptServiceResponse(connectId, requestId, "err", "用户名或密码错误哈哈哈")
         return
     end
     citizen = citizen[0]
 
     g_loggedCitizens[connectId] = citizen
-    NTAddReplyMultiString(connectId, nil, nil, "scriptcbk", "msg", "登录成功")
+    NTScriptServiceResponse(connectId, requestId, "msg", "登陆成功")
 
 end
 

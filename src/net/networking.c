@@ -111,9 +111,6 @@ static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
                 if (0 != sn->proc) {
                     sn->proc(sn);
                 }
-                if (0 != sdslen(sn->luaCbkUrl)) {
-                    STScriptServiceCallback(sn);
-                }
                 NTFreeNTSnode(sn);
                 return;
             }
@@ -286,7 +283,6 @@ static int parseInputBufferGetSegment(NTSnode *sn, sds *target_addr) {
     return readlen;
 }
 
-
 /* 从querybuf中读取数字，并使用tmpQuerybuf
  */
 static int parseInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num) {
@@ -308,7 +304,6 @@ static int parseInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num
 
     return readlen;
 }
-
 
 static void parseInputBufferStatus(NTSnode *sn) {
     int readlen = 0;
@@ -333,7 +328,6 @@ static void parseInputBufferStatus(NTSnode *sn) {
     }
 
 }
-
 
 static void parseInputBufferString(NTSnode *sn) {
     int readlen = 0, len;
@@ -395,7 +389,6 @@ static void parseInputBufferString(NTSnode *sn) {
 
     }
 }
-
 
 static void parseInputBufferArray(NTSnode *sn) {
     int readlen = 0, len, argJ;
@@ -495,7 +488,6 @@ PARSING_ARGV_START:
 
 }
 
-
 /* 解析读取数据
  */
 static void parseInputBuffer(NTSnode *sn) {
@@ -577,7 +569,6 @@ static void parseInputBuffer(NTSnode *sn) {
     }
 }
 
-
 static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
     NTSnode *sn = (NTSnode*) privdata;
     int nread;
@@ -612,9 +603,61 @@ static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask)
         NTFreeNTSnode(sn);
         return;
     }
-    parseInputBuffer(sn);
+
+    while (sdslen(sn->querybuf) > 0) {
+        parseInputBuffer(sn);
+    }
 }
 
+static inline void freeScriptServiceRequestCtx(NTScriptServiceRequestCtx* ctx) {
+    sdsfree(ctx->ScriptServiceCallbackUrl);
+    sdsfree(ctx->ScriptServiceCallbackArg);
+    zfree(ctx);
+}
+
+static inline void resetScriptServiceRequestCtx(NTScriptServiceRequestCtx *ctx) {
+    sdsclear(ctx->ScriptServiceCallbackUrl);
+    sdsclear(ctx->ScriptServiceCallbackArg);
+    ctx->ScriptServiceLua = 0;
+}
+
+NTScriptServiceRequestCtx* NTNewScriptServiceRequestCtx() {
+    NTScriptServiceRequestCtx *ctx;
+    if (0 == listLength(nt_server.scriptServiceRequestCtxPool)) {
+        for (int i = 0; i < 20; i++) {
+            ctx = (NTScriptServiceRequestCtx*)zmalloc(sizeof(NTScriptServiceRequestCtx));
+            memset(ctx, 0, sizeof(NTScriptServiceRequestCtx));
+            ctx->ScriptServiceCallbackUrl = sdsempty();
+            ctx->ScriptServiceCallbackArg = sdsempty();
+
+            nt_server.scriptServiceRequestCtxPool = listAddNodeTail(nt_server.scriptServiceRequestCtxPool, ctx);
+        }
+    }
+
+    listNode *ln = listFirst(nt_server.scriptServiceRequestCtxPool);
+    ctx = (NTScriptServiceRequestCtx*)ln->value;
+    listDelNode(nt_server.scriptServiceRequestCtxPool, ln);
+
+    resetScriptServiceRequestCtx(ctx);
+
+    return ctx;
+}
+
+void NTRecycleScriptServiceRequestCtx(void *_ctx) {
+    NTScriptServiceRequestCtx *ctx = (NTScriptServiceRequestCtx*)_ctx;
+    if (listLength(nt_server.scriptServiceRequestCtxPool) > 200) {
+        listIter *li;
+        listNode *ln;
+        li = listGetIterator(nt_server.scriptServiceRequestCtxPool, AL_START_HEAD);
+        for (int i = 0; i < 100 && NULL != (ln = listNext(li)); i++) {
+            freeScriptServiceRequestCtx((NTScriptServiceRequestCtx*)listNodeValue(ln));
+            listDelNode(nt_server.scriptServiceRequestCtxPool, ln);
+        }
+        listReleaseIterator(li);
+    }
+
+    nt_server.scriptServiceRequestCtxPool = listAddNodeTail(nt_server.scriptServiceRequestCtxPool, ctx);
+}
 
 static NTSnode* createNTSnode(int fd) {
     NTSnode *sn = zmalloc(sizeof(NTSnode));
@@ -649,17 +692,15 @@ static NTSnode* createNTSnode(int fd) {
     
     sn->responseProc = 0;
 
-    sn->lua = 0;
-    sn->luaCbkUrl = sdsempty();
-    sn->luaCbkArg = sdsempty();
+    sn->scriptServiceRequestCtxList = listCreate();
+    sn->scriptServiceRequestCtxList->free = NTRecycleScriptServiceRequestCtx;
+    sn->scriptServiceRequestCtxListMaxId = 0;
 
     nt_server.statNumConnections++;
     dictAdd(nt_server.snodes, sn->fdstr, sn);
 
     return sn;
 }
-
-
 
 void NTFreeNTSnode(NTSnode *sn) {
     TrvLogD("Free NTSnode %d", sn->fd);
@@ -675,10 +716,9 @@ void NTFreeNTSnode(NTSnode *sn) {
     sdsfree(sn->querybuf);
     sdsfree(sn->writebuf);
 
-    sdsfree(sn->luaCbkUrl);
-    sdsfree(sn->luaCbkArg);
-
     dictDelete(nt_server.snodes, sn->fdstr);
+
+    listRelease(sn->scriptServiceRequestCtxList);
 
     zfree(sn);
 
@@ -725,8 +765,6 @@ static void acceptCommonHandler(int fd, int flags) {
     sn->flags |= flags;
 }
 
-
-
 static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask) {
     int cport, cfd, max = TRV_NET_MAX_ACCEPTS_PER_CALL;
     char cip[INET6_ADDRSTRLEN];
@@ -744,7 +782,6 @@ static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask) {
         acceptCommonHandler(cfd,0);
     }
 }
-
 
 static int listenToPort() {
     int loopJ; 
@@ -814,6 +851,8 @@ int NTPrepare(int listenPort) {
         TrvLogE("Listen to port err");
         return ERRNO_ERR;
     }
+
+    nt_server.scriptServiceRequestCtxPool = listCreate();
 
     SVPrepare();
 

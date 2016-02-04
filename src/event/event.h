@@ -35,8 +35,8 @@ typedef struct ETChannelActor {
 
 // 管理 Actor与ActorEvent
 typedef struct ETFactoryActor {
-    list *freeActorEventList;
-    list *freeActorList;
+    list *actorEventPool;
+    list *actorPool;
     list *runningEventList; // 正在处理中的 ActorEvent
     list *waitingEventList; // 等待处理的 ActorEvent
     dict *channels;           // 发布订阅频道 ETKeyChannelDictType
@@ -73,8 +73,6 @@ typedef struct ETDeviceStartJobParam {
     ETDevice    *device;
     ETDeviceJob *job;
 } ETDeviceStartJobParam;
-
-void dictChannelDestructor(void *privdata, void *val);
 
 ETFactoryActor* ETNewFactoryActor(void);
 void ETFreeFactoryActor(ETFactoryActor *factoryActor);

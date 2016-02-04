@@ -1,9 +1,9 @@
 local CtrMain = {}
 
-function CtrMain.Index(connectId, argv)
+function CtrMain.Index(connectId, requestId, argv)
     content = LoadView("index")
 
-    NTAddReplyMultiString(connectId, nil, nil, "scriptcbk", "data", content)
+    NTScriptServiceResponse(connectId, requestId, "data", content)
 end
 
 return CtrMain

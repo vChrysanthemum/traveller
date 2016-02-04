@@ -4,7 +4,7 @@
 
 static void freeActorEvent(ETActorEvent *event);
 
-void dictChannelDestructor(void *privdata, void *val) {
+static void dictChannelDestructor(void *privdata, void *val) {
     DICT_NOTUSED(privdata);
     ETFreeChannelActor((ETChannelActor*)val);
 }
@@ -22,9 +22,9 @@ ETFactoryActor* ETNewFactoryActor(void) {
     ETFactoryActor *factoryActor = (ETFactoryActor*)zmalloc(sizeof(ETFactoryActor));
     memset(factoryActor, 0, sizeof(ETFactoryActor));
 
-    factoryActor->freeActorEventList = listCreate();
+    factoryActor->actorEventPool = listCreate();
 
-    factoryActor->freeActorList = listCreate();
+    factoryActor->actorPool = listCreate();
 
     factoryActor->runningEventList = listCreate();
 
@@ -38,19 +38,19 @@ ETFactoryActor* ETNewFactoryActor(void) {
 void ETFreeFactoryActor(ETFactoryActor *factoryActor) {
     listIter *li;
     listNode *ln;
-    li = listGetIterator(factoryActor->freeActorEventList, AL_START_HEAD);
+    li = listGetIterator(factoryActor->actorEventPool, AL_START_HEAD);
     while (NULL != (ln = listNext(li))) {
         freeActorEvent((ETActorEvent*)listNodeValue(ln));
     }
     listReleaseIterator(li);
 
-    listRelease(factoryActor->freeActorList);
-    li = listGetIterator(factoryActor->freeActorList, AL_START_HEAD);
+    listRelease(factoryActor->actorPool);
+    li = listGetIterator(factoryActor->actorPool, AL_START_HEAD);
     while (NULL != (ln = listNext(li))) {
         zfree(ln->value);
     }
     listReleaseIterator(li);
-    listRelease(factoryActor->freeActorList);
+    listRelease(factoryActor->actorPool);
 
     li = listGetIterator(factoryActor->runningEventList, AL_START_HEAD);
     while (NULL != (ln = listNext(li))) {
@@ -81,18 +81,18 @@ static inline void resetActorEvent(ETActorEvent *actorEvent) {
 ETActorEvent* ETFactoryActorNewEvent(ETFactoryActor *factoryActor) {
     ETActorEvent *actorEvent;
 
-    if (0 == listLength(factoryActor->freeActorEventList)) {
+    if (0 == listLength(factoryActor->actorEventPool)) {
         for (int i = 0; i < 20; i++) {
             actorEvent = (ETActorEvent*)zmalloc(sizeof(ETActorEvent));
             memset(actorEvent, 0, sizeof(ETActorEvent));
 
-            factoryActor->freeActorEventList = listAddNodeTail(factoryActor->freeActorEventList, actorEvent);
+            factoryActor->actorEventPool = listAddNodeTail(factoryActor->actorEventPool, actorEvent);
         }
     }
 
-    listNode *ln = listFirst(factoryActor->freeActorEventList);
+    listNode *ln = listFirst(factoryActor->actorEventPool);
     actorEvent = (ETActorEvent*)ln->value;
-    listDelNode(factoryActor->freeActorEventList, ln);
+    listDelNode(factoryActor->actorEventPool, ln);
 
     memset(actorEvent, 0, sizeof(ETActorEvent));
 
@@ -100,19 +100,19 @@ ETActorEvent* ETFactoryActorNewEvent(ETFactoryActor *factoryActor) {
 }
 
 void ETFactoryActorRecycleEvent(ETFactoryActor *factoryActor,  ETActorEvent *actorEvent) {
-    if (listLength(factoryActor->freeActorEventList) > 200) {
+    if (listLength(factoryActor->actorEventPool) > 200) {
         listIter *li;
         listNode *ln;
-        li = listGetIterator(factoryActor->freeActorEventList, AL_START_HEAD);
+        li = listGetIterator(factoryActor->actorEventPool, AL_START_HEAD);
         for (int i = 0; i < 100 && NULL != (ln = listNext(li)); i++) {
             freeActorEvent((ETActorEvent*)listNodeValue(ln));
-            listDelNode(factoryActor->freeActorEventList, ln);
+            listDelNode(factoryActor->actorEventPool, ln);
         }
         listReleaseIterator(li);
     }
 
     resetActorEvent(actorEvent);
-    factoryActor->freeActorEventList = listAddNodeTail(factoryActor->freeActorEventList, actorEvent);
+    factoryActor->actorEventPool = listAddNodeTail(factoryActor->actorEventPool, actorEvent);
 }
 
 void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent) {
@@ -220,18 +220,18 @@ static inline void resetActor(ETActor *actor) {
 ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor) {
     ETActor *actor;
 
-    if (0 == listLength(factoryActor->freeActorList)) {
+    if (0 == listLength(factoryActor->actorPool)) {
         for (int i = 0; i < 20; i++) {
             actor = (ETActor*)zmalloc(sizeof(ETActor));
             memset(actor, 0, sizeof(ETActor));
 
-            factoryActor->freeActorList = listAddNodeTail(factoryActor->freeActorList, actor);
+            factoryActor->actorPool = listAddNodeTail(factoryActor->actorPool, actor);
         }
     }
 
-    listNode *ln = listFirst(factoryActor->freeActorList);
+    listNode *ln = listFirst(factoryActor->actorPool);
     actor = (ETActor*)ln->value;
-    listDelNode(factoryActor->freeActorList, ln);
+    listDelNode(factoryActor->actorPool, ln);
 
     memset(actor, 0, sizeof(ETActor));
 
@@ -239,19 +239,19 @@ ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor) {
 }
 
 void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor) {
-    if (listLength(factoryActor->freeActorList) > 200) {
+    if (listLength(factoryActor->actorPool) > 200) {
         listIter *li;
         listNode *ln;
-        li = listGetIterator(factoryActor->freeActorList, AL_START_HEAD);
+        li = listGetIterator(factoryActor->actorPool, AL_START_HEAD);
         for (int i = 0; i < 100 && NULL != (ln = listNext(li)); i++) {
             freeActor((ETActor*)listNodeValue(ln));
-            listDelNode(factoryActor->freeActorList, ln);
+            listDelNode(factoryActor->actorPool, ln);
         }
         listReleaseIterator(li);
     }
 
     resetActor(actor);
-    factoryActor->freeActorList = listAddNodeTail(factoryActor->freeActorList, actor);
+    factoryActor->actorPool = listAddNodeTail(factoryActor->actorPool, actor);
 }
 
 void ETDeviceFactoryActorLoopOnce(ETDevice *device) {

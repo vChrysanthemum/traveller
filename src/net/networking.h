@@ -44,6 +44,13 @@
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
 
+typedef struct NTScriptServiceRequestCtx {
+    int requestId;
+    lua_State *ScriptServiceLua;
+    sds ScriptServiceCallbackUrl;
+    sds ScriptServiceCallbackArg;
+} NTScriptServiceRequestCtx;
+
 struct NTSnode;
 typedef struct NTSnode NTSnode;
 typedef struct NTSnode {
@@ -67,9 +74,8 @@ typedef struct NTSnode {
 
     void (*responseProc) (NTSnode *sn); //在等待远程机器发来结果的回调函数
 
-    lua_State *lua;
-    sds luaCbkUrl;
-    sds luaCbkArg;
+    int scriptServiceRequestCtxListMaxId;
+    list *scriptServiceRequestCtxList;
 
     void (*proc) (NTSnode *sn);
     void (*hupProc) (NTSnode *sn); //如果远程机器挂掉了，需要调用的函数
@@ -100,6 +106,8 @@ typedef struct NTServer {
     dict *snodes;                   // key 是 fdstr 
     size_t snodeMaxQuerybufLen;  // Limit for client query buffer length 
 
+    list *scriptServiceRequestCtxPool;
+
     int tcpkeepalive;
 
     NTSnode* currentSnode;
@@ -118,6 +126,8 @@ void NTAddReplySds(NTSnode *sn, sds data);
 void NTAddReplyRawSds(NTSnode *sn, sds data);
 void NTAddReplyString(NTSnode *sn, char *data);
 void NTAddReplyRawString(NTSnode *sn, char *data);
+NTScriptServiceRequestCtx* NTNewScriptServiceRequestCtx();
+void NTRecycleScriptServiceRequestCtx(void *_ctx);
 void NTFreeNTSnode(NTSnode *sn);  // dangerous 
 NTSnode* NTGetNTSnodeByFDS(const char *fdstr);
 

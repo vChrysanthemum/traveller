@@ -25,6 +25,8 @@ static void STInitScriptLua(STScript *script) {
     lua_register(L, "LogI",                    STLogI);
     lua_register(L, "LoadView",                STLoadView);
     lua_register(L, "NTConnectNTSnode",        STNTConnectSnode);
+    lua_register(L, "NTScriptServiceRequest",  STNTScriptServiceRequest);
+    lua_register(L, "NTScriptServiceResponse", STNTScriptServiceResponse);
     lua_register(L, "NTAddReplyString",        STNTAddReplyString);
     lua_register(L, "NTAddReplyRawString",     STNTAddReplyRawString);
     lua_register(L, "NTAddReplyMultiString",   STNTAddReplyMultiString);
@@ -133,7 +135,7 @@ int STPrepare() {
 
         value = IniGet(g_conf, section->key, "is_subscribe_net");
         if (0 != value && 0 == sdscmpstr(value, "1")) {
-            SVSubscribeScriptCmd(script);
+            SVSubscribeScriptService(script);
         }
     }
     dictReleaseIterator(di);
