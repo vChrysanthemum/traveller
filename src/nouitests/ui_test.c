@@ -33,5 +33,5 @@ TEST_CASE("fail html token parser test")
     REQUIRE_EQ(0, strcmp("</div>", token->content), "err: %s", token->content);
 
     token = UIHtmlNextToken(&ptr);
-    REQUIRE(0 == token, "err:");
+    REQUIRE(0 == token, "err");
 }

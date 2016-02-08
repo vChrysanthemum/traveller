@@ -1,7 +1,7 @@
 baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./core/zmalloc.o \
 				   ./core/ini.o ./core/sds.o ./core/util.o ./core/adlist.o \
-				   ./core/dict.o ./core/frozen.o ./core/debug.o \
+				   ./core/stack.o ./core/dict.o ./core/frozen.o ./core/debug.o \
 				   ./core/sha1.o ./core/crc64.o \
 				   ./event/device.o ./event/actor.o \
 				   ./net/anet.o ./net/ae.o ./net/networking.o \
@@ -14,7 +14,8 @@ travellerobjects := ./traveller.o $(baseobjects)
 
 uitestobjects := ./uitests/main.o $(baseobjects) ./uitests/ui_test.o
 
-nouitestobjects = ./nouitests/main.o ./nouitests/case.o $(baseobjects) ./nouitests/ui_test.o
+nouitestobjects = ./nouitests/main.o ./nouitests/case.o $(baseobjects) \
+				  ./nouitests/core_test.o ./nouitests/ui_test.o
 
 ALL_INCS= -I ./ \
 		  -I ../deps/lua/src/ \

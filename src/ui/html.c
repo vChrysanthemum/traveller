@@ -1,4 +1,5 @@
 #include "core/token.h"
+#include "core/stack.h"
 #include "core/sds.h"
 #include "ui/ui.h"
 
@@ -26,8 +27,8 @@ UIHtmlToken* UIHtmlNextToken(char **ptr) {
         return 0;
     }
 
-    int stack[6] = {0};
-    int stackLen = 0;
+    int tokenStack[6] = {0};
+    int tokenStackLen = 0;
 
     char *s = *ptr;
     int len;
@@ -35,7 +36,7 @@ UIHtmlToken* UIHtmlNextToken(char **ptr) {
     UIHtmlToken *token = newHtmlToken();
     token->type = UIHTML_TOKEN_TEXT;
 
-    while('\0' != *s && stackLen < 6) {
+    while('\0' != *s && tokenStackLen < 6) {
         // 解析覆盖一下情况
         // "<text>"
         // "<text/>"
@@ -46,67 +47,67 @@ UIHtmlToken* UIHtmlNextToken(char **ptr) {
         switch(*s) {
             case '<':
                 //预防 "< lkasfd < >" 的情况
-                if (0 == stackLen) {
-                    stack[0] = TOKEN_LSS;
-                    stackLen++;
+                if (0 == tokenStackLen) {
+                    tokenStack[0] = TOKEN_LSS;
+                    tokenStackLen++;
                 } else {
-                    if (TOKEN_LSS == stack[0]) {
-                        if (TOKEN_TEXT != stack[stackLen-1]) {
-                            stack[stackLen] = TOKEN_TEXT;
-                            stackLen++;
+                    if (TOKEN_LSS == tokenStack[0]) {
+                        if (TOKEN_TEXT != tokenStack[tokenStackLen-1]) {
+                            tokenStack[tokenStackLen] = TOKEN_TEXT;
+                            tokenStackLen++;
                         }
                     } else {
-                        stack[stackLen] = TOKEN_LSS;
-                        stackLen++;
+                        tokenStack[tokenStackLen] = TOKEN_LSS;
+                        tokenStackLen++;
                     }
                 }
                 break;
             case '>':
-                stack[stackLen] = TOKEN_GTR;
-                stackLen++;
+                tokenStack[tokenStackLen] = TOKEN_GTR;
+                tokenStackLen++;
                 break;
             case '/':
-                stack[stackLen] = TOKEN_QUO;
-                stackLen++;
+                tokenStack[tokenStackLen] = TOKEN_QUO;
+                tokenStackLen++;
                 break;
             default:
-                if (0 == stackLen) {
-                    stack[0] = TOKEN_TEXT;
-                    stackLen++;
-                } else if (TOKEN_TEXT != stack[stackLen-1]) {
-                    stack[stackLen] = TOKEN_TEXT;
-                    stackLen++;
+                if (0 == tokenStackLen) {
+                    tokenStack[0] = TOKEN_TEXT;
+                    tokenStackLen++;
+                } else if (TOKEN_TEXT != tokenStack[tokenStackLen-1]) {
+                    tokenStack[tokenStackLen] = TOKEN_TEXT;
+                    tokenStackLen++;
                 }
         }
 
-        if (3 == stackLen && 
-                TOKEN_LSS == stack[0]  &&   // <
-                TOKEN_TEXT == stack[1] &&   // tag
-                TOKEN_GTR == stack[2]) {    // >
+        if (3 == tokenStackLen && 
+                TOKEN_LSS == tokenStack[0]  &&   // <
+                TOKEN_TEXT == tokenStack[1] &&   // tag
+                TOKEN_GTR == tokenStack[2]) {    // >
             token->type = UIHTML_TOKEN_START_TAG;
             goto GET_TOKEN_SUCCESS;
 
-        } else if (4 == stackLen) {
-            if (TOKEN_LSS == stack[0]      && // <
-                    TOKEN_QUO == stack[1]  && // /
-                    TOKEN_TEXT == stack[2] && // tag
-                    TOKEN_GTR == stack[3]) {    // >
+        } else if (4 == tokenStackLen) {
+            if (TOKEN_LSS == tokenStack[0]      && // <
+                    TOKEN_QUO == tokenStack[1]  && // /
+                    TOKEN_TEXT == tokenStack[2] && // tag
+                    TOKEN_GTR == tokenStack[3]) {    // >
                 token->type = UIHTML_TOKEN_END_TAG;
                 goto GET_TOKEN_SUCCESS;
 
-            } else if (TOKEN_LSS == stack[0] && // <
-                    TOKEN_TEXT == stack[1]   && // tag
-                    TOKEN_QUO == stack[2]    && // /
-                    TOKEN_GTR == stack[3]) {    // >
+            } else if (TOKEN_LSS == tokenStack[0] && // <
+                    TOKEN_TEXT == tokenStack[1]   && // tag
+                    TOKEN_QUO == tokenStack[2]    && // /
+                    TOKEN_GTR == tokenStack[3]) {    // >
                 token->type = UIHTML_TOKEN_SELF_CLOSING_TAG;
                 goto GET_TOKEN_SUCCESS;
             }
 
-        } else if (2 == stackLen && 
-                TOKEN_TEXT == stack[0] &&    // text
-                TOKEN_LSS == stack[1]) {     // <
+        } else if (2 == tokenStackLen && 
+                TOKEN_TEXT == tokenStack[0] &&    // text
+                TOKEN_LSS == tokenStack[1]) {     // <
             token->type = UIHTML_TOKEN_TEXT;
-            stackLen--;
+            tokenStackLen--;
             s--;
             goto GET_TOKEN_SUCCESS;
         }

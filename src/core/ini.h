@@ -1,5 +1,5 @@
-#ifndef _CORE_INI_H
-#define _CORE_INI_H
+#ifndef __CORE_INI_H
+#define __CORE_INI_H
 
 #include <sys/types.h>
 
