@@ -20,6 +20,8 @@ static inline void freeHtmlToken(UIHTMLToken *token) {
 }
 
 UIHTMLToken* UIHTMLNextToken(char **ptr) {
+    skipStringNotConcern(ptr);
+
     if ('\0' == **ptr) {
         return 0;
     }
@@ -27,14 +29,12 @@ UIHTMLToken* UIHTMLNextToken(char **ptr) {
     int stack[6] = {0};
     int stackLen = 0;
 
-    skipStringNotConcern(ptr);
-
     char *s = *ptr;
+    int len;
     
     UIHTMLToken *token = newHtmlToken();
     token->type = UIHTML_TOKEN_TEXT;
 
-    printf("\n");
     while('\0' != *s && stackLen < 6) {
         // 解析覆盖一下情况
         // "<text>"
@@ -50,8 +50,13 @@ UIHTMLToken* UIHTMLNextToken(char **ptr) {
                     stack[0] = TOKEN_LSS;
                     stackLen++;
                 } else {
-                    if (TOKEN_TEXT != stack[stackLen-1]) {
-                        stack[stackLen] = TOKEN_TEXT;
+                    if (TOKEN_LSS == stack[0]) {
+                        if (TOKEN_TEXT != stack[stackLen-1]) {
+                            stack[stackLen] = TOKEN_TEXT;
+                            stackLen++;
+                        }
+                    } else {
+                        stack[stackLen] = TOKEN_LSS;
                         stackLen++;
                     }
                 }
@@ -65,7 +70,10 @@ UIHTMLToken* UIHTMLNextToken(char **ptr) {
                 stackLen++;
                 break;
             default:
-                if (stackLen > 0 && TOKEN_TEXT != stack[stackLen-1]) {
+                if (0 == stackLen) {
+                    stack[0] = TOKEN_TEXT;
+                    stackLen++;
+                } else if (TOKEN_TEXT != stack[stackLen-1]) {
                     stack[stackLen] = TOKEN_TEXT;
                     stackLen++;
                 }
@@ -95,11 +103,11 @@ UIHTMLToken* UIHTMLNextToken(char **ptr) {
             }
 
         } else if (2 == stackLen && 
-                TOKEN_LSS == stack[0] &&
-                TOKEN_TEXT == stack[0]) {
-            //如果是: "text<"
+                TOKEN_TEXT == stack[0] &&    // text
+                TOKEN_LSS == stack[1]) {     // <
             token->type = UIHTML_TOKEN_TEXT;
             stackLen--;
+            s--;
             goto GET_TOKEN_SUCCESS;
         }
 
@@ -107,8 +115,22 @@ UIHTMLToken* UIHTMLNextToken(char **ptr) {
     }
 
 GET_TOKEN_SUCCESS:
-    token->content = sdscatlen(token->content, *ptr, s-*ptr+1);
-    (*ptr) = s + 1;
+
+    len = (int)(s-*ptr+1);
+
+    //去掉尾部空格
+    if (UIHTML_TOKEN_TEXT == token->type) {
+        s = &((*ptr)[len-1]);
+        for (int i = len-1; i >= 0; i--,s--) {
+            if (' ' == *s || '\t' == *s || '\r' == *s || '\n' == *s) {
+                continue;
+            }
+            break;
+        }
+    }
+
+    token->content = sdscatlen(token->content, *ptr, (int)(s-*ptr+1));
+    (*ptr) = (*ptr) + len;
     return token;
 }
 
