@@ -57,7 +57,7 @@ static IniSection* NewSection() {
     return section;
 }
 
-static inline void skipWhitespaces(char **ptr)  {
+static inline void skipStringNotConcern(char **ptr)  {
     while( 0 != **ptr && (' ' == **ptr || '\t' == **ptr || '\r' == **ptr || '\n' == **ptr)) {
         (*ptr)++;
     }
@@ -69,7 +69,7 @@ static void skipCommenting(char **ptr)  {
     while (1) {
         ifFound = 0;
 
-        skipWhitespaces(ptr);
+        skipStringNotConcern(ptr);
 
         if ('#' == **ptr) {
             ifFound = 1;
@@ -77,7 +77,7 @@ static void skipCommenting(char **ptr)  {
                 (*ptr)++;
             }
 
-            skipWhitespaces(ptr);
+            skipStringNotConcern(ptr);
         }
 
         if (0 == ifFound) break;
@@ -106,7 +106,7 @@ static int parseOptionKeyAndSkip(char **ptr) {
         (*ptr)++;
     }
 
-    skipWhitespaces(ptr);
+    skipStringNotConcern(ptr);
 
     if(1 == isEqualFound) {
         (*ptr)++;
@@ -209,11 +209,11 @@ void IniRead(Ini *conf, char *path) {
 
         }
 
-        skipWhitespaces(&ptr);
+        skipStringNotConcern(&ptr);
         optionKey = ptr;
         optionKeyLen= parseOptionKeyAndSkip(&ptr);
 
-        skipWhitespaces(&ptr);
+        skipStringNotConcern(&ptr);
         optionValue = ptr;
         optionValueLen = parseOptionValueAndSkip(&ptr);
 

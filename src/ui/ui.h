@@ -82,4 +82,29 @@ void UIreRenderConsole();
 
 void UIInitMap();
 
+/**
+ * html相关
+ */
+#define UIHTML_TOKEN_START_TAG          0 // <tag>
+#define UIHTML_TOKEN_TEXT               1 // 标记中的字符串
+#define UIHTML_TOKEN_END_TAG            2 // </tag>
+#define UIHTML_TOKEN_SELF_CLOSING_TAG   3 // <tag />
+
+typedef struct UIHTMLToken {
+    int  type;
+    sds  content;
+} UIHTMLToken;
+UIHTMLToken* UIHTMLNextToken(char **ptr);
+
+typedef struct UIHTMLDom {
+    int  type;
+    sds  content;
+    list *children;
+} UIHTMLDom;
+UIHTMLDom* UINewHTMLDom();
+void UIFreeHTMLDom(UIHTMLDom *dom);
+
+typedef struct UIRenderDom {
+} UIRenderDom;
+
 #endif

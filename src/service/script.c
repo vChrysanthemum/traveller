@@ -75,7 +75,7 @@ static int SVscriptServiceCallback(NTSnode *sn) {
 
     listIter *li;
     listNode *ln;
-    li = listGetIterator(sn->scriptServiceRequestCtxList, AL_START_TAIL);
+    li = listGetIterator(sn->scriptServiceRequestCtxList, AL_START_HEAD);
     NTScriptServiceRequestCtx *ctx, *ctxTarget = 0;
     while (NULL != (ln = listNext(li))) {
         ctx = (NTScriptServiceRequestCtx*)listNodeValue(ln);

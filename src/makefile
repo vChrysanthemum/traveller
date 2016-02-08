@@ -5,21 +5,16 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./core/sha1.o ./core/crc64.o \
 				   ./event/device.o ./event/actor.o \
 				   ./net/anet.o ./net/ae.o ./net/networking.o \
-				   ./script/script.o ./script/util.o ./script/ui.o \
-				   ./script/db.o \
-				   ./script/net.o \
-
-travellerobjects := ./traveller.o $(baseobjects) \
+				   ./script/script.o ./script/util.o ./script/ui.o ./script/db.o ./script/net.o \
 				   ./service/service.o ./service/test.o ./service/script.o \
-				   ./ui/ui.o \
-				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o 
+				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
+				   ./ui/ui.o ./ui/html.o
 
-uitestobjects := ./uitests/main.o $(baseobjects) \
-				 ./service/service.o ./service/test.o ./service/script.o \
-				 ./uitests/ui_test.o \
-				 ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o 
+travellerobjects := ./traveller.o $(baseobjects)
 
-nouitestobjects = ./nouitests/case.o ./nouitests/ui_test.o
+uitestobjects := ./uitests/main.o $(baseobjects) ./uitests/ui_test.o
+
+nouitestobjects = ./nouitests/main.o ./nouitests/case.o $(baseobjects) ./nouitests/ui_test.o
 
 ALL_INCS= -I ./ \
 		  -I ../deps/lua/src/ \
