@@ -8,18 +8,18 @@ static inline void skipStringNotConcern(char **ptr)  {
     }
 }
 
-static inline UIHTMLToken* newHtmlToken() {
-    UIHTMLToken *token = (UIHTMLToken*)zmalloc(sizeof(UIHTMLToken));
+static inline UIHtmlToken* newHtmlToken() {
+    UIHtmlToken *token = (UIHtmlToken*)zmalloc(sizeof(UIHtmlToken));
     token->content = sdsempty();
     return token;
 }
 
-static inline void freeHtmlToken(UIHTMLToken *token) {
+void UIHtmlFreeToken(UIHtmlToken *token) {
     sdsfree(token->content);
     zfree(token);
 }
 
-UIHTMLToken* UIHTMLNextToken(char **ptr) {
+UIHtmlToken* UIHtmlNextToken(char **ptr) {
     skipStringNotConcern(ptr);
 
     if ('\0' == **ptr) {
@@ -32,7 +32,7 @@ UIHTMLToken* UIHTMLNextToken(char **ptr) {
     char *s = *ptr;
     int len;
     
-    UIHTMLToken *token = newHtmlToken();
+    UIHtmlToken *token = newHtmlToken();
     token->type = UIHTML_TOKEN_TEXT;
 
     while('\0' != *s && stackLen < 6) {
@@ -134,6 +134,17 @@ GET_TOKEN_SUCCESS:
     return token;
 }
 
-UIHTMLDom* UIHTMLGetNextDom(char *html) {
+UIHtmlDom* UINewHtmlDom() {
+    return 0;
+}
+
+void UIFreeHtmlDom(UIHtmlDom *dom) {
+}
+
+UIHtmlDom* UIHtmlNextDom(char *html) {
+    for (UIHtmlToken *token = UIHtmlNextToken(&html); 0 != token;) {
+        token = UIHtmlNextToken(&html);
+        UIHtmlFreeToken(token);
+    }
     return 0;
 }

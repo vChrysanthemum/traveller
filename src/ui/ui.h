@@ -90,19 +90,21 @@ void UIInitMap();
 #define UIHTML_TOKEN_END_TAG            2 // </tag>
 #define UIHTML_TOKEN_SELF_CLOSING_TAG   3 // <tag />
 
-typedef struct UIHTMLToken {
+typedef struct UIHtmlToken {
     int  type;
     sds  content;
-} UIHTMLToken;
-UIHTMLToken* UIHTMLNextToken(char **ptr);
+} UIHtmlToken;
+void UIHtmlFreeToken(UIHtmlToken *token);
+UIHtmlToken* UIHtmlNextToken(char **ptr);
 
-typedef struct UIHTMLDom {
+typedef struct UIHtmlDom {
     int  type;
     sds  content;
     list *children;
-} UIHTMLDom;
-UIHTMLDom* UINewHTMLDom();
-void UIFreeHTMLDom(UIHTMLDom *dom);
+} UIHtmlDom;
+UIHtmlDom* UINewHtmlDom();
+void UIFreeHtmlDom(UIHtmlDom *dom);
+UIHtmlDom* UIHtmlNextDom(char *html);
 
 typedef struct UIRenderDom {
 } UIRenderDom;
