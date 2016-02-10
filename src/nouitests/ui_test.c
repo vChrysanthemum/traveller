@@ -6,7 +6,7 @@
 
 TEST_CASE("fail html token parser test")
 {
-    UIHtmlPrepare();
+    UIPrepareHtml();
     char *html = "\
                   <div>\
                   <input type=\"text\" name=\"text\" />\
@@ -40,7 +40,7 @@ TEST_CASE("fail html token parser test")
 
 TEST_CASE("fail html parser test")
 {
-    UIHtmlPrepare();
+    UIPrepareHtml();
     listNode *ln;
     UIHtmlDom *dom;
     char *html = "\

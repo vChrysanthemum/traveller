@@ -22,6 +22,22 @@ UIPage *ui_activePage;
 
 ETDevice *ui_device;
 
+const int UIHTML_DOM_TEXT    = -2;
+const int UIHTML_DOM_UNKNOWN = -1;
+const int UIHTML_DOM_HTML    = 0;
+const int UIHTML_DOM_HEAD    = 1;
+const int UIHTML_DOM_TITLE   = 2;
+const int UIHTML_DOM_BODY    = 3;
+const int UIHTML_DOM_SCRIPT  = 4;
+const int UIHTML_DOM_DIV     = 5;
+const int UIHTML_DOM_TABLE   = 6;
+const int UIHTML_DOM_TR      = 7;
+const int UIHTML_DOM_TD      = 8;
+
+dict *UIHtmlDomTypeTable;
+
+int UIColorPair[16][16];
+
 static list *keyDownProcessors;
 
 static void uiLoop() {
@@ -77,7 +93,7 @@ static void UIPrepareLoadPageActor() {
 }
 
 int UIPrepare() {
-    UIHtmlPrepare();
+    UIPrepareHtml();
 
     ui_panels = listCreate();
     ui_pages = listCreate();
@@ -103,7 +119,7 @@ int UIInit() {
 
     getmaxyx(stdscr, ui_height, ui_width);
 
-    UIinitColor();
+    UIPrepareColor();
 
     UIinitConsole();
     //UIInitMap();

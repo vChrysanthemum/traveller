@@ -4,20 +4,9 @@
 #include "ui/ui.h"
 
 #include "core/extern.h"
+#include "ui/extern.h"
 
-const int UIHTML_DOM_TEXT    = -2;
-const int UIHTML_DOM_UNKNOWN = -1;
-const int UIHTML_DOM_HTML    = 0;
-const int UIHTML_DOM_HEAD    = 1;
-const int UIHTML_DOM_TITLE   = 2;
-const int UIHTML_DOM_BODY    = 3;
-const int UIHTML_DOM_SCRIPT  = 4;
-const int UIHTML_DOM_DIV     = 5;
-const int UIHTML_DOM_TABLE   = 6;
-const int UIHTML_DOM_TR      = 7;
-const int UIHTML_DOM_TD      = 8;
-
-void UIHtmlPrepare() {
+void UIPrepareHtml() {
     UIHtmlDomTypeTable = dictCreate(&stackStringTableDictType, 0);
     dictAdd(UIHtmlDomTypeTable, "html",     (void*)&UIHTML_DOM_HTML);
     dictAdd(UIHtmlDomTypeTable, "head",     (void*)&UIHTML_DOM_HEAD);

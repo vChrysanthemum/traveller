@@ -20,7 +20,8 @@ void UIFreePage(UIPage *page) {
 
 void* UILoadPageActor(ETActor *actor, int args, void **argv) {
     UIPage *page = (UIPage*)argv[0];
-    TrvLogI("%s", page->content);
+    UIHtmlDom *dom = listNodeValue(UIParseHtml(page->content)->children->head);
+    TrvLogI("%s", dom->title);
     page->uiwin = UIcreateWindow(20, ui_width, 0, 0);
     wprintw(page->uiwin->win, page->content);
     wrefresh(page->uiwin->win);

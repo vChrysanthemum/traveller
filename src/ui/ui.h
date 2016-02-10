@@ -71,7 +71,7 @@ typedef struct {
 int UIPrepare();
 int UIInit();
 
-void UIinitColor();
+void UIPrepareColor();
 
 typedef void (*UIKeyDownProcessor) (char ch);
 int UISubscribeKeyDownEvent(UIKeyDownProcessor subscriber);
@@ -85,9 +85,7 @@ void UIInitMap();
 /**
  * html相关
  */
-dict *UIHtmlDomTypeTable;
-
-void UIHtmlPrepare();
+void UIPrepareHtml();
 
 #define UIHTML_TOKEN_START_TAG          0 // <tag>
 #define UIHTML_TOKEN_TEXT               1 // 标记中的字符串

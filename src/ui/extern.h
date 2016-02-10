@@ -23,6 +23,10 @@ extern const int UIHTML_DOM_TABLE;
 extern const int UIHTML_DOM_TR;
 extern const int UIHTML_DOM_TD;
 
+dict *UIHtmlDomTypeTable;
+
+extern int UIColorPair[8][8];
+
 ETDevice *ui_device;
 
 #endif

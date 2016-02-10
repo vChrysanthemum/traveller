@@ -82,7 +82,7 @@ int UIInit() {
 
     getmaxyx(stdscr, ui_height, ui_width);
 
-    UIinitColor();
+    UIPrepareColor();
 
     UIinitConsole();
     //UIInitMap();
