@@ -141,6 +141,7 @@ UIHtmlDom* UINewHtmlDom() {
     UIHtmlDom *dom = (UIHtmlDom*)zmalloc(sizeof(UIHtmlDom));
     memset(dom, 0, sizeof(UIHtmlDom));
     dom->title = sdsempty();
+    dom->attribute = dictCreate(&stringTableDictType, 0);
     dom->children = listCreate();
     dom->children->free = UIFreeHtmlDom;
     return dom;
@@ -148,8 +149,9 @@ UIHtmlDom* UINewHtmlDom() {
 
 void UIFreeHtmlDom(void *_dom) {
     UIHtmlDom *dom = (UIHtmlDom*)_dom;
-    sdsfree(dom->content);
     sdsfree(dom->title);
+    dictRelease(dom->attribute);
+    if (0 != dom->content) sdsfree(dom->content);
     listRelease(dom->children);
 }
 
@@ -161,8 +163,6 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
     int contentEndOffset;
     enum {EXPECTING_KEY, EXPECTING_VALUE} expectState;
     int isExpectingDoubleQuoteClose, isExpectingQuoteClose;
-
-    dom->attribute = dictCreate(&stringTableDictType, 0);
 
     // 提取 title
     contentOffset = 0;
@@ -394,7 +394,7 @@ void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
     printf("%s", dom->title);
-    if (0 != dom->attribute && dictSize(dom->attribute) > 0) {
+    if (dictSize(dom->attribute) > 0) {
         dictEntry *de;
         dictIterator *di = dictGetIterator(dom->attribute);
         while ((de = dictNext(di)) != NULL) {
