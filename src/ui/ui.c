@@ -77,6 +77,8 @@ static void UIPrepareLoadPageActor() {
 }
 
 int UIPrepare() {
+    UIHtmlPrepare();
+
     ui_panels = listCreate();
     ui_pages = listCreate();
     keyDownProcessors = listCreate();

@@ -5,6 +5,31 @@
 
 #include "core/extern.h"
 
+const int UIHTML_DOM_TEXT    = -2;
+const int UIHTML_DOM_UNKNOWN = -1;
+const int UIHTML_DOM_HTML    = 0;
+const int UIHTML_DOM_HEAD    = 1;
+const int UIHTML_DOM_TITLE   = 2;
+const int UIHTML_DOM_BODY    = 3;
+const int UIHTML_DOM_SCRIPT  = 4;
+const int UIHTML_DOM_DIV     = 5;
+const int UIHTML_DOM_TABLE   = 6;
+const int UIHTML_DOM_TR      = 7;
+const int UIHTML_DOM_TD      = 8;
+
+void UIHtmlPrepare() {
+    UIHtmlDomTypeTable = dictCreate(&stackStringTableDictType, 0);
+    dictAdd(UIHtmlDomTypeTable, "html",     (void*)&UIHTML_DOM_HTML);
+    dictAdd(UIHtmlDomTypeTable, "head",     (void*)&UIHTML_DOM_HEAD);
+    dictAdd(UIHtmlDomTypeTable, "title",    (void*)&UIHTML_DOM_TITLE);
+    dictAdd(UIHtmlDomTypeTable, "body",     (void*)&UIHTML_DOM_BODY);
+    dictAdd(UIHtmlDomTypeTable, "script",   (void*)&UIHTML_DOM_SCRIPT);
+    dictAdd(UIHtmlDomTypeTable, "div",      (void*)&UIHTML_DOM_DIV);
+    dictAdd(UIHtmlDomTypeTable, "table",    (void*)&UIHTML_DOM_TABLE);
+    dictAdd(UIHtmlDomTypeTable, "tr",       (void*)&UIHTML_DOM_TR);
+    dictAdd(UIHtmlDomTypeTable, "td",       (void*)&UIHTML_DOM_TD);
+}
+
 static inline void skipStringNotConcern(char **ptr)  {
     while(UIIsWhiteSpace(**ptr) && 0 != **ptr) {
         (*ptr)++;
@@ -141,6 +166,7 @@ UIHtmlDom* UINewHtmlDom() {
     UIHtmlDom *dom = (UIHtmlDom*)zmalloc(sizeof(UIHtmlDom));
     memset(dom, 0, sizeof(UIHtmlDom));
     dom->title = sdsempty();
+    dom->type = UIHTML_DOM_UNKNOWN;
     dom->attribute = dictCreate(&stringTableDictType, 0);
     dom->children = listCreate();
     dom->children->free = UIFreeHtmlDom;
@@ -172,6 +198,13 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
         }
     }
     dom->title = sdscatlen(dom->title, &(token->content[contentOffset]), contentEndOffset-contentOffset);
+    int *intPtr;
+    intPtr = dictFetchValue(UIHtmlDomTypeTable, dom->title);
+    if (0 == intPtr) {
+        dom->type = UIHTML_DOM_UNKNOWN;
+    } else {
+        dom->type = *intPtr;
+    }
 
     contentOffset = contentEndOffset + 1;
 
@@ -322,16 +355,21 @@ static inline UIHtmlDom* parseHtmlTokenSelfClosingTag(UIHtmlDom *dom, UIHtmlToke
 
 // text
 static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) {
-    UIHtmlDom *newdom = UINewHtmlDom();
-    newdom->parentDom = dom;
-    newdom->content = sdsempty();
-    dom->children = listAddNodeTail(dom->children, newdom);
+    if (UIHTML_DOM_SCRIPT == dom->type) {
+        if (0 == dom->content) {
+            dom->content = sdsnewlen(token->content, sdslen(token->content));
+        } else {
+            dom->content = sdscatsds(dom->content, token->content);
+        }
 
-    if (0 == stringcmp("script", dom->title)) {
-        newdom->content = sdscatsds(newdom->content, token->content);
-        
     } else {
+        UIHtmlDom *newdom = UINewHtmlDom();
+        newdom->parentDom = dom;
+        newdom->content = sdsempty();
+        dom->children = listAddNodeTail(dom->children, newdom);
+
         // 除了 script 以外的dom内容，均合并多个空格为一个空格
+        newdom->type = UIHTML_DOM_TEXT;
         newdom->content = sdsMakeRoomFor(newdom->content, 
                 sdslen(newdom->content)+sdslen(token->content));
 
@@ -356,9 +394,9 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) 
             }
         }
         newdom->content[domPoi] = '\0';
+        sdsupdatelen(newdom->content);
     }
 
-    sdsupdatelen(newdom->content);
     return dom;
 }
 
@@ -402,10 +440,11 @@ void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
         }
         dictReleaseIterator(di);
     }
-    printf("\n");
-    if (0 != dom->content) {
-        for (i = 0; i < indent; i++) { printf("  "); }
-        printf("content: %s\n", dom->content);
+
+    if (UIHTML_DOM_TEXT == dom->type) {
+        printf("%s\n", dom->content);
+    } else {
+        printf("\n");
     }
 
     listIter *li;
