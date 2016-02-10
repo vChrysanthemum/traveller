@@ -60,7 +60,7 @@ TEST_CASE("fail html parser test")
     ln = rootDom->children->head;
     UIHtmlDom *rootDivDom = listNodeValue(ln);
 
-    REQUIRE_EQ(3, listLength(rootDivDom->children), "err");
+    REQUIRE_EQ(4, listLength(rootDivDom->children), "err");
 
     REQUIRE_EQ(0, strcmp("div", rootDivDom->title), "err");
 
@@ -79,5 +79,8 @@ TEST_CASE("fail html parser test")
     ln = dom->children->head;
     dom = listNodeValue(ln);
     REQUIRE_EQ(0, strcmp("td", dom->title), "err");
+
+    ln = dom->children->head;
+    dom = listNodeValue(ln);
     REQUIRE_EQ(0, strcmp("hello world !", dom->content), "err");
 }

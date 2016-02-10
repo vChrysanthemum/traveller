@@ -285,18 +285,20 @@ static inline UIHtmlDom* parseHtmlTokenSelfClosingTag(UIHtmlDom *dom, UIHtmlToke
 
 // text
 static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) {
-    if (0 == dom->content) {
-        dom->content = sdsempty();
-    }
+    UIHtmlDom *newdom = UINewHtmlDom();
+    newdom->parentDom = dom;
+    newdom->content = sdsempty();
+    dom->children = listAddNodeTail(dom->children, newdom);
 
     if (0 == stringcmp("script", dom->title)) {
-        dom->content = sdscatsds(dom->content, token->content);
+        newdom->content = sdscatsds(newdom->content, token->content);
         
     } else {
         // 除了 script 以外的dom内容，均合并多个空格为一个空格
-        dom->content = sdsMakeRoomFor(dom->content, sdslen(dom->content)+sdslen(token->content));
+        newdom->content = sdsMakeRoomFor(newdom->content, 
+                sdslen(newdom->content)+sdslen(token->content));
 
-        int domPoi = sdslen(dom->content);
+        int domPoi = sdslen(newdom->content);
         int isWhiteSpaceFound = 0;
         int len = sdslen(token->content);
         char *ptr = token->content;
@@ -304,7 +306,7 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) 
             if (UIIsWhiteSpace(*ptr)) {
                 if (0 == isWhiteSpaceFound) {
                     isWhiteSpaceFound = 1;
-                    dom->content[domPoi] = ' ';
+                    newdom->content[domPoi] = ' ';
                     domPoi++;
                 }
 
@@ -312,14 +314,14 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) 
                 if (1 == isWhiteSpaceFound) {
                     isWhiteSpaceFound = 0;
                 }
-                dom->content[domPoi] = *ptr;
+                newdom->content[domPoi] = *ptr;
                 domPoi++;
             }
         }
-        dom->content[domPoi] = '\0';
+        newdom->content[domPoi] = '\0';
     }
 
-    sdsupdatelen(dom->content);
+    sdsupdatelen(newdom->content);
     return dom;
 }
 
