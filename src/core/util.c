@@ -5,6 +5,15 @@
 #include "core/dict.h"
 #include "core/sds.h"
 
+dictType stringTableDictType = {
+    dictStringCaseHash,        /* hash function */
+    NULL,                      /* key dup */
+    NULL,                      /* val dup */
+    dictStringCompare,         /* key compare */
+    dictStringDestructor,      /* key destructor */
+    dictStringDestructor       /* val destructor */
+};
+
 dictType stackStringTableDictType = {
     dictStringCaseHash,        /* hash function */
     NULL,                      /* key dup */

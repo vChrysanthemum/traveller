@@ -35,3 +35,49 @@ TEST_CASE("fail html token parser test")
     token = UIHtmlNextToken(&ptr);
     REQUIRE(0 == token, "err");
 }
+
+TEST_CASE("fail html parser test")
+{
+    listNode *ln;
+    UIHtmlDom *dom;
+    char *html = "\
+                  <div style=\"shit\">\
+                    <input type=\"text\" name=\"text\" />\
+                    <table>\
+                        <tr>\
+                            <td>   hello    world   ! </td>\
+                        </tr> \
+                    </table>\
+                    hello sdlkfj \
+                    <script>\
+                    hello sdlkfjsdfonounoi123oi12n3oin \
+                    </script>\
+                  </div>\
+                  ";
+    UIHtmlDom *rootDom = UIParseHtml(html);
+    UIHtmlPrintDomTree(rootDom, 0);
+
+    ln = rootDom->children->head;
+    UIHtmlDom *rootDivDom = listNodeValue(ln);
+
+    REQUIRE_EQ(3, listLength(rootDivDom->children), "err");
+
+    REQUIRE_EQ(0, strcmp("div", rootDivDom->title), "err");
+
+    ln = rootDivDom->children->head;
+    dom = listNodeValue(ln);
+    REQUIRE_EQ(0, strcmp("input", dom->title), "err");
+
+    ln = ln->next;
+    dom = listNodeValue(ln);
+    REQUIRE_EQ(0, strcmp("table", dom->title), "err");
+
+    ln = dom->children->head;
+    dom = listNodeValue(ln);
+    REQUIRE_EQ(0, strcmp("tr", dom->title), "err");
+
+    ln = dom->children->head;
+    dom = listNodeValue(ln);
+    REQUIRE_EQ(0, strcmp("td", dom->title), "err");
+    REQUIRE_EQ(0, strcmp("hello world !", dom->content), "err");
+}

@@ -71,6 +71,18 @@ sds sdsempty(void) {
     return sdsnewlen("",0);
 }
 
+int stringcmp(const void *s1, const void *s2) {
+    size_t l1, l2, minlen;
+    int cmp;
+
+    l1 = strlen(s1);
+    l2 = strlen(s2);
+    minlen = (l1 < l2) ? l1 : l2;
+    cmp = memcmp(s1,s2,minlen);
+    if (cmp == 0) return l1-l2;
+    return cmp;
+}
+
 char* stringnewlen(const char *init, size_t initlen) {
     char *ret;
     ret = (char*)zmalloc(initlen+1);

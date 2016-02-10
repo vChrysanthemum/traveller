@@ -54,6 +54,7 @@ static inline size_t sdsavail(const sds s) {
     return sh->free;
 }
 
+int stringcmp(const void *s1, const void *s2);
 char* stringnewlen(const char *init, size_t initlen);
 char* stringnew(const char *init);
 int sdscmpstr(const sds s1, const char *s2);

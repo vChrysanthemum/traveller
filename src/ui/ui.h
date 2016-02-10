@@ -90,6 +90,15 @@ void UIInitMap();
 #define UIHTML_TOKEN_END_TAG            2 // </tag>
 #define UIHTML_TOKEN_SELF_CLOSING_TAG   3 // <tag />
 
+#define UIHTML_DOM_HTML    0
+#define UIHTML_DOM_HEAD    1
+#define UIHTML_DOM_TITLE   2
+#define UIHTML_DOM_BODY    3
+#define UIHTML_DOM_SCRIPT  4
+#define UIHTML_DOM_DIV     5
+
+#define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
+
 typedef struct UIHtmlToken {
     int  type;
     sds  content;
@@ -97,14 +106,20 @@ typedef struct UIHtmlToken {
 void UIHtmlFreeToken(UIHtmlToken *token);
 UIHtmlToken* UIHtmlNextToken(char **ptr);
 
+typedef struct UIHtmlDom UIHtmlDom;
 typedef struct UIHtmlDom {
-    int  type;
-    sds  content;
-    list *children;
+    int         type;
+    sds         title;
+    dict        *attribute;
+    sds         content;
+    UIHtmlDom   *parentDom;
+    list        *children;
 } UIHtmlDom;
 UIHtmlDom* UINewHtmlDom();
-void UIFreeHtmlDom(UIHtmlDom *dom);
-UIHtmlDom* UIHtmlNextDom(char *html);
+void UIFreeHtmlDom(void *_dom);
+UIHtmlDom* UIParseHtml(char *html);
+
+void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent);
 
 typedef struct UIRenderDom {
 } UIRenderDom;
