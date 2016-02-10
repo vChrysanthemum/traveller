@@ -16,6 +16,7 @@ TEST_CASE("fail html token parser test")
     char *ptr = html;
     UIHtmlToken *token = UIHtmlNextToken(&ptr);
 	REQUIRE(token, "should pass");
+
 	REQUIRE_EQ(token->type, UIHTML_TOKEN_START_TAG, "err: %s", token->content);
     REQUIRE_EQ(0, strcmp("<div>", token->content), "err: %s", token->content);
     //freeHtmlToken
@@ -41,7 +42,7 @@ TEST_CASE("fail html parser test")
     listNode *ln;
     UIHtmlDom *dom;
     char *html = "\
-                  <div style=\"shit\">\
+                  <div style=\"shit '' \\\" shit\">\
                     <input type=\"text\" name=\"text\" />\
                     <table>\
                         <tr>\

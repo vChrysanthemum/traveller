@@ -159,8 +159,6 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
 
     int contentOffset;
     int contentEndOffset;
-    char *attributeKey = 0;
-    char *attributeValue = 0;
     enum {EXPECTING_KEY, EXPECTING_VALUE} expectState;
     int isExpectingDoubleQuoteClose, isExpectingQuoteClose;
 
@@ -177,89 +175,119 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
 
     contentOffset = contentEndOffset + 1;
 
+    int len = strlen(&token->content[contentOffset]);
+    if (0 == len) {
+        return;
+    }
+
+    sds attributeData = sdsnewlen(&token->content[contentOffset], len);
+    int attributeDataOffset;
+    char *attributeDataPtr = &token->content[contentOffset];
+    char *attributeKey = 0;
+    char *attributeValue = 0;
+    attributeDataOffset = 0;
+
     // 提取attribute
     expectState = EXPECTING_KEY;
     while(1) {
+        // 开始解析新的 key 或 value
 
         // 跳过空格
         if (UIIsWhiteSpace(token->content[contentOffset])) {
             if (0 != token->content[contentOffset]) {
                 goto PARSE_HTML_DOM_TAG_END;
             }
-            contentOffset++;
+            attributeDataPtr++;
         }
-        contentEndOffset = contentOffset + 1;
 
         isExpectingDoubleQuoteClose = 0;
         isExpectingQuoteClose = 0;
         while(1) {
-            if (0 == token->content[contentEndOffset]) {
+            if ('\0' == *attributeDataPtr) {
                 goto PARSE_ATTRIBUTE;
             }
 
-            if ('\\' == token->content[contentEndOffset]) {
-                goto PARSE_NEXT_CHARACTER;
+            if ('\\' == *attributeDataPtr) {
+                attributeDataPtr++;
+                goto STORE_CHARACTER;
             }
 
-            /*
             if (1 == isExpectingDoubleQuoteClose) {
-                if ('"' == token->content[contentEndOffset]) {
+                if ('"' == *attributeDataPtr) {
                     isExpectingDoubleQuoteClose = 0;
+                    goto PARSE_NEXT_CHARACTER;
+
+                } else {
+                    goto STORE_CHARACTER;
                 }
-                goto PARSE_NEXT_CHARACTER;
             }
 
             if (1 == isExpectingQuoteClose) {
-                if ('\'' == token->content[contentEndOffset]) {
+                if ('\'' == *attributeDataPtr) {
                     isExpectingQuoteClose = 0;
+                    goto PARSE_NEXT_CHARACTER;
+
+                } else {
+                    goto STORE_CHARACTER;
                 }
-                goto PARSE_NEXT_CHARACTER;
             }
 
-            if ('"' == token->content[contentEndOffset]) {
+            // assert 0 == isExpectingDoubleQuoteClose
+            // assert 0 == isExpectingQuoteClose
+            if ('"' == *attributeDataPtr && 0 == isExpectingQuoteClose) {
                 isExpectingDoubleQuoteClose = 1;
                 goto PARSE_NEXT_CHARACTER;
 
-            } else if ('\'' == token->content[contentEndOffset]) {
+            } else if ('\'' == *attributeDataPtr && 0 == isExpectingDoubleQuoteClose) {
                 isExpectingQuoteClose = 1;
                 goto PARSE_NEXT_CHARACTER;
             }
-            */
 
-            if (UIIsWhiteSpace(token->content[contentEndOffset])) {
+            if (UIIsWhiteSpace(*attributeDataPtr)) {
+                attributeDataPtr++;
                 break;
             }
-            if ('=' == token->content[contentEndOffset]) {
+
+            if ('=' == *attributeDataPtr) {
+                attributeDataPtr++;
                 break;
             }
+
+STORE_CHARACTER:
+            attributeData[attributeDataOffset] = *attributeDataPtr;
+            attributeDataOffset++;
 
 PARSE_NEXT_CHARACTER:
-            contentEndOffset++;
+            attributeDataPtr++;
         }
 
 PARSE_ATTRIBUTE:
+        attributeData[attributeDataOffset] = '\0';
+
         switch(expectState) {
             case EXPECTING_KEY:
-                attributeKey = stringnewlen(&(token->content[contentOffset]), contentEndOffset-contentOffset);
-                contentOffset = contentEndOffset + 1;
+                attributeKey = stringnewlen(attributeData, strlen(attributeData));
+                attributeDataOffset = 0;
                 expectState = EXPECTING_VALUE;
                 break;
             case EXPECTING_VALUE:
-                attributeValue = stringnewlen(&(token->content[contentOffset]), contentEndOffset-contentOffset);
-                contentOffset = contentEndOffset + 1;
+                attributeValue = stringnewlen(attributeData, strlen(attributeData));
+                attributeDataOffset = 0;
+                expectState = EXPECTING_KEY;
+
                 dictAdd(dom->attribute, attributeKey, attributeValue);
                 attributeKey = 0;
                 attributeValue = 0;
-                expectState = EXPECTING_KEY;
                 break;
         }
 
-        if (0 == token->content[contentEndOffset]) {
+        if (0 == *attributeDataPtr) {
             goto PARSE_HTML_DOM_TAG_END;
         }
     }
 
 PARSE_HTML_DOM_TAG_END:
+    if (0 != attributeData) sdsfree(attributeData);
     if (0 != attributeKey) zfree(attributeKey);
     if (0 != attributeValue) zfree(attributeValue);
 }
