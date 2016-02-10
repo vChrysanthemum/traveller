@@ -48,10 +48,10 @@ TEST_CASE("fail html parser test")
                             <td>   hello    world   ! </td>\
                         </tr> \
                     </table>\
-                    hello sdlkfj \
                     <script>\
                     hello sdlkfjsdfonounoi123oi12n3oin \
                     </script>\
+                    hello sdlkfj \
                   </div>\
                   ";
     UIHtmlDom *rootDom = UIParseHtml(html);

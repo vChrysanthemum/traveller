@@ -194,13 +194,14 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
         isExpectingQuoteClose = 0;
         while(1) {
             if (0 == token->content[contentEndOffset]) {
-                goto PARSE_HTML_DOM_TAG_END;
+                goto PARSE_ATTRIBUTE;
             }
 
             if ('\\' == token->content[contentEndOffset]) {
                 goto PARSE_NEXT_CHARACTER;
             }
 
+            /*
             if (1 == isExpectingDoubleQuoteClose) {
                 if ('"' == token->content[contentEndOffset]) {
                     isExpectingDoubleQuoteClose = 0;
@@ -223,6 +224,7 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
                 isExpectingQuoteClose = 1;
                 goto PARSE_NEXT_CHARACTER;
             }
+            */
 
             if (UIIsWhiteSpace(token->content[contentEndOffset])) {
                 break;
@@ -235,6 +237,7 @@ PARSE_NEXT_CHARACTER:
             contentEndOffset++;
         }
 
+PARSE_ATTRIBUTE:
         switch(expectState) {
             case EXPECTING_KEY:
                 attributeKey = stringnewlen(&(token->content[contentOffset]), contentEndOffset-contentOffset);
@@ -245,8 +248,14 @@ PARSE_NEXT_CHARACTER:
                 attributeValue = stringnewlen(&(token->content[contentOffset]), contentEndOffset-contentOffset);
                 contentOffset = contentEndOffset + 1;
                 dictAdd(dom->attribute, attributeKey, attributeValue);
+                attributeKey = 0;
+                attributeValue = 0;
                 expectState = EXPECTING_KEY;
                 break;
+        }
+
+        if (0 == token->content[contentEndOffset]) {
+            goto PARSE_HTML_DOM_TAG_END;
         }
     }
 
@@ -356,10 +365,19 @@ UIHtmlDom* UIParseHtml(char *html) {
 void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
-    printf("%s\n", dom->title);
+    printf("%s", dom->title);
+    if (0 != dom->attribute && dictSize(dom->attribute) > 0) {
+        dictEntry *de;
+        dictIterator *di = dictGetIterator(dom->attribute);
+        while ((de = dictNext(di)) != NULL) {
+            printf(" %s=%s", dictGetKey(de), dictGetVal(de));
+        }
+        dictReleaseIterator(di);
+    }
+    printf("\n");
     if (0 != dom->content) {
         for (i = 0; i < indent; i++) { printf("  "); }
-        printf("  %s\n", dom->content);
+        printf("content: %s\n", dom->content);
     }
 
     listIter *li;
