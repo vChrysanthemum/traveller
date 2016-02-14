@@ -165,6 +165,8 @@ void UIFreeHtmlDom(void *_dom) {
     UIHtmlDom *dom = (UIHtmlDom*)_dom;
     sdsfree(dom->title);
     if (0 != dom->attribute) dictRelease(dom->attribute);
+    if (0 != dom->id) sdsfree(dom->id);
+    if (0 != dom->classes) listRelease(dom->classes);
     if (0 != dom->content) sdsfree(dom->content);
     listRelease(dom->children);
 }
@@ -206,6 +208,7 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
     char *attributeDataPtr = &token->content[contentOffset];
     char *attributeKey = 0;
     char *attributeValue = 0;
+    char *sptr, *sptr2;
     attributeDataOffset = 0;
 
     // 提取attribute
@@ -300,6 +303,52 @@ PARSE_ATTRIBUTE:
                     dom->attribute = dictCreate(&stringTableDictType, 0);
                 }
                 dictAdd(dom->attribute, attributeKey, attributeValue);
+
+                if (0 == stringcmp("class", attributeKey)) {
+                    if (0 == dom->classes) {
+                        dom->classes = listCreate();
+                        dom->classes->free = listFreeSds;
+                    }
+
+                    sptr = attributeValue;
+                    while(UIIsWhiteSpace(*sptr)) {
+                        sptr++;
+                    }
+                    sptr2 = sptr + 1;
+                    while(1) {
+                        if ('\0' == *sptr2) {
+                            break;
+                        }
+
+                        if (UIIsWhiteSpace(*sptr2)) {
+                            listAddNodeTail(dom->classes, sdsnewlen(sptr, sptr2-sptr));
+
+                            while(UIIsWhiteSpace(*sptr2)) {
+                                sptr2++;
+                            }
+
+                            sptr = sptr2;
+
+                            if ('\0' == *sptr2) {
+                                break;
+                            }
+                        }
+
+                        sptr2++;
+                    }
+
+                    if (sptr2 > sptr) {
+                        listAddNodeTail(dom->classes, sdsnewlen(sptr, sptr2-sptr));
+                    }
+
+                } else if (0 == stringcmp("id", attributeKey)) {
+                    if (0 != dom->id) {
+                        sdsfree(dom->id);
+                    }
+
+                    dom->id = sdsnew(attributeValue);
+                }
+
                 attributeKey = 0;
                 attributeValue = 0;
                 break;

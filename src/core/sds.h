@@ -54,6 +54,7 @@ static inline size_t sdsavail(const sds s) {
     return sh->free;
 }
 
+void listFreeSds(void* _ptr);
 int stringcmp(const void *s1, const void *s2);
 char* stringnewlen(const char *init, size_t initlen);
 char* stringnew(const char *init);

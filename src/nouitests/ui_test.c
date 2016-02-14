@@ -44,7 +44,7 @@ TEST_CASE("fail html parser test")
     listNode *ln;
     UIHtmlDom *dom;
     char *html = "\
-                  <div style=\"shit '' \\\" shit\">\
+                  <div id=\"top\" style=\"shit '' \\\" shit\" class=\"top hover\">\
                     <input type=\"text\" name=\"text\" />\
                     <table>\
                         <tr>\
@@ -67,6 +67,11 @@ TEST_CASE("fail html parser test")
     REQUIRE_EQ(4, listLength(rootDivDom->children), "err");
 
     REQUIRE_EQ(0, strcmp("div", rootDivDom->title), "err");
+
+    REQUIRE_EQ(2, listLength(rootDivDom->classes), "err");
+    REQUIRE_EQ(0, strcmp("top", rootDivDom->id), "err");
+    REQUIRE_EQ(0, strcmp("top", (sds)listNodeValue(rootDivDom->classes->head)), "err");
+    REQUIRE_EQ(0, strcmp("hover", (sds)listNodeValue(rootDivDom->classes->head->next)), "err");
 
     ln = rootDivDom->children->head;
     dom = listNodeValue(ln);

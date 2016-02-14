@@ -107,8 +107,9 @@ typedef struct UIHtmlDom {
     int         type;
     sds         title;
     dict        *attribute;
+    sds         id;
+    list        *classes;
     sds         content;
-    sds         className;
     UIHtmlDom   *parentDom;
     list        *children;
 } UIHtmlDom;

@@ -71,6 +71,11 @@ sds sdsempty(void) {
     return sdsnewlen("",0);
 }
 
+void listFreeSds(void* _ptr) {
+    sds ptr = (sds)_ptr;
+    sdsfree(ptr);
+}
+
 int stringcmp(const void *s1, const void *s2) {
     size_t l1, l2, minlen;
     int cmp;
