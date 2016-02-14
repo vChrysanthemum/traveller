@@ -33,6 +33,7 @@ const int UIHTML_DOM_DIV     = 5;
 const int UIHTML_DOM_TABLE   = 6;
 const int UIHTML_DOM_TR      = 7;
 const int UIHTML_DOM_TD      = 8;
+const int UIHTML_DOM_STYLE   = 9;
 
 dict *UIHtmlDomTypeTable;
 
@@ -46,6 +47,8 @@ const int UICOLOR_CYAN      = COLOR_CYAN;
 const int UICOLOR_WHITE     = COLOR_WHITE;
 int UIColorPair[8][8];
 dict *UIColorPairTable;
+
+dict *UIHtmlSpecialStringTable;
 
 static list *keyDownProcessors;
 

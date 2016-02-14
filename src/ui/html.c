@@ -17,6 +17,14 @@ void UIPrepareHtml() {
     dictAdd(UIHtmlDomTypeTable, "table",    (void*)&UIHTML_DOM_TABLE);
     dictAdd(UIHtmlDomTypeTable, "tr",       (void*)&UIHTML_DOM_TR);
     dictAdd(UIHtmlDomTypeTable, "td",       (void*)&UIHTML_DOM_TD);
+    dictAdd(UIHtmlDomTypeTable, "style",    (void*)&UIHTML_DOM_STYLE);
+
+    UIHtmlSpecialStringTable = dictCreate(&stackStringTableDictType, 0);
+    dictAdd(UIHtmlSpecialStringTable, "&quot;", "\"");
+    dictAdd(UIHtmlSpecialStringTable, "&amp;",  "&");
+    dictAdd(UIHtmlSpecialStringTable, "&gt;",   ">");
+    dictAdd(UIHtmlSpecialStringTable, "&lt;",   "<");
+    dictAdd(UIHtmlSpecialStringTable, "&nbsp;", " ");
 }
 
 static inline void skipStringNotConcern(char **ptr)  {
@@ -403,12 +411,12 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) 
         }
 
     } else {
+        // 除了 script 以外的dom内容，均作特殊处理
         UIHtmlDom *newdom = UINewHtmlDom();
         newdom->parentDom = dom;
         newdom->content = sdsempty();
         dom->children = listAddNodeTail(dom->children, newdom);
 
-        // 除了 script 以外的dom内容，均合并多个空格为一个空格
         newdom->type = UIHTML_DOM_TEXT;
         newdom->content = sdsMakeRoomFor(newdom->content, 
                 sdslen(newdom->content)+sdslen(token->content));
@@ -417,22 +425,45 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) 
         int isWhiteSpaceFound = 0;
         int len = sdslen(token->content);
         char *ptr = token->content;
+        char *ptr2;
+        sds tmpString = sdsMakeRoomFor(sdsempty(), 12);
         for (int i = 0; i < len; i++,ptr++) {
+            //合并空格
             if (UIIsWhiteSpace(*ptr)) {
                 if (0 == isWhiteSpaceFound) {
                     isWhiteSpaceFound = 1;
                     newdom->content[domPoi] = ' ';
                     domPoi++;
                 }
+                continue;
 
-            } else {
-                if (1 == isWhiteSpaceFound) {
-                    isWhiteSpaceFound = 0;
-                }
-                newdom->content[domPoi] = *ptr;
-                domPoi++;
             }
+
+            if (1 == isWhiteSpaceFound) {
+                isWhiteSpaceFound = 0;
+            }
+
+            //转义
+            if ('&' == *ptr) {
+                ptr2 = ptr;
+                while(i < len && ';' != *ptr2) {
+                    i++;ptr2++;
+                }
+                sdsclear(tmpString);
+                tmpString = sdscatlen(tmpString, ptr, ptr2-ptr+1);
+                ptr = ptr2;
+                ptr2 = dictFetchValue(UIHtmlSpecialStringTable, tmpString);
+                if (0 != ptr2) {
+                    newdom->content[domPoi] = *ptr2;
+                    domPoi++;
+                }
+                continue;
+            }
+
+            newdom->content[domPoi] = *ptr;
+            domPoi++;
         }
+        sdsfree(tmpString);
         newdom->content[domPoi] = '\0';
         sdsupdatelen(newdom->content);
     }
@@ -483,6 +514,12 @@ void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
 
     if (UIHTML_DOM_TEXT == dom->type) {
         printf("%s\n", dom->content);
+
+    } else if (UIHTML_DOM_SCRIPT == dom->type) {
+        printf("\n");
+        for (i = 0; i < indent; i++) { printf("  "); }
+        printf("  %s\n", dom->content);
+
     } else {
         printf("\n");
     }

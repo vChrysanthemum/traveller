@@ -85,7 +85,6 @@ void UIInitMap();
 /**
  * html相关
  */
-
 void UIPrepareHtml();
 
 #define UIHTML_TOKEN_START_TAG          0 // <tag>
@@ -119,7 +118,16 @@ UIHtmlDom* UIParseHtml(char *html);
 
 void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent);
 
-typedef struct UIRenderDom {
-} UIRenderDom;
+typedef struct UIRenderObject {
+    sds   content;
+    int   width;
+    int   height;
+    list  *children;
+} UIRenderObject;
+
+
+/**
+ * css相关
+ */
 
 #endif
