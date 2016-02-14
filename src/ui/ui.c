@@ -36,7 +36,16 @@ const int UIHTML_DOM_TD      = 8;
 
 dict *UIHtmlDomTypeTable;
 
-int UIColorPair[16][16];
+const int UICOLOR_BLACK     = COLOR_BLACK; 
+const int UICOLOR_RED       = COLOR_RED;
+const int UICOLOR_GREEN     = COLOR_GREEN;
+const int UICOLOR_YELLOW    = COLOR_YELLOW;
+const int UICOLOR_BLUE      = COLOR_BLUE;
+const int UICOLOR_MAGENTA   = COLOR_MAGENTA;
+const int UICOLOR_CYAN      = COLOR_CYAN;
+const int UICOLOR_WHITE     = COLOR_WHITE;
+int UIColorPair[8][8];
+dict *UIColorPairTable;
 
 static list *keyDownProcessors;
 

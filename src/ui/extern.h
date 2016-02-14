@@ -25,7 +25,17 @@ extern const int UIHTML_DOM_TD;
 
 dict *UIHtmlDomTypeTable;
 
+extern const int UICOLOR_BLACK; 
+extern const int UICOLOR_RED;
+extern const int UICOLOR_GREEN;
+extern const int UICOLOR_YELLOW;
+extern const int UICOLOR_BLUE;
+extern const int UICOLOR_MAGENTA;
+extern const int UICOLOR_CYAN;
+extern const int UICOLOR_WHITE;
+
 extern int UIColorPair[8][8];
+extern dict *UIColorPairTable;
 
 ETDevice *ui_device;
 

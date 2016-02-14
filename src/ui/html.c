@@ -156,7 +156,6 @@ UIHtmlDom* UINewHtmlDom() {
     memset(dom, 0, sizeof(UIHtmlDom));
     dom->title = sdsempty();
     dom->type = UIHTML_DOM_UNKNOWN;
-    dom->attribute = dictCreate(&stringTableDictType, 0);
     dom->children = listCreate();
     dom->children->free = UIFreeHtmlDom;
     return dom;
@@ -165,7 +164,7 @@ UIHtmlDom* UINewHtmlDom() {
 void UIFreeHtmlDom(void *_dom) {
     UIHtmlDom *dom = (UIHtmlDom*)_dom;
     sdsfree(dom->title);
-    dictRelease(dom->attribute);
+    if (0 != dom->attribute) dictRelease(dom->attribute);
     if (0 != dom->content) sdsfree(dom->content);
     listRelease(dom->children);
 }
@@ -297,6 +296,9 @@ PARSE_ATTRIBUTE:
                 attributeDataOffset = 0;
                 expectState = EXPECTING_KEY;
 
+                if (0 == dom->attribute) {
+                    dom->attribute = dictCreate(&stringTableDictType, 0);
+                }
                 dictAdd(dom->attribute, attributeKey, attributeValue);
                 attributeKey = 0;
                 attributeValue = 0;
@@ -421,7 +423,7 @@ void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
     printf("%s", dom->title);
-    if (dictSize(dom->attribute) > 0) {
+    if (0 != dom->attribute && dictSize(dom->attribute) > 0) {
         dictEntry *de;
         dictIterator *di = dictGetIterator(dom->attribute);
         while ((de = dictNext(di)) != NULL) {

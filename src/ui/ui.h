@@ -85,6 +85,7 @@ void UIInitMap();
 /**
  * html相关
  */
+
 void UIPrepareHtml();
 
 #define UIHTML_TOKEN_START_TAG          0 // <tag>
@@ -107,6 +108,7 @@ typedef struct UIHtmlDom {
     sds         title;
     dict        *attribute;
     sds         content;
+    sds         className;
     UIHtmlDom   *parentDom;
     list        *children;
 } UIHtmlDom;
