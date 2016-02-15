@@ -22,33 +22,7 @@ UIPage *ui_activePage;
 
 ETDevice *ui_device;
 
-const int UIHTML_DOM_TEXT    = -2;
-const int UIHTML_DOM_UNKNOWN = -1;
-const int UIHTML_DOM_HTML    = 0;
-const int UIHTML_DOM_HEAD    = 1;
-const int UIHTML_DOM_TITLE   = 2;
-const int UIHTML_DOM_BODY    = 3;
-const int UIHTML_DOM_SCRIPT  = 4;
-const int UIHTML_DOM_DIV     = 5;
-const int UIHTML_DOM_TABLE   = 6;
-const int UIHTML_DOM_TR      = 7;
-const int UIHTML_DOM_TD      = 8;
-const int UIHTML_DOM_STYLE   = 9;
-
-dict *UIHtmlDomTypeTable;
-
-const int UICOLOR_BLACK     = COLOR_BLACK; 
-const int UICOLOR_RED       = COLOR_RED;
-const int UICOLOR_GREEN     = COLOR_GREEN;
-const int UICOLOR_YELLOW    = COLOR_YELLOW;
-const int UICOLOR_BLUE      = COLOR_BLUE;
-const int UICOLOR_MAGENTA   = COLOR_MAGENTA;
-const int UICOLOR_CYAN      = COLOR_CYAN;
-const int UICOLOR_WHITE     = COLOR_WHITE;
 int UIColorPair[8][8];
-dict *UIColorPairTable;
-
-dict *UIHtmlSpecialStringTable;
 
 static list *keyDownProcessors;
 

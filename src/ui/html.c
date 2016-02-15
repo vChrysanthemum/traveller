@@ -6,18 +6,31 @@
 #include "core/extern.h"
 #include "ui/extern.h"
 
+static dict *UIHtmlSpecialStringTable;
+static UIHtmlDomType UIHtmlDomTypeTable[] = {
+    {"unknown"},
+    {"text"},
+    {"html"},
+    {"head"},
+    {"title"},
+    {"body"},
+    {"script"},
+    {"div"},
+    {"table"},
+    {"tr"},
+    {"td"},
+    {"style"},
+    {0},
+};
+const int UIHtmlDomTypeTableSize = (sizeof(UIHtmlDomTypeTable)/sizeof(UIHtmlDomType));
+
+static dict *UIHtmlDomTypeDict;
+
 void UIPrepareHtml() {
-    UIHtmlDomTypeTable = dictCreate(&stackStringTableDictType, 0);
-    dictAdd(UIHtmlDomTypeTable, "html",     (void*)&UIHTML_DOM_HTML);
-    dictAdd(UIHtmlDomTypeTable, "head",     (void*)&UIHTML_DOM_HEAD);
-    dictAdd(UIHtmlDomTypeTable, "title",    (void*)&UIHTML_DOM_TITLE);
-    dictAdd(UIHtmlDomTypeTable, "body",     (void*)&UIHTML_DOM_BODY);
-    dictAdd(UIHtmlDomTypeTable, "script",   (void*)&UIHTML_DOM_SCRIPT);
-    dictAdd(UIHtmlDomTypeTable, "div",      (void*)&UIHTML_DOM_DIV);
-    dictAdd(UIHtmlDomTypeTable, "table",    (void*)&UIHTML_DOM_TABLE);
-    dictAdd(UIHtmlDomTypeTable, "tr",       (void*)&UIHTML_DOM_TR);
-    dictAdd(UIHtmlDomTypeTable, "td",       (void*)&UIHTML_DOM_TD);
-    dictAdd(UIHtmlDomTypeTable, "style",    (void*)&UIHTML_DOM_STYLE);
+    UIHtmlDomTypeDict = dictCreate(&stackStringTableDictType, 0);
+    for (UIHtmlDomType *domType = &UIHtmlDomTypeTable[0]; 0 != domType->name; domType++) {
+        dictAdd(UIHtmlDomTypeDict, domType->name, domType);
+    }
 
     UIHtmlSpecialStringTable = dictCreate(&stackStringTableDictType, 0);
     dictAdd(UIHtmlSpecialStringTable, "&quot;", "\"");
@@ -163,7 +176,7 @@ UIHtmlDom* UINewHtmlDom() {
     UIHtmlDom *dom = (UIHtmlDom*)zmalloc(sizeof(UIHtmlDom));
     memset(dom, 0, sizeof(UIHtmlDom));
     dom->title = sdsempty();
-    dom->type = UIHTML_DOM_UNKNOWN;
+    dom->type = "unknown";
     dom->children = listCreate();
     dom->children->free = UIFreeHtmlDom;
     return dom;
@@ -196,12 +209,11 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
         }
     }
     dom->title = sdscatlen(dom->title, &(token->content[contentOffset]), contentEndOffset-contentOffset);
-    int *intPtr;
-    intPtr = dictFetchValue(UIHtmlDomTypeTable, dom->title);
-    if (0 == intPtr) {
-        dom->type = UIHTML_DOM_UNKNOWN;
+    UIHtmlDomType *domType = dictFetchValue(UIHtmlDomTypeDict, dom->title);
+    if (0 == domType) {
+        dom->type = "unknown";
     } else {
-        dom->type = *intPtr;
+        dom->type = domType->name;
     }
 
     contentOffset = contentEndOffset + 1;
@@ -403,7 +415,7 @@ static inline UIHtmlDom* parseHtmlTokenSelfClosingTag(UIHtmlDom *dom, UIHtmlToke
 
 // text
 static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) {
-    if (UIHTML_DOM_SCRIPT == dom->type) {
+    if (0 == stringcmp("script", dom->type)) {
         if (0 == dom->content) {
             dom->content = sdsnewlen(token->content, sdslen(token->content));
         } else {
@@ -417,7 +429,7 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIHtmlToken *token) 
         newdom->content = sdsempty();
         dom->children = listAddNodeTail(dom->children, newdom);
 
-        newdom->type = UIHTML_DOM_TEXT;
+        newdom->type = "text";
         newdom->content = sdsMakeRoomFor(newdom->content, 
                 sdslen(newdom->content)+sdslen(token->content));
 
@@ -512,10 +524,10 @@ void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
         dictReleaseIterator(di);
     }
 
-    if (UIHTML_DOM_TEXT == dom->type) {
+    if (0 == stringcmp("text", dom->type)) {
         printf("%s\n", dom->content);
 
-    } else if (UIHTML_DOM_SCRIPT == dom->type) {
+    } else if (0 == stringcmp("script", dom->type)) {
         printf("\n");
         for (i = 0; i < indent; i++) { printf("  "); }
         printf("  %s\n", dom->content);

@@ -17,7 +17,7 @@
 
 #define CONSOLE_MODE_CMD 1
 
-#define UI_MAX_PANELS 32;
+#define UI_MAX_PANELS 32
 
 typedef struct {
     int y;
@@ -94,7 +94,11 @@ void UIPrepareHtml();
 
 #define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
-typedef struct UIHtmlToken {
+typedef struct {
+    char *name;
+} UIHtmlDomType;
+
+typedef struct {
     int  type;
     sds  content;
 } UIHtmlToken;
@@ -103,7 +107,7 @@ UIHtmlToken* UIHtmlNextToken(char **ptr);
 
 typedef struct UIHtmlDom UIHtmlDom;
 typedef struct UIHtmlDom {
-    int         type;
+    char        *type;
     sds         title;
     dict        *attribute;
     sds         id;
@@ -118,7 +122,7 @@ UIHtmlDom* UIParseHtml(char *html);
 
 void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent);
 
-typedef struct UIRenderObject {
+typedef struct {
     sds   content;
     int   width;
     int   height;

@@ -23,17 +23,8 @@ void UIPrepareColor() {
     int i, j;
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
-            UIColorPair[types[i]][types[j]] = (types[i]+1)*100 + (types[j]+1)*10;
+            UIColorPair[types[i]][types[j]] = (types[i]+1)*100 + (types[j]+1);
             init_pair(UIColorPair[types[i]][types[j]], types[i], types[j]);
         }
     }
-
-    UIColorPairTable = dictCreate(&stackStringTableDictType, 0);
-    dictAdd(UIColorPairTable, "black",   (void*)&UICOLOR_BLACK);
-    dictAdd(UIColorPairTable, "red",     (void*)&UICOLOR_RED);
-    dictAdd(UIColorPairTable, "green",   (void*)&UICOLOR_GREEN);
-    dictAdd(UIColorPairTable, "yellow",  (void*)&UICOLOR_YELLOW);
-    dictAdd(UIColorPairTable, "magenta", (void*)&UICOLOR_MAGENTA);
-    dictAdd(UIColorPairTable, "cyan",    (void*)&UICOLOR_CYAN);
-    dictAdd(UIColorPairTable, "white",   (void*)&UICOLOR_WHITE);
 }
