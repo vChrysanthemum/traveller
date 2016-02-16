@@ -8,7 +8,7 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./script/script.o ./script/util.o ./script/ui.o ./script/db.o ./script/net.o \
 				   ./service/service.o ./service/test.o ./service/script.o \
 				   ./ui/ui.o ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
-				   ./ui/document/html.o ./ui/document/css.o
+				   ./ui/document/document.o ./ui/document/html.o ./ui/document/css.o
 
 travellerobjects := ./traveller.o $(baseobjects)
 

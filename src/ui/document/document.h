@@ -1,8 +1,22 @@
 #ifndef __UI_UI_DOCUMENT_H
 #define __UI_UI_DOCUMENT_H
 
+typedef struct {
+    int  type;
+    sds  content;
+} UIDocumentScanToken;
+UIDocumentScanToken* UIDocumentNewScanToken();
+void UIDocumentFreeScanToken(UIDocumentScanToken *token);
+
+typedef struct UIDocumentScanner UIDocumentScanner;
+typedef struct UIDocumentScanner {
+    char *content;
+    char *current;
+    UIDocumentScanToken* (*scan) (UIDocumentScanner *scanner);
+} UIDocumentScanner;
+
 /**
- * html相关
+ * html 相关
  */
 void UIPrepareHtml();
 
@@ -13,6 +27,7 @@ void UIPrepareHtml();
 
 #define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
+UIDocumentScanToken* UIHtmlScanToken(UIDocumentScanner *scanner);
 
 typedef struct {
     char *name;
@@ -32,13 +47,6 @@ typedef struct {
     } type;
 } UIHtmlDomInfo;
 
-typedef struct {
-    int  type;
-    sds  content;
-} UIHtmlToken;
-void UIHtmlFreeToken(UIHtmlToken *token);
-UIHtmlToken* UIHtmlNextToken(char **ptr);
-
 typedef struct UIHtmlDom UIHtmlDom;
 typedef struct UIHtmlDom {
     sds         title;
@@ -56,16 +64,8 @@ UIHtmlDom* UIParseHtml(char *html);
 
 void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent);
 
-typedef struct {
-    sds   content;
-    int   width;
-    int   height;
-    list  *children;
-} UIRenderObject;
-
-
 /**
- * css相关
+ * css 相关
  */
 void UIPrepareCss();
 
@@ -90,5 +90,15 @@ typedef struct UICssObject {
     UICssProperty *property;
 } UICssObject;
 
+
+/**
+ * render 相关
+ */
+typedef struct {
+    sds   content;
+    int   width;
+    int   height;
+    list  *children;
+} UIRenderObject;
 
 #endif
