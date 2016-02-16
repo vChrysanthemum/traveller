@@ -15,7 +15,7 @@ void UIPrepareHtml();
 
 typedef struct {
     char *name;
-} UIHtmlDomType;
+} UIHtmlDomInfo;
 
 typedef struct {
     int  type;

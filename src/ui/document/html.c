@@ -6,7 +6,7 @@
 #include "ui/extern.h"
 
 static dict *UIHtmlSpecialStringTable;
-static UIHtmlDomType UIHtmlDomTypeTable[] = {
+static UIHtmlDomInfo UIHtmlDomInfoTable[] = {
     {"unknown"},
     {"text"},
     {"html"},
@@ -21,14 +21,14 @@ static UIHtmlDomType UIHtmlDomTypeTable[] = {
     {"style"},
     {0},
 };
-const int UIHtmlDomTypeTableSize = (sizeof(UIHtmlDomTypeTable)/sizeof(UIHtmlDomType));
+const int UIHtmlDomInfoTableSize = (sizeof(UIHtmlDomInfoTable)/sizeof(UIHtmlDomInfo));
 
-static dict *UIHtmlDomTypeDict;
+static dict *UIHtmlDomInfoDict;
 
 void UIPrepareHtml() {
-    UIHtmlDomTypeDict = dictCreate(&stackStringTableDictType, 0);
-    for (UIHtmlDomType *domType = &UIHtmlDomTypeTable[0]; 0 != domType->name; domType++) {
-        dictAdd(UIHtmlDomTypeDict, domType->name, domType);
+    UIHtmlDomInfoDict = dictCreate(&stackStringTableDictType, 0);
+    for (UIHtmlDomInfo *domInfo = &UIHtmlDomInfoTable[0]; 0 != domInfo->name; domInfo++) {
+        dictAdd(UIHtmlDomInfoDict, domInfo->name, domInfo);
     }
 
     UIHtmlSpecialStringTable = dictCreate(&stackStringTableDictType, 0);
@@ -208,11 +208,11 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIHtmlToken *token) {
         }
     }
     dom->title = sdscatlen(dom->title, &(token->content[contentOffset]), contentEndOffset-contentOffset);
-    UIHtmlDomType *domType = dictFetchValue(UIHtmlDomTypeDict, dom->title);
-    if (0 == domType) {
+    UIHtmlDomInfo *domInfo = dictFetchValue(UIHtmlDomInfoDict, dom->title);
+    if (0 == domInfo) {
         dom->type = "unknown";
     } else {
-        dom->type = domType->name;
+        dom->type = domInfo->name;
     }
 
     contentOffset = contentEndOffset + 1;
