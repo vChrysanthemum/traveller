@@ -13,8 +13,23 @@ void UIPrepareHtml();
 
 #define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
+
 typedef struct {
     char *name;
+    enum UIHtmlDomType {
+        UIHTML_DOM_TYPE_UNKNOWN,
+        UIHTML_DOM_TYPE_TEXT,
+        UIHTML_DOM_TYPE_HTML,
+        UIHTML_DOM_TYPE_HEAD,
+        UIHTML_DOM_TYPE_TITLE,
+        UIHTML_DOM_TYPE_BODY,
+        UIHTML_DOM_TYPE_SCRIPT,
+        UIHTML_DOM_TYPE_DIV,
+        UIHTML_DOM_TYPE_TABLE,
+        UIHTML_DOM_TYPE_TR,
+        UIHTML_DOM_TYPE_TD,
+        UIHTML_DOM_TYPE_STYLE,
+    } type;
 } UIHtmlDomInfo;
 
 typedef struct {
@@ -26,7 +41,6 @@ UIHtmlToken* UIHtmlNextToken(char **ptr);
 
 typedef struct UIHtmlDom UIHtmlDom;
 typedef struct UIHtmlDom {
-    char        *type;
     sds         title;
     dict        *attribute;
     sds         id;
@@ -34,6 +48,7 @@ typedef struct UIHtmlDom {
     sds         content;
     UIHtmlDom   *parentDom;
     list        *children;
+    enum UIHtmlDomType type;
 } UIHtmlDom;
 UIHtmlDom* UINewHtmlDom();
 void UIFreeHtmlDom(void *_dom);
@@ -52,6 +67,28 @@ typedef struct {
 /**
  * css相关
  */
+void UIPrepareCss();
+
+typedef struct {
+    char *name;
+    enum UICssPropertyType {
+        UICSS_PROPERTY_TYPE_BACKGROUND_COLOR,
+        UICSS_PROPERTY_TYPE_COLOR,
+        UICSS_PROPERTY_TYPE_PADDING,
+        UICSS_PROPERTY_TYPE_MARGIN,
+        UICSS_PROPERTY_TYPE_DISPLAY,
+        UICSS_PROPERTY_TYPE_TEXT_ALIGN,
+    } type;
+} UICssPropertyInfo;
+
+typedef struct {
+    enum UICssPropertyType type;
+} UICssProperty;
+
+typedef struct UICssObject UICssObject;
+typedef struct UICssObject {
+    UICssProperty *property;
+} UICssObject;
 
 
 #endif

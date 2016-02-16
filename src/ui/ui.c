@@ -80,6 +80,7 @@ static void UIPrepareLoadPageActor() {
 
 int UIPrepare() {
     UIPrepareHtml();
+    UIPrepareCss();
 
     ui_panels = listCreate();
     ui_pages = listCreate();
