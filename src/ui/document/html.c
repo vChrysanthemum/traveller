@@ -1,4 +1,3 @@
-#include "core/token.h"
 #include "core/stack.h"
 #include "core/sds.h"
 #include "ui/ui.h"
@@ -85,64 +84,64 @@ UIHtmlToken* UIHtmlNextToken(char **ptr) {
             case '<':
                 //预防 "< lkasfd < >" 的情况
                 if (0 == tokenStackLen) {
-                    tokenStack[0] = TOKEN_LSS;
+                    tokenStack[0] = '<';
                     tokenStackLen++;
                 } else {
-                    if (TOKEN_LSS == tokenStack[0]) {
-                        if (TOKEN_TEXT != tokenStack[tokenStackLen-1]) {
-                            tokenStack[tokenStackLen] = TOKEN_TEXT;
+                    if ('<' == tokenStack[0]) {
+                        if (UIHTML_TOKEN_TEXT != tokenStack[tokenStackLen-1]) {
+                            tokenStack[tokenStackLen] = UIHTML_TOKEN_TEXT;
                             tokenStackLen++;
                         }
                     } else {
-                        tokenStack[tokenStackLen] = TOKEN_LSS;
+                        tokenStack[tokenStackLen] = '<';
                         tokenStackLen++;
                     }
                 }
                 break;
             case '>':
-                tokenStack[tokenStackLen] = TOKEN_GTR;
+                tokenStack[tokenStackLen] = '>';
                 tokenStackLen++;
                 break;
             case '/':
-                tokenStack[tokenStackLen] = TOKEN_QUO;
+                tokenStack[tokenStackLen] = '/';
                 tokenStackLen++;
                 break;
             default:
                 if (0 == tokenStackLen) {
-                    tokenStack[0] = TOKEN_TEXT;
+                    tokenStack[0] = UIHTML_TOKEN_TEXT;
                     tokenStackLen++;
-                } else if (TOKEN_TEXT != tokenStack[tokenStackLen-1]) {
-                    tokenStack[tokenStackLen] = TOKEN_TEXT;
+                } else if (UIHTML_TOKEN_TEXT != tokenStack[tokenStackLen-1]) {
+                    tokenStack[tokenStackLen] = UIHTML_TOKEN_TEXT;
                     tokenStackLen++;
                 }
         }
 
         if (3 == tokenStackLen && 
-                TOKEN_LSS == tokenStack[0]  &&   // <
-                TOKEN_TEXT == tokenStack[1] &&   // tag
-                TOKEN_GTR == tokenStack[2]) {    // >
+                '<' == tokenStack[0]  &&   // <
+                UIHTML_TOKEN_TEXT == tokenStack[1] &&   // tag
+                '>' == tokenStack[2]) {    // >
             token->type = UIHTML_TOKEN_START_TAG;
             goto GET_TOKEN_SUCCESS;
 
         } else if (4 == tokenStackLen) {
-            if (TOKEN_LSS == tokenStack[0]      && // <
-                    TOKEN_QUO == tokenStack[1]  && // /
-                    TOKEN_TEXT == tokenStack[2] && // tag
-                    TOKEN_GTR == tokenStack[3]) {    // >
+            if ('<' == tokenStack[0]      && // <
+                    '/' == tokenStack[1]  && // /
+                    UIHTML_TOKEN_TEXT == tokenStack[2] && // tag
+                    '>' == tokenStack[3]) {    // >
                 token->type = UIHTML_TOKEN_END_TAG;
                 goto GET_TOKEN_SUCCESS;
 
-            } else if (TOKEN_LSS == tokenStack[0] && // <
-                    TOKEN_TEXT == tokenStack[1]   && // tag
-                    TOKEN_QUO == tokenStack[2]    && // /
-                    TOKEN_GTR == tokenStack[3]) {    // >
+            } else if ('<' == tokenStack[0] && // <
+                    UIHTML_TOKEN_TEXT == tokenStack[1]   && // tag
+                    '/' == tokenStack[2]    && // /
+                    '>' == tokenStack[3]) {    // >
                 token->type = UIHTML_TOKEN_SELF_CLOSING_TAG;
                 goto GET_TOKEN_SUCCESS;
             }
 
         } else if (2 == tokenStackLen && 
-                TOKEN_TEXT == tokenStack[0] &&    // text
-                TOKEN_LSS == tokenStack[1]) {     // <
+                UIHTML_TOKEN_TEXT == tokenStack[0] &&    // text
+                '<' == tokenStack[1]) {     // <
             token->type = UIHTML_TOKEN_TEXT;
             tokenStackLen--;
             s--;

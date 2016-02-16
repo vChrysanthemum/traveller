@@ -6,10 +6,10 @@
  */
 void UIPrepareHtml();
 
-#define UIHTML_TOKEN_START_TAG          0 // <tag>
-#define UIHTML_TOKEN_TEXT               1 // 标记中的字符串
-#define UIHTML_TOKEN_END_TAG            2 // </tag>
-#define UIHTML_TOKEN_SELF_CLOSING_TAG   3 // <tag />
+#define UIHTML_TOKEN_TEXT               -1 // 标记中的字符串
+#define UIHTML_TOKEN_START_TAG          0  // <tag>
+#define UIHTML_TOKEN_END_TAG            1  // </tag>
+#define UIHTML_TOKEN_SELF_CLOSING_TAG   2  // <tag />
 
 #define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
