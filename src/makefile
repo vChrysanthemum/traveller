@@ -7,8 +7,8 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./net/anet.o ./net/ae.o ./net/networking.o \
 				   ./script/script.o ./script/util.o ./script/ui.o ./script/db.o ./script/net.o \
 				   ./service/service.o ./service/test.o ./service/script.o \
-				   ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
-				   ./ui/ui.o ./ui/html.o
+				   ./ui/ui.o ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
+				   ./ui/document/html.o
 
 travellerobjects := ./traveller.o $(baseobjects)
 
@@ -45,6 +45,7 @@ clean:
 	rm -f ./core/*.o
 	rm -f ./net/*.o
 	rm -f ./ui/*.o
+	rm -f ./ui/document/*.o
 	rm -f ./service/*.o
 	rm -f ./event/*.o
 	rm -f ./script/*.o
