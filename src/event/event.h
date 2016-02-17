@@ -9,14 +9,13 @@
 #include "core/adlist.h"
 #include "core/dict.h"
 
-struct etActor_t;
-typedef struct etActor_t etActor_t;
-typedef struct etActor_t {
+typedef struct etActor_s etActor_t;
+typedef struct etActor_s {
     list *channels;
     void* (*proc)(etActor_t *actor, int args, void **argv);
 } etActor_t;
 
-typedef struct etActorEvent_t {
+typedef struct etActorEvent_s {
     etActor_t *sender;
     etActor_t *receiver;
     sds     channel;
@@ -28,13 +27,13 @@ typedef struct etActorEvent_t {
 } etActorEvent_t;
 
 // 推送消息给订阅者，订阅者为 etActor_t
-typedef struct etChannelActor_t {
+typedef struct etChannelActor_s {
     char *key;
     list *subscribers; //etActor_t
 } etChannelActor_t;
 
 // 管理 Actor与ActorEvent
-typedef struct etFactoryActor_t {
+typedef struct etFactoryActor_s {
     list *actorEventPool;
     list *actorPool;
     list *runningEventList; // 正在处理中的 ActorEvent
@@ -42,7 +41,7 @@ typedef struct etFactoryActor_t {
     dict *channels;           // 发布订阅频道 ETKeyChannelDictType
 } etFactoryActor_t;
 
-typedef struct etDeviceJob_t {
+typedef struct etDeviceJob_s {
     unsigned long         index;
     pthread_t             ntid;
     const pthread_attr_t  *pthreadAttr;
@@ -51,10 +50,9 @@ typedef struct etDeviceJob_t {
     void                  *exitStatus;
 } etDeviceJob_t;
 
-struct etDevice_t;
-typedef struct etDevice_t etDevice_t;
 typedef void* (*etDevice_tLooper) (void* arg);
-typedef struct etDevice_t {
+typedef struct etDevice_s etDevice_t;
+typedef struct etDevice_s {
     list            *jobs;
     pthread_mutex_t jobMutex;
     pthread_mutex_t actorMutex;
@@ -69,7 +67,7 @@ typedef struct etDevice_t {
     void            *looperArg;
 } etDevice_t;
 
-typedef struct etDeviceStartJobParam_t {
+typedef struct etDeviceStartJobParam_s {
     etDevice_t    *device;
     etDeviceJob_t *job;
 } etDeviceStartJobParam_t;

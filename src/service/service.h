@@ -4,7 +4,7 @@
 #include "net/networking.h"
 #include "script/script.h"
 
-typedef struct svServiceRouter_t {
+typedef struct svServiceRouter_s {
     char *key;
     void (*proc)(ntSnode_t *sn);
     int argc;

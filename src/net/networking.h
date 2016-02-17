@@ -44,16 +44,15 @@
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
 
-typedef struct ntScriptServiceRequestCtx_t {
+typedef struct ntScriptServiceRequestCtx_s {
     int requestId;
     lua_State *ScriptServiceLua;
     sds ScriptServiceCallbackUrl;
     sds ScriptServiceCallbackArg;
 } ntScriptServiceRequestCtx_t;
 
-struct ntSnode_t;
-typedef struct ntSnode_t ntSnode_t;
-typedef struct ntSnode_t {
+typedef struct ntSnode_s ntSnode_t;
+typedef struct ntSnode_s {
     int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
     int fd;
     char fdstr[16];           // 字符串类型的fd 
@@ -89,7 +88,7 @@ typedef struct ntSnode_t {
 #define SNODE_RECV_TYPE_STRING 2
 #define SNODE_RECV_TYPE_ARRAY  3  // 数组 且 命令 
 
-typedef struct ntServer_t {
+typedef struct ntServer_s {
     time_t unixtime;        // Unix time sampled every cron cycle. 
 
     int maxSnodes;
@@ -149,72 +148,72 @@ ntSnode_t* NT_GetSnodeByFDS(const char *fdstr);
 /* Macros */
 #define AE_NOTUSED(V) ((void) V)
 
-struct aeLooper;
+struct aeLooper_s;
 
 /* Types and data structures */
-typedef void aeFileProc(struct aeLooper *eventLoop, int fd, void *clientData, int mask);
-typedef int aeTimeProc(struct aeLooper *eventLoop, long long id, void *clientData);
-typedef void aeEventFinalizerProc(struct aeLooper *eventLoop, void *clientData);
-typedef void aeBeforeSleepProc(struct aeLooper *eventLoop);
+typedef void aeFileProc(struct aeLooper_s *eventLoop, int fd, void *clientData, int mask);
+typedef int aeTimeProc(struct aeLooper_s *eventLoop, long long id, void *clientData);
+typedef void aeEventFinalizerProc(struct aeLooper_s *eventLoop, void *clientData);
+typedef void aeBeforeSleepProc(struct aeLooper_s *eventLoop);
 
 /* File event structure */
-typedef struct aeFileEvent {
+typedef struct aeFileEvent_s {
     int mask; /* one of AE_(READABLE|WRITABLE) */
     aeFileProc *rfileProc;
     aeFileProc *wfileProc;
     void *clientData;
-} aeFileEvent;
+} aeFileEvent_t;
 
 /* Time event structure */
-typedef struct aeTimeEvent {
+typedef struct aeTimeEvent_s {
     long long id; /* time event identifier. */
     long whenSec; /* seconds */
     long whenMs; /* milliseconds */
     aeTimeProc *timeProc;
     aeEventFinalizerProc *finalizerProc;
     void *clientData;
-    struct aeTimeEvent *next;
-} aeTimeEvent;
+    struct aeTimeEvent_s *next;
+} aeTimeEvent_t;
 
 /* A fired event */
-typedef struct aeFiredEvent {
+typedef struct aeFiredEvent_s {
     int fd;
     int mask;
-} aeFiredEvent;
+} aeFiredEvent_t;
 
 /* State of an event based program */
-typedef struct aeLooper {
+typedef struct aeLooper_s {
     int maxfd;   /* highest file descriptor currently registered */
     int setsize; /* max number of file descriptors tracked */
     long long timeEventNextId;
     time_t lastTime;     /* Used to detect system clock skew */
-    aeFileEvent *events; /* Registered events */
-    aeFiredEvent *fired; /* Fired events */
-    aeTimeEvent *timeEventHead;
+    aeFileEvent_t *events; /* Registered events */
+    aeFiredEvent_t *fired; /* Fired events */
+    aeTimeEvent_t *timeEventHead;
     int stop;
     void *apidata; /* This is used for polling API specific data */
     aeBeforeSleepProc *beforesleep;
-} aeLooper;
+} aeLooper_t;
 
 /* Prototypes */
-aeLooper *aeNewLooper(int setsize);
-void aeStop(aeLooper *eventLoop);
-int aeCreateFileEvent(aeLooper *eventLoop, int fd, int mask,
+aeLooper_t *aeNewLooper(int setsize);
+void aeStop(aeLooper_t *eventLoop);
+int aeCreateFileEvent(aeLooper_t *eventLoop, int fd, int mask,
         aeFileProc *proc, void *clientData);
-void aeDeleteFileEvent(aeLooper *eventLoop, int fd, int mask);
-int aeGetFileEvents(aeLooper *eventLoop, int fd);
-long long aeCreateTimeEvent(aeLooper *eventLoop, long long milliseconds,
+void aeDeleteFileEvent(aeLooper_t *eventLoop, int fd, int mask);
+int aeGetFileEvents(aeLooper_t *eventLoop, int fd);
+long long aeCreateTimeEvent(aeLooper_t *eventLoop, long long milliseconds,
         aeTimeProc *proc, void *clientData,
         aeEventFinalizerProc *finalizerProc);
-int aeDeleteTimeEvent(aeLooper *eventLoop, long long id);
-int aeProcessEvents(aeLooper *eventLoop, int flags);
+int aeDeleteTimeEvent(aeLooper_t *eventLoop, long long id);
+int aeProcessEvents(aeLooper_t *eventLoop, int flags);
 int aeWait(int fd, int mask, long long milliseconds);
 char *aeGetApiName(void);
-void aeSetBeforeSleepProc(aeLooper *eventLoop, aeBeforeSleepProc *beforesleep);
-int aeGetSetSize(aeLooper *eventLoop);
-int aeResizeSetSize(aeLooper *eventLoop, int setsize);
-void aeDeleteLooper(aeLooper *eventLoop);
-void aeMain(aeLooper *eventLoop);
+void aeSetBeforeSleepProc(aeLooper_t *eventLoop, aeBeforeSleepProc *beforesleep);
+int aeGetSetSize(aeLooper_t *eventLoop);
+int aeResizeSetSize(aeLooper_t *eventLoop, int setsize);
+void aeDeleteLooper(aeLooper_t *eventLoop);
+void aeMain(aeLooper_t *eventLoop);
 void* aeMainDeviceWrap(void *_eventLoop);
 
 #endif

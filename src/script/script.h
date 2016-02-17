@@ -17,7 +17,7 @@
     }\
 } while(0);
 
-typedef struct stScript_t {
+typedef struct stScript_s {
     int        isSubscribeNet;
     sds        basedir;
     IniSection *iniSection;

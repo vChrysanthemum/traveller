@@ -12,7 +12,8 @@ UTF-8
 * "g_" 前缀表示全局变量
 * "ui_" 表示ui模块内变量，以此类推其他模块
 * "UI_" 表示ui模块内方法，以此类推其他模块
-* typedef struct 以 _t 结尾
+* typedef struct 以 _t 结尾 ，core下的基本数据类型可不遵守该约束
+* struct 以 _s 结尾，core下的基本数据类型可不遵守该约束
 * enum 以 _e 结尾
 
 

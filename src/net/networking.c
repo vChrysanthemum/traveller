@@ -14,7 +14,7 @@
 #include "script/script.h"
 #include "core/extern.h"
 
-aeLooper   *nt_el;
+aeLooper_t   *nt_el;
 ntServer_t nt_server;
 
 static void setProtocolError(ntSnode_t *sn, int pos);
@@ -25,13 +25,13 @@ static void parseInputBufferStatus(ntSnode_t *sn);
 static void parseInputBufferString(ntSnode_t *sn);
 static void parseInputBufferArray(ntSnode_t *sn);
 static void parseInputBuffer(ntSnode_t *sn);
-static void readQueryFromSnode(aeLooper *el, int fd, void *privdata, int mask);
+static void readQueryFromSnode(aeLooper_t *el, int fd, void *privdata, int mask);
 static ntSnode_t* createSnode(int fd);
 static void acceptCommonHandler(int fd, int flags);
-static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask);
+static void acceptTcpHandler(aeLooper_t *el, int fd, void *privdata, int mask);
 static int listenToPort(int port, int *fds, int *count);
 static void prepareSnodeToWrite(ntSnode_t *sn);
-static void sendReplyToSnode(aeLooper *el, int fd, void *privdata, int mask);
+static void sendReplyToSnode(aeLooper_t *el, int fd, void *privdata, int mask);
 static ntSnode_t* snodeArgvMakeRoomFor(ntSnode_t *sn, int count);
 static ntSnode_t* snodeArgvClear(ntSnode_t *sn);
 static ntSnode_t* snodeArgvEmpty(ntSnode_t *sn);
@@ -92,7 +92,7 @@ static void prepareSnodeToWrite(ntSnode_t *sn) {
     sn->isWriteMod = 1;
 }
 
-static void sendReplyToSnode(aeLooper *el, int fd, void *privdata, int mask) {
+static void sendReplyToSnode(aeLooper_t *el, int fd, void *privdata, int mask) {
     int nwritten = 0;
     int bufpos = 0;
     ntSnode_t *sn = privdata;
@@ -569,7 +569,7 @@ static void parseInputBuffer(ntSnode_t *sn) {
     }
 }
 
-static void readQueryFromSnode(aeLooper *el, int fd, void *privdata, int mask) {
+static void readQueryFromSnode(aeLooper_t *el, int fd, void *privdata, int mask) {
     ntSnode_t *sn = (ntSnode_t*) privdata;
     int nread;
     NOTUSED(el);
@@ -765,7 +765,7 @@ static void acceptCommonHandler(int fd, int flags) {
     sn->flags |= flags;
 }
 
-static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask) {
+static void acceptTcpHandler(aeLooper_t *el, int fd, void *privdata, int mask) {
     int cport, cfd, max = TRV_NET_MAX_ACCEPTS_PER_CALL;
     char cip[INET6_ADDRSTRLEN];
     NOTUSED(el);

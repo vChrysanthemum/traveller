@@ -20,14 +20,14 @@
 
 #define UI_MAX_PANELS 32
 
-typedef struct {
+typedef struct uiCursor_s {
     int y;
     int x;
     char             utf8char[4];
     int              utf8charPoi;
 } uiCursor_t;
 
-typedef struct {
+typedef struct uiEnv_s {
     int  ch;
     int  cursorY;
     int  cursorX;
@@ -36,7 +36,7 @@ typedef struct {
     int  snumberLen;
 } uiEnv_t;
 
-typedef struct {
+typedef struct uiWindow_s {
     int    height; //行数 
     int    width;  //列数 
     int    startx;
@@ -47,7 +47,7 @@ typedef struct {
 uiWindow_t* UI_createWindow(int height, int width, int starty, int startx);
 void UI_FreeWindow(uiWindow_t* win);
 
-typedef struct {
+typedef struct uiPage_s {
     sds      title;
     sds      content;
     uiWindow_t *uiwin;
@@ -56,12 +56,12 @@ uiPage_t *UI_NewPage();
 void UI_FreePage(uiPage_t *page);
 void* UI_LoadPageActor(etActor_t *actor, int args, void **argv);
 
-typedef struct {
+typedef struct uiConsoleCommand_s {
     sds line;
     sds header;
 } uiConsoleCommand_t;
 
-typedef struct {
+typedef struct uiConsole_s{
     uiWindow_t         *tabuiwin;
     uiWindow_t         *uiwin;
     int              mode;

@@ -3,15 +3,15 @@
 
 #include "core/adlist.h"
 
-typedef struct {
+typedef struct uiDocumentScanToken_s {
     int  type;
     sds  content;
 } uiDocumentScanToken_t;
 uiDocumentScanToken_t* UI_NewDocumentScanToken();
 void UI_FreeDocumentScanToken(uiDocumentScanToken_t *token);
 
-typedef struct uiDocumentScanner_t uiDocumentScanner_t;
-typedef struct uiDocumentScanner_t {
+typedef struct uiDocumentScanner_s uiDocumentScanner_t;
+typedef struct uiDocumentScanner_s {
     char *content;
     char *current;
     uiDocumentScanToken_t* (*scan) (uiDocumentScanner_t *scanner);
@@ -31,7 +31,7 @@ void UI_PrepareHtml();
 
 uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner);
 
-typedef struct {
+typedef struct uiHtmlDomInfo_s {
     char *name;
     enum uiHtmlDomType_e {
         UIHTML_DOM_TYPE_UNKNOWN,
@@ -49,8 +49,8 @@ typedef struct {
     } type;
 } uiHtmlDomInfo_t;
 
-typedef struct uiHtmlDom_t uiHtmlDom_t;
-typedef struct uiHtmlDom_t {
+typedef struct uiHtmlDom_s uiHtmlDom_t;
+typedef struct uiHtmlDom_s {
     sds         title;
     dict        *attribute;
     sds         id;
@@ -71,7 +71,7 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent);
  */
 void UI_PrepareCss();
 
-typedef struct {
+typedef struct uiCssPropertyInfo_s {
     char *name;
     enum uiCssPropertyType_e {
         UICSS_PROPERTY_TYPE_BACKGROUND_COLOR,
@@ -83,24 +83,24 @@ typedef struct {
     } type;
 } uiCssPropertyInfo_t;
 
-typedef struct {
+typedef struct uiCssProperty_s {
     enum uiCssPropertyType_e type;
 } uiCssProperty_t;
 
-typedef struct {
+typedef struct uiCssSelector_s {
 } uiCssSelector_t;
 
-typedef struct {
+typedef struct uiCssRule_s {
     list *selectors;
 } uiCssRule_t;
 
-typedef struct {
+typedef struct uiCssStyleSheet_s {
     list * rulers;
 } uiCssStyleSheet_t;
 uiCssStyleSheet_t* UI_ParseCssStyleSheet(char *css);
 
-typedef struct uiCssObject_t uiCssObject_t;
-typedef struct uiCssObject_t {
+typedef struct uiCssObject_s uiCssObject_t;
+typedef struct uiCssObject_s {
     uiCssProperty_t *property;
 } uiCssObject_t;
 
@@ -108,7 +108,7 @@ typedef struct uiCssObject_t {
 /**
  * render 相关
  */
-typedef struct {
+typedef struct uiRenderObject_s {
     sds   content;
     int   width;
     int   height;
