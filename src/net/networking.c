@@ -14,7 +14,7 @@
 #include "script/script.h"
 #include "core/extern.h"
 
-aeLooper *nt_el;
+aeLooper   *nt_el;
 ntServer_t nt_server;
 
 static void setProtocolError(ntSnode_t *sn, int pos);

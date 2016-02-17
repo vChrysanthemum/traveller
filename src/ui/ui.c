@@ -10,17 +10,17 @@
 
 #include "g_extern.h"
 
-uiWindow_t *ui_rootuiWindow;
-UIMap *ui_curUIMap;
+uiWindow_t  *ui_rootuiWindow;
+UIMap       *ui_curUIMap;
 
-uiEnv_t *ui_env;
-list *ui_panels;
+uiEnv_t     *ui_env;
+list        *ui_panels;
 uiConsole_t *ui_console;
-int ui_width, ui_height; //屏幕宽度、高度
-list *ui_pages;
-uiPage_t *ui_activePage;
+int         ui_width, ui_height; //屏幕宽度、高度
+list        *ui_pages;
+uiPage_t    *ui_activePage;
 
-etDevice_t *ui_device;
+etDevice_t  *ui_device;
 
 int ui_ColorPair[8][8];
 
