@@ -1,6 +1,8 @@
 #ifndef __UI_UI_DOCUMENT_H
 #define __UI_UI_DOCUMENT_H
 
+#include "core/adlist.h"
+
 typedef struct {
     int  type;
     sds  content;
@@ -84,6 +86,18 @@ typedef struct {
 typedef struct {
     enum uiCssPropertyType_e type;
 } uiCssProperty_t;
+
+typedef struct {
+} uiCssSelector_t;
+
+typedef struct {
+    list *selectors;
+} uiCssRule_t;
+
+typedef struct {
+    list * rulers;
+} uiCssStyleSheet_t;
+uiCssStyleSheet_t* UI_ParseCssStyleSheet(char *css);
 
 typedef struct uiCssObject_t uiCssObject_t;
 typedef struct uiCssObject_t {

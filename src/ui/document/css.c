@@ -20,3 +20,7 @@ void UI_PrepareCss() {
         dictAdd(uiCssPropertyInfoDict, domInfo->name, domInfo);
     }
 }
+
+uiCssStyleSheet_t* UI_ParseCssStyleSheet(char *css) {
+    return 0;
+}
