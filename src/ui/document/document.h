@@ -4,21 +4,21 @@
 typedef struct {
     int  type;
     sds  content;
-} UIDocumentScanToken;
-UIDocumentScanToken* UIDocumentNewScanToken();
-void UIDocumentFreeScanToken(UIDocumentScanToken *token);
+} uiDocumentScanToken_t;
+uiDocumentScanToken_t* UI_NewDocumentScanToken();
+void UI_FreeDocumentScanToken(uiDocumentScanToken_t *token);
 
-typedef struct UIDocumentScanner UIDocumentScanner;
-typedef struct UIDocumentScanner {
+typedef struct uiDocumentScanner_t uiDocumentScanner_t;
+typedef struct uiDocumentScanner_t {
     char *content;
     char *current;
-    UIDocumentScanToken* (*scan) (UIDocumentScanner *scanner);
-} UIDocumentScanner;
+    uiDocumentScanToken_t* (*scan) (uiDocumentScanner_t *scanner);
+} uiDocumentScanner_t;
 
 /**
  * html 相关
  */
-void UIPrepareHtml();
+void UI_PrepareHtml();
 
 #define UIHTML_TOKEN_TEXT               -1 // 标记中的字符串
 #define UIHTML_TOKEN_START_TAG          0  // <tag>
@@ -27,11 +27,11 @@ void UIPrepareHtml();
 
 #define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
-UIDocumentScanToken* UIHtmlScanToken(UIDocumentScanner *scanner);
+uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner);
 
 typedef struct {
     char *name;
-    enum UIHtmlDomType {
+    enum uiHtmlDomType_e {
         UIHTML_DOM_TYPE_UNKNOWN,
         UIHTML_DOM_TYPE_TEXT,
         UIHTML_DOM_TYPE_HTML,
@@ -45,33 +45,33 @@ typedef struct {
         UIHTML_DOM_TYPE_TD,
         UIHTML_DOM_TYPE_STYLE,
     } type;
-} UIHtmlDomInfo;
+} uiHtmlDomInfo_t;
 
-typedef struct UIHtmlDom UIHtmlDom;
-typedef struct UIHtmlDom {
+typedef struct uiHtmlDom_t uiHtmlDom_t;
+typedef struct uiHtmlDom_t {
     sds         title;
     dict        *attribute;
     sds         id;
     list        *classes;
     sds         content;
-    UIHtmlDom   *parentDom;
+    uiHtmlDom_t   *parentDom;
     list        *children;
-    enum UIHtmlDomType type;
-} UIHtmlDom;
-UIHtmlDom* UINewHtmlDom();
-void UIFreeHtmlDom(void *_dom);
-UIHtmlDom* UIParseHtml(char *html);
+    enum uiHtmlDomType_e type;
+} uiHtmlDom_t;
+uiHtmlDom_t* UI_NewHtmlDom();
+void UI_FreeHtmlDom(void *_dom);
+uiHtmlDom_t* UI_ParseHtml(char *html);
 
-void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent);
+void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent);
 
 /**
  * css 相关
  */
-void UIPrepareCss();
+void UI_PrepareCss();
 
 typedef struct {
     char *name;
-    enum UICssPropertyType {
+    enum uiCssPropertyType_e {
         UICSS_PROPERTY_TYPE_BACKGROUND_COLOR,
         UICSS_PROPERTY_TYPE_COLOR,
         UICSS_PROPERTY_TYPE_PADDING,
@@ -79,16 +79,16 @@ typedef struct {
         UICSS_PROPERTY_TYPE_DISPLAY,
         UICSS_PROPERTY_TYPE_TEXT_ALIGN,
     } type;
-} UICssPropertyInfo;
+} uiCssPropertyInfo_t;
 
 typedef struct {
-    enum UICssPropertyType type;
-} UICssProperty;
+    enum uiCssPropertyType_e type;
+} uiCssProperty_t;
 
-typedef struct UICssObject UICssObject;
-typedef struct UICssObject {
-    UICssProperty *property;
-} UICssObject;
+typedef struct uiCssObject_t uiCssObject_t;
+typedef struct uiCssObject_t {
+    uiCssProperty_t *property;
+} uiCssObject_t;
 
 
 /**
@@ -99,6 +99,6 @@ typedef struct {
     int   width;
     int   height;
     list  *children;
-} UIRenderObject;
+} uiRenderObject_t;
 
 #endif

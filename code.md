@@ -11,6 +11,9 @@ UTF-8
 * "_" 表示隐藏、局部
 * "g_" 前缀表示全局变量
 * "ui_" 表示ui模块内变量，以此类推其他模块
+* "UI_" 表示ui模块内方法，以此类推其他模块
+* typedef struct 以 _t 结尾
+* enum 以 _e 结尾
 
 
 #### 目录结构
@@ -31,7 +34,6 @@ readme.md
 #### 模块   
 ```
 UI src/ui 
-UIHT src/ui/html 
 SV src/service
 ST src/script
 NT src/net

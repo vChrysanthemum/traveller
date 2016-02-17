@@ -25,7 +25,7 @@ typedef struct {
     int x;
     char             utf8char[4];
     int              utf8charPoi;
-} UICursor;
+} uiCursor_t;
 
 typedef struct {
     int  ch;
@@ -34,7 +34,7 @@ typedef struct {
     int  number;      //已输入的数字
     char snumber[8];  //已输入的数字
     int  snumberLen;
-} UIEnv;
+} uiEnv_t;
 
 typedef struct {
     int    height; //行数 
@@ -43,44 +43,43 @@ typedef struct {
     int    starty;
     WINDOW *win;
     PANEL  *panel;
-} UIWindow;
-UIWindow* UIcreateWindow(int height, int width, int starty, int startx);
-void UIFreeWindow(UIWindow* win);
+} uiWindow_t;
+uiWindow_t* UI_createWindow(int height, int width, int starty, int startx);
+void UI_FreeWindow(uiWindow_t* win);
 
 typedef struct {
     sds      title;
     sds      content;
-    UIWindow *uiwin;
-} UIPage;
-UIPage *UINewPage();
-void UIFreePage(UIPage *page);
-void* UILoadPageActor(ETActor *actor, int args, void **argv);
+    uiWindow_t *uiwin;
+} uiPage_t;
+uiPage_t *UI_NewPage();
+void UI_FreePage(uiPage_t *page);
+void* UI_LoadPageActor(etActor_t *actor, int args, void **argv);
 
 typedef struct {
     sds line;
     sds header;
-} UIConsoleCommand;
+} uiConsoleCommand_t;
 
 typedef struct {
-    UIWindow         *tabuiwin;
-    UIWindow         *uiwin;
+    uiWindow_t         *tabuiwin;
+    uiWindow_t         *uiwin;
     int              mode;
-    UICursor         cursor;
-    UIConsoleCommand cmd;
-} UIConsole;
+    uiCursor_t         cursor;
+    uiConsoleCommand_t cmd;
+} uiConsole_t;
 
-int UIPrepare();
-int UIInit();
-
-void UIPrepareColor();
+int UI_PrepareColor();
+int UI_Prepare();
+int UI_Init();
 
 typedef void (*UIKeyDownProcessor) (char ch);
-int UISubscribeKeyDownEvent(UIKeyDownProcessor subscriber);
-int UIUnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber);
+int UI_SubscribeKeyDownEvent(UIKeyDownProcessor subscriber);
+int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber);
 
-void UIinitConsole();
-void UIreRenderConsole();
+void UI_initConsole();
+void UI_reRenderConsole();
 
-void UIInitMap();
+void UI_InitMap();
 
 #endif

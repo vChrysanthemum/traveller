@@ -3,12 +3,12 @@
 #include "g_extern.h"
 #include "ui/extern.h"
 
-static UIWindow *uiwin;
+static uiWindow_t *uiwin;
 static WINDOW   *win;
-static UIWindow *tabuiwin;
+static uiWindow_t *tabuiwin;
 static WINDOW   *tabwin;
-static UICursor *cursor;
-static UIConsoleCommand *cmd;
+static uiCursor_t *cursor;
+static uiConsoleCommand_t *cmd;
 
 static void renderTabs() {
     wattron(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_BG));
@@ -20,10 +20,10 @@ static void renderTabs() {
     wmove(tabwin, 0, 0);
 
     listNode *ln;
-    UIPage *page;
+    uiPage_t *page;
     listIter *li = listGetIterator(ui_pages, AL_START_HEAD);
     while (NULL != (ln = listNext(li))) {
-        page = (UIPage*)ln->value;
+        page = (uiPage_t*)ln->value;
 
         if (page == ui_activePage) {
             wattron(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
@@ -106,11 +106,11 @@ static void prepareCmdMode() {
     ui_console->mode = CONSOLE_MODE_CMD;
 }
 
-void UIinitConsole() {
-    ui_console = (UIConsole*)zmalloc(sizeof(UIConsole));
+void UI_initConsole() {
+    ui_console = (uiConsole_t*)zmalloc(sizeof(uiConsole_t));
 
-    ui_console->tabuiwin = UIcreateWindow(1, ui_width, ui_height-6, 0);
-    ui_console->uiwin = UIcreateWindow(5, ui_width, ui_height-5, 0);
+    ui_console->tabuiwin = UI_createWindow(1, ui_width, ui_height-6, 0);
+    ui_console->uiwin = UI_createWindow(5, ui_width, ui_height-5, 0);
     ui_console->cursor.y = 0;
     ui_console->cursor.x = 0;
     ui_console->cmd.line = sdsempty();
@@ -127,13 +127,13 @@ void UIinitConsole() {
     cmd = &ui_console->cmd;
 
     prepareCmdMode();
-    UISubscribeKeyDownEvent((UIKeyDownProcessor)keyDownProcessor);
+    UI_SubscribeKeyDownEvent((UIKeyDownProcessor)keyDownProcessor);
 
     wrefresh(tabwin);
     wrefresh(win);
 }
 
-void UIreRenderConsole() {
+void UI_reRenderConsole() {
     renderTabs();
 
     wrefresh(tabwin);

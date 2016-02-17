@@ -11,28 +11,28 @@
 #define SCRIPT_SERVICE_ERRNO_OK         0
 #define SCRIPT_SERVICE_ERRNO_INNERERR   502
 
-#define STAssertLuaPCallSuccess(L, errno) do {\
+#define ST_AssertLuaPCallSuccess(L, errno) do {\
     if (0 != errno) {\
         TrvExit(errno, "%s %d", lua_tostring(L, -1), errno);\
     }\
 } while(0);
 
-typedef struct STScript {
+typedef struct stScript_t {
     int        isSubscribeNet;
     sds        basedir;
     IniSection *iniSection;
     lua_State  *L;
-} STScript;
+} stScript_t;
 
-STScript* STNewScript(IniSection *iniSection);
-void STFreeScript(void *script);
+stScript_t* ST_NewScript(IniSection *iniSection);
+void ST_FreeScript(void *script);
 
-int STPrepare();
+int ST_Prepare();
 
-#define STAddReplyHeader(L) \
+#define ST_AddReplyHeader(L) \
     const char *fdstr;\
     int argc;\
-    NTSnode *sn;\
+    ntSnode_t *sn;\
 \
     argc = lua_gettop(L);\
     if (argc < 3) {\
@@ -41,7 +41,7 @@ int STPrepare();
     }\
 \
     fdstr = lua_tostring(L, 1);\
-    sn = NTGetNTSnodeByFDS(fdstr);\
+    sn = NT_GetSnodeByFDS(fdstr);\
     if (NULL == sn) {\
         TrvLogI("找不到链接: %s", fdstr);\
         lua_pushnumber(L, -2);\
@@ -49,18 +49,18 @@ int STPrepare();
     }\
 \
 
-const char* STgetGlobalString(lua_State *L, char *key);
-int STLogI(lua_State *L);
-int STLoadView(lua_State *L);
-int STNTScriptServiceRequest(lua_State *L);
-int STNTScriptServiceResponse(lua_State *L);
-int STNTAddReplyString(lua_State *L);
-int STNTAddReplyMultiString(lua_State *L);
-int STNTAddReplyRawString(lua_State *L);
-int STNTConnectSnode(lua_State *L);
-int STDBConnect(lua_State *L);
-int STDBClose(lua_State *L);
-int STDBQuery(lua_State *L);
-int STUILoadPage(lua_State *L);
+const char* ST_getGlobalString(lua_State *L, char *key);
+int ST_LogI(lua_State *L);
+int ST_LoadView(lua_State *L);
+int STNT_ScriptServiceRequest(lua_State *L);
+int STNT_ScriptServiceResponse(lua_State *L);
+int STNT_AddReplyString(lua_State *L);
+int STNT_AddReplyMultiString(lua_State *L);
+int STNT_AddReplyRawString(lua_State *L);
+int STNT_ConnectSnode(lua_State *L);
+int STDB_Connect(lua_State *L);
+int STDB_Close(lua_State *L);
+int STDB_Query(lua_State *L);
+int STUI_LoadPage(lua_State *L);
 
 #endif

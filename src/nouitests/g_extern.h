@@ -9,9 +9,9 @@
 #include "lua.h"
 #include "sqlite3.h"
 
-extern ETDevice *g_mainDevice;
-extern ETDevice *g_fooDevice;
-extern ETDevice *g_netDevice;
+extern etDevice_t *g_mainDevice;
+extern etDevice_t *g_fooDevice;
+extern etDevice_t *g_netDevice;
 
 extern char g_basedir[];
 Log g_log;

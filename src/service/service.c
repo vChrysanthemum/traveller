@@ -15,26 +15,26 @@ dictType serviceTableDictType = {
     NULL                       /* val destructor */
 };
 
-SVServiceRouter SVServiceRouterTable[] = {
-    {"script",      SVScript, 0},
-    {"scriptcbk",   SVScriptCallback, 0},
-    {"test",        SVTest, 0},
-    {"msg",         SVMsg, 0},
-    {"close",       SVClose, 0}
+svServiceRouter_t svServiceRouter_tTable[] = {
+    {"script",      SV_Script, 0},
+    {"scriptcbk",   SV_ScriptCallback, 0},
+    {"test",        SV_Test, 0},
+    {"msg",         SV_Msg, 0},
+    {"close",       SV_Close, 0}
 };
 
-void SVSubscribeScriptService(STScript *script) {
+void SV_SubscribeScriptService(stScript_t *script) {
     listAddNodeTail(sv_scriptServiceSubscriber, script);
 }
 
-void SVPrepare() {
+void SV_Prepare() {
     sv_scriptServiceSubscriber = listCreate();
 
     int loopJ, tmpsize;
 
     nt_server.services = dictCreate(&serviceTableDictType, NULL);
-    tmpsize = sizeof(SVServiceRouterTable) / sizeof(SVServiceRouterTable[0]);
+    tmpsize = sizeof(svServiceRouter_tTable) / sizeof(svServiceRouter_tTable[0]);
     for (loopJ = 0; loopJ < tmpsize; loopJ++) {
-        dictAdd(nt_server.services, sdsnew(SVServiceRouterTable[loopJ].key), SVServiceRouterTable[loopJ].proc);
+        dictAdd(nt_server.services, sdsnew(svServiceRouter_tTable[loopJ].key), svServiceRouter_tTable[loopJ].proc);
     }
 }

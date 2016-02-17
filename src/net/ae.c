@@ -453,7 +453,7 @@ int aeWait(int fd, int mask, long long milliseconds) {
 }
 
 void aeMain(aeLooper *eventLoop) {
-    ETDevice *device = g_netDevice;
+    etDevice_t *device = g_netDevice;
 
     eventLoop->stop = 0;
     while (!eventLoop->stop) {
@@ -461,7 +461,7 @@ void aeMain(aeLooper *eventLoop) {
             eventLoop->beforesleep(eventLoop);
         aeProcessEvents(eventLoop, AE_ALL_EVENTS);
 
-        ETDeviceFactoryActorLoopOnce(device);
+        ET_DeviceFactoryActorLoopOnce(device);
     }
 
     aeDeleteLooper(eventLoop);

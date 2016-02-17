@@ -7,8 +7,8 @@
 
 static dict *UIHtmlSpecialStringTable;
 
-static dict *UIHtmlDomInfoDict;
-static UIHtmlDomInfo UIHtmlDomInfoTable[] = {
+static dict *uiHtmlDomInfoDict;
+static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
     {"unknown", UIHTML_DOM_TYPE_UNKNOWN},
     {"text",    UIHTML_DOM_TYPE_TEXT},
     {"html",    UIHTML_DOM_TYPE_HTML},
@@ -24,10 +24,10 @@ static UIHtmlDomInfo UIHtmlDomInfoTable[] = {
     {0, 0},
 };
 
-void UIPrepareHtml() {
-    UIHtmlDomInfoDict = dictCreate(&stackStringTableDictType, 0);
-    for (UIHtmlDomInfo *domInfo = &UIHtmlDomInfoTable[0]; 0 != domInfo->name; domInfo++) {
-        dictAdd(UIHtmlDomInfoDict, domInfo->name, domInfo);
+void UI_PrepareHtml() {
+    uiHtmlDomInfoDict = dictCreate(&stackStringTableDictType, 0);
+    for (uiHtmlDomInfo_t *domInfo = &uiHtmlDomInfoTable[0]; 0 != domInfo->name; domInfo++) {
+        dictAdd(uiHtmlDomInfoDict, domInfo->name, domInfo);
     }
 
     UIHtmlSpecialStringTable = dictCreate(&stackStringTableDictType, 0);
@@ -44,7 +44,7 @@ static inline void skipStringNotConcern(char **ptr)  {
     }
 }
 
-UIDocumentScanToken* UIHtmlScanToken(UIDocumentScanner *scanner) {
+uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
     char **ptr = &scanner->current;
 
     skipStringNotConcern(ptr);
@@ -59,7 +59,7 @@ UIDocumentScanToken* UIHtmlScanToken(UIDocumentScanner *scanner) {
     char *s = *ptr;
     int len;
     
-    UIDocumentScanToken *token = UIDocumentNewScanToken();
+    uiDocumentScanToken_t *token = UI_NewDocumentScanToken();
     token->type = UIHTML_TOKEN_TEXT;
 
     while('\0' != *s && tokenStackLen < 6) {
@@ -161,18 +161,18 @@ GET_TOKEN_SUCCESS:
     return token;
 }
 
-UIHtmlDom* UINewHtmlDom() {
-    UIHtmlDom *dom = (UIHtmlDom*)zmalloc(sizeof(UIHtmlDom));
-    memset(dom, 0, sizeof(UIHtmlDom));
+uiHtmlDom_t* UI_NewHtmlDom() {
+    uiHtmlDom_t *dom = (uiHtmlDom_t*)zmalloc(sizeof(uiHtmlDom_t));
+    memset(dom, 0, sizeof(uiHtmlDom_t));
     dom->title = sdsempty();
     dom->type = UIHTML_DOM_TYPE_UNKNOWN;
     dom->children = listCreate();
-    dom->children->free = UIFreeHtmlDom;
+    dom->children->free = UI_FreeHtmlDom;
     return dom;
 }
 
-void UIFreeHtmlDom(void *_dom) {
-    UIHtmlDom *dom = (UIHtmlDom*)_dom;
+void UI_FreeHtmlDom(void *_dom) {
+    uiHtmlDom_t *dom = (uiHtmlDom_t*)_dom;
     sdsfree(dom->title);
     if (0 != dom->attribute) dictRelease(dom->attribute);
     if (0 != dom->id) sdsfree(dom->id);
@@ -182,7 +182,7 @@ void UIFreeHtmlDom(void *_dom) {
 }
 
 // 解析单个tag 中的 title和attribute
-static inline void parseHtmlDomTag(UIHtmlDom *dom, UIDocumentScanToken *token) {
+static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     int contentLen = sdslen(token->content);
 
     int contentOffset;
@@ -198,7 +198,7 @@ static inline void parseHtmlDomTag(UIHtmlDom *dom, UIDocumentScanToken *token) {
         }
     }
     dom->title = sdscatlen(dom->title, &(token->content[contentOffset]), contentEndOffset-contentOffset);
-    UIHtmlDomInfo *domInfo = dictFetchValue(UIHtmlDomInfoDict, dom->title);
+    uiHtmlDomInfo_t *domInfo = dictFetchValue(uiHtmlDomInfoDict, dom->title);
     if (0 == domInfo) {
         dom->type = UIHTML_DOM_TYPE_UNKNOWN;
     } else {
@@ -374,12 +374,12 @@ PARSE_HTML_DOM_TAG_END:
     if (0 != attributeValue) zfree(attributeValue);
 }
 
-// @return UIHtmlDom* 需要继续处理的 UIHtmlDom*
+// @return uiHtmlDom_t* 需要继续处理的 uiHtmlDom_t*
 
 // <tag>
-static inline UIHtmlDom* parseHtmlTokenStartTag(UIHtmlDom *dom, UIDocumentScanToken *token) {
+static inline uiHtmlDom_t* parseHtmlTokenStartTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     sdsrange(token->content, 1, -2);
-    UIHtmlDom *newdom = UINewHtmlDom();
+    uiHtmlDom_t *newdom = UI_NewHtmlDom();
     newdom->parentDom = dom;
     parseHtmlDomTag(newdom, token);
     dom->children = listAddNodeTail(dom->children, newdom);
@@ -387,15 +387,15 @@ static inline UIHtmlDom* parseHtmlTokenStartTag(UIHtmlDom *dom, UIDocumentScanTo
 }
 
 // </tag>
-static inline UIHtmlDom* parseHtmlTokenEndTag(UIHtmlDom *dom, UIDocumentScanToken *token) {
+static inline uiHtmlDom_t* parseHtmlTokenEndTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     sdsrange(token->content, 2, -2);
     return dom->parentDom;
 }
 
 // <tag/>
-static inline UIHtmlDom* parseHtmlTokenSelfClosingTag(UIHtmlDom *dom, UIDocumentScanToken *token) {
+static inline uiHtmlDom_t* parseHtmlTokenSelfClosingTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     sdsrange(token->content, 1, -3);
-    UIHtmlDom *newdom = UINewHtmlDom();
+    uiHtmlDom_t *newdom = UI_NewHtmlDom();
     newdom->parentDom = dom;
     parseHtmlDomTag(newdom, token);
     dom->children = listAddNodeTail(dom->children, newdom);
@@ -403,7 +403,7 @@ static inline UIHtmlDom* parseHtmlTokenSelfClosingTag(UIHtmlDom *dom, UIDocument
 }
 
 // text
-static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIDocumentScanToken *token) {
+static inline uiHtmlDom_t* parseHtmlTokenText(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     if (UIHTML_DOM_TYPE_SCRIPT == dom->type) {
         if (0 == dom->content) {
             dom->content = sdsnewlen(token->content, sdslen(token->content));
@@ -413,7 +413,7 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIDocumentScanToken 
 
     } else {
         // 除了 script 以外的dom内容，均作特殊处理
-        UIHtmlDom *newdom = UINewHtmlDom();
+        uiHtmlDom_t *newdom = UI_NewHtmlDom();
         newdom->parentDom = dom;
         newdom->content = sdsempty();
         dom->children = listAddNodeTail(dom->children, newdom);
@@ -472,14 +472,14 @@ static inline UIHtmlDom* parseHtmlTokenText(UIHtmlDom *dom, UIDocumentScanToken 
     return dom;
 }
 
-UIHtmlDom* UIParseHtml(char *html) {
-    UIHtmlDom *rootDom = UINewHtmlDom();
-    UIHtmlDom *dom = rootDom;
-    UIDocumentScanner UIHtmlScanner = {
-        html, html, UIHtmlScanToken
+uiHtmlDom_t* UI_ParseHtml(char *html) {
+    uiHtmlDom_t *rootDom = UI_NewHtmlDom();
+    uiHtmlDom_t *dom = rootDom;
+    uiDocumentScanner_t UIHtmlScanner = {
+        html, html, UI_ScanHtmlToken
     };
 
-    UIDocumentScanToken *token;
+    uiDocumentScanToken_t *token;
     while(0 != (token = UIHtmlScanner.scan(&UIHtmlScanner))) {
         switch(token->type) {
             case UIHTML_TOKEN_START_TAG:
@@ -495,13 +495,13 @@ UIHtmlDom* UIParseHtml(char *html) {
                 dom = parseHtmlTokenText(dom, token);
                 break;
         }
-        UIDocumentFreeScanToken(token);
+        UI_FreeDocumentScanToken(token);
     }
 
     return rootDom;
 }
 
-void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
+void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
     printf("%s", dom->title);
@@ -531,7 +531,7 @@ void UIHtmlPrintDomTree(UIHtmlDom *dom, int indent) {
     li = listGetIterator(dom->children, AL_START_HEAD);
     indent++;
     while (NULL != (ln = listNext(li))) {
-        UIHtmlPrintDomTree((UIHtmlDom*)listNodeValue(ln), indent);
+        UI_PrintHtmlDomTree((uiHtmlDom_t*)listNodeValue(ln), indent);
     }
     listReleaseIterator(li);
 }

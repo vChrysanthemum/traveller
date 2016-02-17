@@ -25,7 +25,7 @@
  * @param RequestId          string
  * @param Data               string...
  */
-static int SVscriptService(STScript *script, NTSnode *sn) {
+static int SV_scriptService(stScript_t *script, ntSnode_t *sn) {
     int errno;
     char **argv = &(sn->argv[1]);
     int argc = sn->argc - 1; // 减去 argv[0] = "script"
@@ -67,7 +67,7 @@ static int SVscriptService(STScript *script, NTSnode *sn) {
  * @param ScriptServiceCallbackArg string
  * @param Data                     string...
  */
-static int SVscriptServiceCallback(NTSnode *sn) {
+static int SV_scriptServiceCallback(ntSnode_t *sn) {
     int errno;
     char **argv = &(sn->argv[1]);
 
@@ -76,9 +76,9 @@ static int SVscriptServiceCallback(NTSnode *sn) {
     listIter *li;
     listNode *ln;
     li = listGetIterator(sn->scriptServiceRequestCtxList, AL_START_HEAD);
-    NTScriptServiceRequestCtx *ctx, *ctxTarget = 0;
+    ntScriptServiceRequestCtx_t *ctx, *ctxTarget = 0;
     while (NULL != (ln = listNext(li))) {
-        ctx = (NTScriptServiceRequestCtx*)listNodeValue(ln);
+        ctx = (ntScriptServiceRequestCtx_t*)listNodeValue(ln);
         if (requestId == ctx->requestId) {
             ctxTarget = ctx;
             break;
@@ -125,42 +125,42 @@ static int SVscriptServiceCallback(NTSnode *sn) {
 /**
  * 触发脚本服务
  */
-void SVScript(NTSnode *sn) {
+void SV_Script(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     int errno;
 
-    STScript *script;
+    stScript_t *script;
     listIter *li;
     listNode *ln;
     li = listGetIterator(sv_scriptServiceSubscriber, AL_START_HEAD);
     while (NULL != (ln = listNext(li))) {
-        script = (STScript*)listNodeValue(ln);
+        script = (stScript_t*)listNodeValue(ln);
 
-        errno = SVscriptService(script, sn);
+        errno = SV_scriptService(script, sn);
 
         if(SCRIPT_SERVICE_ERRNO_OK != errno) {
-            NTAddReplyError(sn, "script error");
+            NT_AddReplyError(sn, "script error");
             sn->flags = SNODE_CLOSE_AFTER_REPLY;
-            NTSnodeServiceSetFinishedFlag(sn);
+            NT_SnodeServiceSetFinishedFlag(sn);
             break;
         }
     }
 
-    NTSnodeServiceSetFinishedFlag(sn);
+    NT_SnodeServiceSetFinishedFlag(sn);
 }
 
 /**
  * 远程机器运行脚本服务结束返回结果，触发回调
  */
-void SVScriptCallback(NTSnode *sn) {
+void SV_ScriptCallback(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     int errno;
-    errno = SVscriptServiceCallback(sn);
+    errno = SV_scriptServiceCallback(sn);
     if(SCRIPT_SERVICE_ERRNO_OK != errno) {
-        NTAddReplyError(sn, "script callback error");
+        NT_AddReplyError(sn, "script callback error");
     }
 
-    NTSnodeServiceSetFinishedFlag(sn);
+    NT_SnodeServiceSetFinishedFlag(sn);
 }

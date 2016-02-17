@@ -13,7 +13,7 @@ function CtrCitizen.Login(connectId, requestId, argv)
     g_db = db:Instance()
 
     if nil == email or nil == password then
-        NTScriptServiceResponse(connectId, requestId, "err", "请输入用户名或密码")
+        NT_ScriptServiceResponse(connectId, requestId, "err", "请输入用户名或密码")
         return
     end
 
@@ -23,13 +23,13 @@ function CtrCitizen.Login(connectId, requestId, argv)
     {email=email, password=md5.sumhexa(password)})
 
     if not citizen[0] then
-        NTScriptServiceResponse(connectId, requestId, "err", "用户名或密码错误哈哈哈")
+        NT_ScriptServiceResponse(connectId, requestId, "err", "用户名或密码错误哈哈哈")
         return
     end
     citizen = citizen[0]
 
     g_loggedCitizens[connectId] = citizen
-    NTScriptServiceResponse(connectId, requestId, "msg", "登陆成功")
+    NT_ScriptServiceResponse(connectId, requestId, "msg", "登陆成功")
 
 end
 

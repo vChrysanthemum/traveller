@@ -4,31 +4,31 @@
 #include "net/networking.h"
 #include "service/service.h"
 
-void SVTest(NTSnode *sn) {
+void SV_Test(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
-    NTAddReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
-    NTSnodeServiceSetFinishedFlag(sn);
+    NT_AddReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
+    NT_SnodeServiceSetFinishedFlag(sn);
  
-    NTSnode *new_sn = NTConnectNTSnode("127.0.0.1", 1091);
+    ntSnode_t *new_sn = NT_ConnectSnode("127.0.0.1", 1091);
     if (NULL != new_sn) {
-        NTAddReplyMultiString(new_sn, 2, "close", "so;iafnonaioient");
+        NT_AddReplyMultiString(new_sn, 2, "close", "so;iafnonaioient");
     }
 }
 
-void SVMsg(NTSnode *sn) {
+void SV_Msg(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     TrvLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
-    NTSnodeServiceSetFinishedFlag(sn);
+    NT_SnodeServiceSetFinishedFlag(sn);
 }
 
-void SVClose(NTSnode *sn) {
+void SV_Close(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     TrvLogD("closed by other people");
-    NTAddReplyMultiString(sn, 2, "msg", "21oi4oaiwef");
-    NTSnodeServiceSetFinishedFlag(sn);
+    NT_AddReplyMultiString(sn, 2, "msg", "21oi4oaiwef");
+    NT_SnodeServiceSetFinishedFlag(sn);
  
     sn->flags |= SNODE_CLOSE_AFTER_REPLY;
 

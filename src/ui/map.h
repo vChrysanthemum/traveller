@@ -26,40 +26,40 @@
 /* 根据x,y，返回map上节点键值 */
 #define MAP_ADDR(x, y, width) (y * width + x)
 
-#define UIMoveUICursorLeft(count) do {\
+#define UIMoveuiCursor_tLeft(count) do {\
     ui_env->cursorX -= count;\
     if (ui_env->cursorX < 0) {\
         UIMoveCurMapX(ui_env->cursorX);\
         ui_env->cursorX = 0;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
-#define UIMoveUICursorRight(count) do {\
+#define UIMoveuiCursor_tRight(count) do {\
     ui_env->cursorX += count;\
-    if (ui_env->cursorX > ui_rootUIWindow->width) {\
-        UIMoveCurMapX(ui_env->cursorX - ui_rootUIWindow->width);\
-        ui_env->cursorX = ui_rootUIWindow->width;\
+    if (ui_env->cursorX > ui_rootuiWindow->width) {\
+        UIMoveCurMapX(ui_env->cursorX - ui_rootuiWindow->width);\
+        ui_env->cursorX = ui_rootuiWindow->width;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
-#define UIMoveUICursorUp(count) do {\
+#define UI_MoveuiCursorUp(count) do {\
     ui_env->cursorY -= count;\
     if (ui_env->cursorY < 0) {\
         UIMoveCurMapY(ui_env->cursorY);\
         ui_env->cursorY = 0;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
-#define UIMoveUICursorDown(count) do {\
+#define UIMoveuiCursor_tDown(count) do {\
     ui_env->cursorY += count;\
-    if (ui_env->cursorY > ui_rootUIWindow->height) {\
-        UIMoveCurMapY(ui_env->cursorY - ui_rootUIWindow->height);\
-        ui_env->cursorY = ui_rootUIWindow->height;\
+    if (ui_env->cursorY > ui_rootuiWindow->height) {\
+        UIMoveCurMapY(ui_env->cursorY - ui_rootuiWindow->height);\
+        ui_env->cursorY = ui_rootuiWindow->height;\
     }\
-    wmove(ui_rootUIWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
 } while(0);
 
 /* 地图上的物体 */

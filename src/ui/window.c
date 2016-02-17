@@ -4,8 +4,8 @@
 
 extern list *ui_panels;
 
-UIWindow* UIcreateWindow(int height, int width, int starty, int startx) {
-    UIWindow *win = (UIWindow*)zmalloc(sizeof(UIWindow));
+uiWindow_t* UI_createWindow(int height, int width, int starty, int startx) {
+    uiWindow_t *win = (uiWindow_t*)zmalloc(sizeof(uiWindow_t));
     win->startx = startx;
     win->starty = starty;
     win->height = height;
@@ -16,7 +16,7 @@ UIWindow* UIcreateWindow(int height, int width, int starty, int startx) {
     return win;
 }
 
-void UIFreeWindow(UIWindow *win) {
+void UI_FreeWindow(uiWindow_t *win) {
     del_panel(win->panel);
     delwin(win->win);
     zfree(win);

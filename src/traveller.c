@@ -25,13 +25,13 @@
  *  Step1. 读取配置文件
  *  Step2. 开启界面
  *  Step3. 开启事件
- *  Step4. 开启3块 ETDevice g_mainDevice g_netDevice g_fooDevice
+ *  Step4. 开启3块 etDevice_t g_mainDevice g_netDevice g_fooDevice
  */
 
 /* 全局变量 */
-ETDevice *g_mainDevice;
-ETDevice *g_fooDevice;
-ETDevice *g_netDevice;
+etDevice_t *g_mainDevice;
+etDevice_t *g_fooDevice;
+etDevice_t *g_netDevice;
 
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
 Log g_log;
@@ -90,31 +90,31 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
 
-    g_mainDevice = ETNewDevice(0, 0);
-    g_fooDevice = ETNewDevice(0, 0);
+    g_mainDevice = ET_NewDevice(0, 0);
+    g_fooDevice = ET_NewDevice(0, 0);
 
     //初始化UI
-    if (ERRNO_ERR == UIPrepare()) {
+    if (ERRNO_ERR == UI_Prepare()) {
         TrvExit(0, "初始化UI失败");
     }
 
     //开启网络
-    if (ERRNO_ERR == NTPrepare(listenPort)) {
+    if (ERRNO_ERR == NT_Prepare(listenPort)) {
         TrvExit(0, "初始化网络失败");
     }
-    g_netDevice = ETNewDevice(aeMainDeviceWrap, nt_el);
+    g_netDevice = ET_NewDevice(aeMainDeviceWrap, nt_el);
 
     //开启脚本支持
-    if (ERRNO_ERR == STPrepare()) {
+    if (ERRNO_ERR == ST_Prepare()) {
         TrvExit(0, "初始化脚本失败");
     }
 
-    ETDeviceStart(g_mainDevice);
-    ETDeviceStart(g_fooDevice);
-    ETDeviceStart(g_netDevice);
+    ET_StartDevice(g_mainDevice);
+    ET_StartDevice(g_fooDevice);
+    ET_StartDevice(g_netDevice);
 
     //开启界面，并阻塞在 uiLoop
-    if (ERRNO_ERR == UIInit()) {
+    if (ERRNO_ERR == UI_Init()) {
         TrvExit(0, "初始化UI失败");
     }
 

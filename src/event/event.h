@@ -9,52 +9,52 @@
 #include "core/adlist.h"
 #include "core/dict.h"
 
-struct ETActor;
-typedef struct ETActor ETActor;
-typedef struct ETActor {
+struct etActor_t;
+typedef struct etActor_t etActor_t;
+typedef struct etActor_t {
     list *channels;
-    void* (*proc)(ETActor *actor, int args, void **argv);
-} ETActor;
+    void* (*proc)(etActor_t *actor, int args, void **argv);
+} etActor_t;
 
-typedef struct ETActorEvent {
-    ETActor *sender;
-    ETActor *receiver;
+typedef struct etActorEvent_t {
+    etActor_t *sender;
+    etActor_t *receiver;
     sds     channel;
 
     // 信件由收件人回收
     // TODO: 考虑有多个人收件
     int     mailArgs;
     void    **mailArgv;
-} ETActorEvent;
+} etActorEvent_t;
 
-// 推送消息给订阅者，订阅者为 ETActor
-typedef struct ETChannelActor {
+// 推送消息给订阅者，订阅者为 etActor_t
+typedef struct etChannelActor_t {
     char *key;
-    list *subscribers; //ETActor
-} ETChannelActor;
+    list *subscribers; //etActor_t
+} etChannelActor_t;
 
 // 管理 Actor与ActorEvent
-typedef struct ETFactoryActor {
+typedef struct etFactoryActor_t {
     list *actorEventPool;
     list *actorPool;
     list *runningEventList; // 正在处理中的 ActorEvent
     list *waitingEventList; // 等待处理的 ActorEvent
     dict *channels;           // 发布订阅频道 ETKeyChannelDictType
-} ETFactoryActor;
+} etFactoryActor_t;
 
-typedef struct ETDeviceJob {
+typedef struct etDeviceJob_t {
     unsigned long         index;
     pthread_t             ntid;
     const pthread_attr_t  *pthreadAttr;
     void *(*startRoutine) (void *);
     void                  *arg;
     void                  *exitStatus;
-} ETDeviceJob;
+} etDeviceJob_t;
 
-struct ETDevice;
-typedef struct ETDevice ETDevice;
-typedef void* (*ETDeviceLooper) (void* arg);
-typedef struct ETDevice {
+struct etDevice_t;
+typedef struct etDevice_t etDevice_t;
+typedef void* (*etDevice_tLooper) (void* arg);
+typedef struct etDevice_t {
     list            *jobs;
     pthread_mutex_t jobMutex;
     pthread_mutex_t actorMutex;
@@ -62,47 +62,47 @@ typedef struct ETDevice {
     pthread_mutex_t eventWaitMutex;
     pthread_cond_t  eventWaitCond;
     list            *waitingEventList;
-    ETFactoryActor  *factoryActor;
+    etFactoryActor_t  *factoryActor;
     pthread_t       looperNtid;
-    ETDeviceLooper  looper;
+    etDevice_tLooper  looper;
     int             looperStop;
     void            *looperArg;
-} ETDevice;
+} etDevice_t;
 
-typedef struct ETDeviceStartJobParam {
-    ETDevice    *device;
-    ETDeviceJob *job;
-} ETDeviceStartJobParam;
+typedef struct etDeviceStartJobParam_t {
+    etDevice_t    *device;
+    etDeviceJob_t *job;
+} etDeviceStartJobParam_t;
 
-ETFactoryActor* ETNewFactoryActor(void);
-void ETFreeFactoryActor(ETFactoryActor *factoryActor);
+etFactoryActor_t* ET_NewFactoryActor(void);
+void ET_FreeFactoryActor(etFactoryActor_t *factoryActor);
 
-ETActorEvent* ETFactoryActorNewEvent(ETFactoryActor *factoryActor);
-void ETFactoryActorRecycleEvent(ETFactoryActor *factoryActor,  ETActorEvent *actorEvent);
-void ETFactoryActorAppendEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
-void ETFactoryActorProcessEvent(ETFactoryActor *factoryActor, ETActorEvent *actorEvent);
+etActorEvent_t* ET_FactoryActorNewEvent(etFactoryActor_t *factoryActor);
+void ET_FactoryActorRecycleEvent(etFactoryActor_t *factoryActor,  etActorEvent_t *actorEvent);
+void ET_FactoryActorAppendEvent(etFactoryActor_t *factoryActor, etActorEvent_t *actorEvent);
+void ET_FactoryActorProcessEvent(etFactoryActor_t *factoryActor, etActorEvent_t *actorEvent);
 
-ETChannelActor* ETNewChannelActor(void);
-void ETFreeChannelActor(ETChannelActor *channelActor);
-void ETFactoryActorAppendChannel(ETFactoryActor *factoryActor, ETChannelActor *channel);
-void ETFactoryActorRemoveChannel(ETFactoryActor *factoryActor, ETChannelActor *channel);
-void ETSubscribeChannel(ETActor *actor, ETChannelActor *channelActor);
-void ETUnSubscribeChannel(ETActor *actor, ETChannelActor *channelActor);
+etChannelActor_t* ET_NewChannelActor(void);
+void ET_FreeChannelActor(etChannelActor_t *channelActor);
+void ET_FactoryActorAppendChannel(etFactoryActor_t *factoryActor, etChannelActor_t *channel);
+void ET_FactoryActorRemoveChannel(etFactoryActor_t *factoryActor, etChannelActor_t *channel);
+void ET_SubscribeChannel(etActor_t *actor, etChannelActor_t *channelActor);
+void ET_UnSubscribeChannel(etActor_t *actor, etChannelActor_t *channelActor);
 
-ETActor* ETFactoryActorNewActor(ETFactoryActor *factoryActor);
-void ETFactoryActorRecycleActor(ETFactoryActor *factoryActor, ETActor *actor); //回收Actor 
+etActor_t* ET_FactoryActorNewActor(etFactoryActor_t *factoryActor);
+void ET_FactoryActorRecycleActor(etFactoryActor_t *factoryActor, etActor_t *actor); //回收Actor 
 
-void ETDeviceFactoryActorLoopOnce(ETDevice *device);
-void ETDeviceFactoryActorLooper(ETDevice *device);
+void ET_DeviceFactoryActorLoopOnce(etDevice_t *device);
+void ET_DeviceFactoryActorLooper(etDevice_t *device);
 
-void ETFreeDeviceJob(void* _job);
-ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg);
-void ETFreeDevice(ETDevice *device);
-void ETDeviceStart(ETDevice *device);
-pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,
+void ET_FreeDeviceJob(void* _job);
+etDevice_t* ET_NewDevice(etDevice_tLooper looper, void *arg);
+void ET_FreeDevice(etDevice_t *device);
+void ET_StartDevice(etDevice_t *device);
+pthread_t ET_DeviceStartJob(etDevice_t *device, const pthread_attr_t *attr,
         void *(*startRoutine) (void *), void *arg);
-void ETDeviceAppendEvent(ETDevice *device, ETActorEvent *event);
-list* ETDevicePopEventList(ETDevice *device); //弹出device上的事件
-void ETDeviceWaitEventList(ETDevice *device); //阻塞等待事件
+void ET_DeviceAppendEvent(etDevice_t *device, etActorEvent_t *event);
+list* ET_DevicePopEventList(etDevice_t *device); //弹出device上的事件
+void ET_DeviceWaitEventList(etDevice_t *device); //阻塞等待事件
 
 #endif

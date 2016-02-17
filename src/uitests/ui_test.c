@@ -10,20 +10,20 @@
 
 #include "g_extern.h"
 
-UIWindow *ui_rootUIWindow;
+uiWindow_t *ui_rootuiWindow;
 UIMap *ui_curUIMap;
 
-UIEnv *ui_env;
+uiEnv_t *ui_env;
 list *ui_panels;
-UIConsole *ui_console;
+uiConsole_t *ui_console;
 int ui_width, ui_height; //屏幕宽度、高度
 list *ui_pages;
-UIPage *ui_activePage;
+uiPage_t *ui_activePage;
 
 static list *keyDownProcessors;
 
 static void uiLoop() {
-    ETDevice *device = g_mainDevice;
+    etDevice_t *device = g_mainDevice;
 
     while(1) {
         halfdelay(2);
@@ -39,18 +39,18 @@ static void uiLoop() {
             listReleaseIterator(iter);
         }
 
-        ETDeviceFactoryActorLoopOnce(device);
+        ET_DeviceFactoryActorLoopOnce(device);
     }
 
     endwin();
 }
 
-int UISubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+int UI_SubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     keyDownProcessors = listAddNodeTail(keyDownProcessors, subscriber);
     return ERRNO_OK;
 }
 
-int UIUnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     listNode *node;
     listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
     while (NULL != (node = listNext(iter))) {
@@ -63,12 +63,12 @@ int UIUnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     return ERRNO_OK;
 }
 
-int UIInit() {
+int UI_Init() {
     ui_panels = listCreate();
     ui_pages = listCreate();
     keyDownProcessors = listCreate();
 
-    ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
+    ui_env = (uiEnv_t*)zmalloc(sizeof(uiEnv_t));
     ui_env->number = 1;
     ui_env->snumber[0] = 0;
     ui_env->snumberLen = 0;
@@ -82,21 +82,21 @@ int UIInit() {
 
     getmaxyx(stdscr, ui_height, ui_width);
 
-    UIPrepareColor();
+    UI_PrepareColor();
 
-    UIinitConsole();
-    //UIInitMap();
+    UI_initConsole();
+    //UI_InitMap();
 
     top_panel(ui_console->uiwin->panel);
     update_panels();
     doupdate();
 
-    UIPage *page;
-    page = UINewPage("地图");
+    uiPage_t *page;
+    page = UI_NewPage("地图");
     mvwprintw(page->uiwin->win, 2, 2, "");
-    UINewPage("飞船");
+    UI_NewPage("飞船");
     ui_activePage = page;
-    UIreRenderConsole();
+    UI_reRenderConsole();
 
     uiLoop();
 

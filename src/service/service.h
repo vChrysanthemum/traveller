@@ -4,18 +4,18 @@
 #include "net/networking.h"
 #include "script/script.h"
 
-typedef struct SVServiceRouter {
+typedef struct svServiceRouter_t {
     char *key;
-    void (*proc)(NTSnode *sn);
+    void (*proc)(ntSnode_t *sn);
     int argc;
-} SVServiceRouter;
+} svServiceRouter_t;
 
-void SVSubscribeScriptService(STScript *script);
-void SVPrepare();
-void SVScript(NTSnode *sn); //触发脚本服务
-void SVScriptCallback(NTSnode *sn);
-void SVMsg(NTSnode *sn);
-void SVTest(NTSnode *sn);
-void SVClose(NTSnode *sn);
+void SV_SubscribeScriptService(stScript_t *script);
+void SV_Prepare();
+void SV_Script(ntSnode_t *sn); //触发脚本服务
+void SV_ScriptCallback(ntSnode_t *sn);
+void SV_Msg(ntSnode_t *sn);
+void SV_Test(ntSnode_t *sn);
+void SV_Close(ntSnode_t *sn);
 
 #endif

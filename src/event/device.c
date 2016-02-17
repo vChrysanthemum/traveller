@@ -2,19 +2,19 @@
 #include "core/util.h"
 #include "event/event.h"
 
-void ETFreeDeviceJob(void* _job) {
-    ETDeviceJob *job = (ETDeviceJob*)_job;
+void ET_FreeDeviceJob(void* _job) {
+    etDeviceJob_t *job = (etDeviceJob_t*)_job;
     zfree(job);
 }
 
-ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg) {
-    ETDevice *device = (ETDevice*)zmalloc(sizeof(ETDevice));
-    memset(device, 0, sizeof(ETDevice));
+etDevice_t* ET_NewDevice(etDevice_tLooper looper, void *arg) {
+    etDevice_t *device = (etDevice_t*)zmalloc(sizeof(etDevice_t));
+    memset(device, 0, sizeof(etDevice_t));
     
     device->jobs = listCreate();
-    device->jobs->free = ETFreeDeviceJob;
+    device->jobs->free = ET_FreeDeviceJob;
 
-    device->factoryActor = ETNewFactoryActor();
+    device->factoryActor = ET_NewFactoryActor();
     pthread_mutex_init(&device->jobMutex, 0);
     pthread_mutex_init(&device->actorMutex, 0);
     pthread_mutex_init(&device->eventMutex, 0);
@@ -29,8 +29,8 @@ ETDevice* ETNewDevice(ETDeviceLooper looper, void *arg) {
     return device;
 }
 
-void ETFreeDevice(ETDevice *device) {
-    ETFreeFactoryActor(device->factoryActor);
+void ET_FreeDevice(etDevice_t *device) {
+    ET_FreeFactoryActor(device->factoryActor);
     pthread_mutex_destroy(&device->jobMutex);
     pthread_mutex_destroy(&device->actorMutex);
     pthread_mutex_destroy(&device->eventMutex);
@@ -39,16 +39,16 @@ void ETFreeDevice(ETDevice *device) {
     zfree(device);
 }
 
-void ETDeviceStart(ETDevice *device) {
+void ET_StartDevice(etDevice_t *device) {
     if (0 != device->looper) {
         pthread_create(&device->looperNtid, 0, device->looper, device->looperArg);
     }
 }
 
 static void* deviceStartJob(void *_param) {
-    ETDeviceStartJobParam *param = (ETDeviceStartJobParam*)_param;
-    ETDevice *device = param->device;
-    ETDeviceJob *job = param->job;
+    etDeviceStartJobParam_t *param = (etDeviceStartJobParam_t*)_param;
+    etDevice_t *device = param->device;
+    etDeviceJob_t *job = param->job;
 
     pthread_create(&job->ntid, job->pthreadAttr, job->startRoutine, job->arg);
 
@@ -59,11 +59,11 @@ static void* deviceStartJob(void *_param) {
     return 0;
 }
 
-pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,
+pthread_t ET_DeviceStartJob(etDevice_t *device, const pthread_attr_t *attr,
         void *(*startRoutine) (void *), void *arg) {
 
-    ETDeviceJob *job = (ETDeviceJob*)zmalloc(sizeof(ETDeviceJob));
-    memset(job, 0, sizeof(ETDeviceJob));
+    etDeviceJob_t *job = (etDeviceJob_t*)zmalloc(sizeof(etDeviceJob_t));
+    memset(job, 0, sizeof(etDeviceJob_t));
 
     job->pthreadAttr = attr;
     job->arg = arg;
@@ -74,14 +74,14 @@ pthread_t ETDeviceStartJob(ETDevice *device, const pthread_attr_t *attr,
     job->index = listLength(device->jobs) - 1;
     pthread_mutex_unlock(&device->jobMutex);
 
-    ETDeviceStartJobParam param = {device, job};
+    etDeviceStartJobParam_t param = {device, job};
 
     pthread_t ntid;
     pthread_create(&ntid, 0, deviceStartJob, &param);
     return ntid;
 }
 
-void ETDeviceAppendEvent(ETDevice *device, ETActorEvent *event) {
+void ET_DeviceAppendEvent(etDevice_t *device, etActorEvent_t *event) {
     pthread_mutex_lock(&device->eventWaitMutex);
 
     pthread_mutex_lock(&device->eventMutex);
@@ -93,7 +93,7 @@ void ETDeviceAppendEvent(ETDevice *device, ETActorEvent *event) {
     pthread_mutex_unlock(&device->eventWaitMutex);
 }
 
-list* ETDevicePopEventList(ETDevice *device) {
+list* ET_DevicePopEventList(etDevice_t *device) {
     list* _l;
 
     if (0 == listLength(device->waitingEventList)) {
@@ -108,7 +108,7 @@ list* ETDevicePopEventList(ETDevice *device) {
     return _l;
 }
 
-void ETDeviceWaitEventList(ETDevice *device) {
+void ET_DeviceWaitEventList(etDevice_t *device) {
     pthread_mutex_lock(&device->eventWaitMutex);
     if (0 == listLength(device->waitingEventList)) {
         pthread_cond_wait(&device->eventWaitCond, &device->eventWaitMutex);

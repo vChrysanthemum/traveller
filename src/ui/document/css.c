@@ -3,8 +3,8 @@
 #include "core/extern.h"
 #include "ui/extern.h"
 
-static dict *UICssPropertyInfoDict;
-static UICssPropertyInfo UICssPropertyInfoTable[] = {
+static dict *uiCssPropertyInfoDict;
+static uiCssPropertyInfo_t uiCssPropertyInfoTable[] = {
     {"background-color", UICSS_PROPERTY_TYPE_BACKGROUND_COLOR},
     {"color",            UICSS_PROPERTY_TYPE_COLOR},
     {"padding",          UICSS_PROPERTY_TYPE_PADDING},
@@ -14,9 +14,9 @@ static UICssPropertyInfo UICssPropertyInfoTable[] = {
     {0},
 };
 
-void UIPrepareCss() {
-    UICssPropertyInfoDict = dictCreate(&stackStringTableDictType, 0);
-    for (UICssPropertyInfo *domInfo = &UICssPropertyInfoTable[0]; 0 != domInfo->name; domInfo++) {
-        dictAdd(UICssPropertyInfoDict, domInfo->name, domInfo);
+void UI_PrepareCss() {
+    uiCssPropertyInfoDict = dictCreate(&stackStringTableDictType, 0);
+    for (uiCssPropertyInfo_t *domInfo = &uiCssPropertyInfoTable[0]; 0 != domInfo->name; domInfo++) {
+        dictAdd(uiCssPropertyInfoDict, domInfo->name, domInfo);
     }
 }

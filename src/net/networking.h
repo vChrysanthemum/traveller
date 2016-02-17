@@ -19,7 +19,7 @@
 #define TRV_NET_IOBUF_LEN (1024)  // Generic I/O buffer size 
 
 /* 基于RESP通信协议，不过有点不一样
- * 通信NTSnode接受信息各个状态如下：
+ * 通信ntSnode_t接受信息各个状态如下：
  */
 #define SNODE_RECV_STAT_ACCEPT   0  // 客户端首次连接，socket accept后 
 #define SNODE_RECV_STAT_PREPARE  1  // 准备就绪，等待数据中 
@@ -27,7 +27,7 @@
 #define SNODE_RECV_STAT_PARSED   4  // 数据完成 
 #define SNODE_RECV_STAT_EXCUTING 5  // 正在执行中 
 #define SNODE_RECV_STAT_EXCUTED  6  // 命令执行完成 
-#define NTSnodeServiceSetFinishedFlag(sn) sn->recvStat = SNODE_RECV_STAT_EXCUTED;
+#define NT_SnodeServiceSetFinishedFlag(sn) sn->recvStat = SNODE_RECV_STAT_EXCUTED;
 
 /* 各个类型解析状态
  */
@@ -38,22 +38,22 @@
 #define SNODE_RECV_STAT_PARSING_FINISHED    4
 
 
-/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 NTSnode (socket node)，
+/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 ntSnode_t (socket node)，
  * 包括连接traveller的client，或traveller主动连接的nt_server
  */
 #define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
 #define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
 
-typedef struct NTScriptServiceRequestCtx {
+typedef struct ntScriptServiceRequestCtx_t {
     int requestId;
     lua_State *ScriptServiceLua;
     sds ScriptServiceCallbackUrl;
     sds ScriptServiceCallbackArg;
-} NTScriptServiceRequestCtx;
+} ntScriptServiceRequestCtx_t;
 
-struct NTSnode;
-typedef struct NTSnode NTSnode;
-typedef struct NTSnode {
+struct ntSnode_t;
+typedef struct ntSnode_t ntSnode_t;
+typedef struct ntSnode_t {
     int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
     int fd;
     char fdstr[16];           // 字符串类型的fd 
@@ -72,16 +72,16 @@ typedef struct NTSnode {
     int argvRemaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
     time_t lastinteraction; // time of the last interaction, used for timeout 
 
-    void (*responseProc) (NTSnode *sn); //在等待远程机器发来结果的回调函数
+    void (*responseProc) (ntSnode_t *sn); //在等待远程机器发来结果的回调函数
 
     int scriptServiceRequestCtxListMaxId;
     list *scriptServiceRequestCtxList;
 
-    void (*proc) (NTSnode *sn);
-    void (*hupProc) (NTSnode *sn); //如果远程机器挂掉了，需要调用的函数
+    void (*proc) (ntSnode_t *sn);
+    void (*hupProc) (ntSnode_t *sn); //如果远程机器挂掉了，需要调用的函数
 
     int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
-} NTSnode;
+} ntSnode_t;
 
 #define SNODE_RECV_TYPE_HUP    -2 // 远程机器挂掉了
 #define SNODE_RECV_TYPE_ERR    -1 // -:ERR 
@@ -89,7 +89,7 @@ typedef struct NTSnode {
 #define SNODE_RECV_TYPE_STRING 2
 #define SNODE_RECV_TYPE_ARRAY  3  // 数组 且 命令 
 
-typedef struct NTServer {
+typedef struct ntServer_t {
     time_t unixtime;        // Unix time sampled every cron cycle. 
 
     int maxSnodes;
@@ -110,26 +110,26 @@ typedef struct NTServer {
 
     int tcpkeepalive;
 
-    NTSnode* currentSnode;
+    ntSnode_t* currentSnode;
 
     dict* services;
-} NTServer;
+} ntServer_t;
 
-int NTPrepare(int port);
-sds NTCatNTSnodeInfoString(sds s, NTSnode *sn);
-NTSnode* NTConnectNTSnode(char *addr, int port);
-void NTAddReplyError(NTSnode *sn, char *err);
-void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv);
-void NTAddReplyMultiString(NTSnode *sn, int count, ...);
-void NTAddReplyMultiSds(NTSnode *sn, int count, ...);
-void NTAddReplySds(NTSnode *sn, sds data);
-void NTAddReplyRawSds(NTSnode *sn, sds data);
-void NTAddReplyString(NTSnode *sn, char *data);
-void NTAddReplyRawString(NTSnode *sn, char *data);
-NTScriptServiceRequestCtx* NTNewScriptServiceRequestCtx();
-void NTRecycleScriptServiceRequestCtx(void *_ctx);
-void NTFreeNTSnode(NTSnode *sn);  // dangerous 
-NTSnode* NTGetNTSnodeByFDS(const char *fdstr);
+int NT_Prepare(int port);
+sds NT_CatSnodeInfoString(sds s, ntSnode_t *sn);
+ntSnode_t* NT_ConnectSnode(char *addr, int port);
+void NT_AddReplyError(ntSnode_t *sn, char *err);
+void NT_AddReplyStringArgv(ntSnode_t *sn, int argc, char **argv);
+void NT_AddReplyMultiString(ntSnode_t *sn, int count, ...);
+void NT_AddReplyMultiSds(ntSnode_t *sn, int count, ...);
+void NT_AddReplySds(ntSnode_t *sn, sds data);
+void NT_AddReplyRawSds(ntSnode_t *sn, sds data);
+void NT_AddReplyString(ntSnode_t *sn, char *data);
+void NT_AddReplyRawString(ntSnode_t *sn, char *data);
+ntScriptServiceRequestCtx_t* NT_NewScriptServiceRequestCtx();
+void NT_RecycleScriptServiceRequestCtx(void *_ctx);
+void NT_FreeSnode(ntSnode_t *sn);  // dangerous 
+ntSnode_t* NT_GetSnodeByFDS(const char *fdstr);
 
 
 #define AE_OK 0

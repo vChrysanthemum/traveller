@@ -10,24 +10,24 @@
 
 #include "g_extern.h"
 
-UIWindow *ui_rootUIWindow;
+uiWindow_t *ui_rootuiWindow;
 UIMap *ui_curUIMap;
 
-UIEnv *ui_env;
+uiEnv_t *ui_env;
 list *ui_panels;
-UIConsole *ui_console;
+uiConsole_t *ui_console;
 int ui_width, ui_height; //屏幕宽度、高度
 list *ui_pages;
-UIPage *ui_activePage;
+uiPage_t *ui_activePage;
 
-ETDevice *ui_device;
+etDevice_t *ui_device;
 
-int UIColorPair[8][8];
+int ui_ColorPair[8][8];
 
 static list *keyDownProcessors;
 
 static void uiLoop() {
-    ETDevice *device = g_mainDevice;
+    etDevice_t *device = g_mainDevice;
 
     while(1) {
         halfdelay(2);
@@ -43,18 +43,18 @@ static void uiLoop() {
             listReleaseIterator(iter);
         }
 
-        ETDeviceFactoryActorLoopOnce(device);
+        ET_DeviceFactoryActorLoopOnce(device);
     }
 
     endwin();
 }
 
-int UISubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+int UI_SubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     keyDownProcessors = listAddNodeTail(keyDownProcessors, subscriber);
     return ERRNO_OK;
 }
 
-int UIUnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     listNode *node;
     listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
     while (NULL != (node = listNext(iter))) {
@@ -67,37 +67,37 @@ int UIUnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     return ERRNO_OK;
 }
 
-static void UIPrepareLoadPageActor() {
-    ETFactoryActor *factoryActor = ui_device->factoryActor;
-    ETChannelActor *channelActor = ETNewChannelActor();
+static void UI_PrepareLoadPageActor() {
+    etFactoryActor_t *factoryActor = ui_device->factoryActor;
+    etChannelActor_t *channelActor = ET_NewChannelActor();
     channelActor->key = stringnew("/loadpage");
-    ETFactoryActorAppendChannel(factoryActor, channelActor);
+    ET_FactoryActorAppendChannel(factoryActor, channelActor);
 
-    ETActor *actor = ETFactoryActorNewActor(factoryActor);
-    actor->proc = UILoadPageActor;
-    ETSubscribeChannel(actor, channelActor);
+    etActor_t *actor = ET_FactoryActorNewActor(factoryActor);
+    actor->proc = UI_LoadPageActor;
+    ET_SubscribeChannel(actor, channelActor);
 }
 
-int UIPrepare() {
-    UIPrepareHtml();
-    UIPrepareCss();
+int UI_Prepare() {
+    UI_PrepareHtml();
+    UI_PrepareCss();
 
     ui_panels = listCreate();
     ui_pages = listCreate();
     keyDownProcessors = listCreate();
 
-    ui_env = (UIEnv*)zmalloc(sizeof(UIEnv));
-    memset(ui_env, 0, sizeof(UIEnv));
+    ui_env = (uiEnv_t*)zmalloc(sizeof(uiEnv_t));
+    memset(ui_env, 0, sizeof(uiEnv_t));
 
     setlocale(LC_ALL, "");
 
     ui_device = g_mainDevice;
-    UIPrepareLoadPageActor();
+    UI_PrepareLoadPageActor();
 
     return ERRNO_OK;
 }
 
-int UIInit() {
+int UI_Init() {
     initscr();
     clear();
     cbreak();
@@ -106,10 +106,10 @@ int UIInit() {
 
     getmaxyx(stdscr, ui_height, ui_width);
 
-    UIPrepareColor();
+    UI_PrepareColor();
 
-    UIinitConsole();
-    //UIInitMap();
+    UI_initConsole();
+    //UI_InitMap();
 
     top_panel(ui_console->uiwin->panel);
     update_panels();

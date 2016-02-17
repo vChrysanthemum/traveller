@@ -7,9 +7,9 @@
 #include "ui/ui.h"
 #include "g_extern.h"
 
-ETDevice *st_device;
+etDevice_t *st_device;
 
-static void STInitScriptLua(STScript *script) {
+static void ST_InitScriptLua(stScript_t *script) {
     lua_State *L;
     L = luaL_newstate();
     luaL_openlibs(L);
@@ -22,18 +22,18 @@ static void STInitScriptLua(STScript *script) {
 
     lua_pushstring(L, script->basedir);lua_setglobal(L, "g_basedir");
 
-    lua_register(L, "LogI",                    STLogI);
-    lua_register(L, "LoadView",                STLoadView);
-    lua_register(L, "NTConnectNTSnode",        STNTConnectSnode);
-    lua_register(L, "NTScriptServiceRequest",  STNTScriptServiceRequest);
-    lua_register(L, "NTScriptServiceResponse", STNTScriptServiceResponse);
-    lua_register(L, "NTAddReplyString",        STNTAddReplyString);
-    lua_register(L, "NTAddReplyRawString",     STNTAddReplyRawString);
-    lua_register(L, "NTAddReplyMultiString",   STNTAddReplyMultiString);
-    lua_register(L, "DBConnect",               STDBConnect);
-    lua_register(L, "DBClose",                 STDBClose);
-    lua_register(L, "DBQuery",                 STDBQuery);
-    lua_register(L, "UILoadPage",              STUILoadPage);
+    lua_register(L, "LogI",                     ST_LogI);
+    lua_register(L, "LoadView",                 ST_LoadView);
+    lua_register(L, "NT_ConnectSnode",          STNT_ConnectSnode);
+    lua_register(L, "NT_ScriptServiceRequest",  STNT_ScriptServiceRequest);
+    lua_register(L, "NT_ScriptServiceResponse", STNT_ScriptServiceResponse);
+    lua_register(L, "NT_AddReplyString",        STNT_AddReplyString);
+    lua_register(L, "NT_AddReplyRawString",     STNT_AddReplyRawString);
+    lua_register(L, "NT_AddReplyMultiString",   STNT_AddReplyMultiString);
+    lua_register(L, "DB_Connect",               STDB_Connect);
+    lua_register(L, "DB_Close",                 STDB_Close);
+    lua_register(L, "DB_Query",                 STDB_Query);
+    lua_register(L, "UI_LoadPage",              STUI_LoadPage);
 
     int errno;
 
@@ -68,15 +68,15 @@ static void STInitScriptLua(STScript *script) {
     dictReleaseIterator(di);
 
     errno = lua_pcall(L, 1, 0, 0);
-    STAssertLuaPCallSuccess(L, errno);
+    ST_AssertLuaPCallSuccess(L, errno);
 
     script->L = L;
 }
 
 
-STScript* STNewScript(IniSection *iniSection) {
-    STScript *script = (STScript*)zmalloc(sizeof(STScript));
-    memset(script, 0, sizeof(STScript));
+stScript_t* ST_NewScript(IniSection *iniSection) {
+    stScript_t *script = (stScript_t*)zmalloc(sizeof(stScript_t));
+    memset(script, 0, sizeof(stScript_t));
     
     script->iniSection = iniSection;
 
@@ -90,31 +90,31 @@ STScript* STNewScript(IniSection *iniSection) {
     dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
     script->basedir = sdsnew(dir);
 
-    STInitScriptLua(script);
+    ST_InitScriptLua(script);
 
     sdsfree(dir);
     return script;
 }
 
-void STFreeScript(void *_script) {
-    STScript *script = _script;
+void ST_FreeScript(void *_script) {
+    stScript_t *script = _script;
     sdsfree(script->basedir);
     lua_close(script->L);
     zfree(script);
 }
 
 /* 基础部分初始化 */
-int STPrepare() {
+int ST_Prepare() {
     st_device = g_netDevice;
     g_scripts = listCreate();
-    g_scripts->free = STFreeScript;
+    g_scripts->free = ST_FreeScript;
 
     sds value;
 
     char *header = "script:";
     int headerLen = strlen(header);
 
-    STScript *script;
+    stScript_t *script;
 
     IniSection *section;
     dictEntry *de;
@@ -129,13 +129,13 @@ int STPrepare() {
             continue;
         }
 
-        script = STNewScript(section);
+        script = ST_NewScript(section);
 
         g_scripts = listAddNodeTail(g_scripts, script);
 
         value = IniGet(g_conf, section->key, "is_subscribe_net");
         if (0 != value && 0 == sdscmpstr(value, "1")) {
-            SVSubscribeScriptService(script);
+            SV_SubscribeScriptService(script);
         }
     }
     dictReleaseIterator(di);

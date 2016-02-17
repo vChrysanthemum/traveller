@@ -6,7 +6,7 @@
 
 TEST_CASE("fail html token parser test")
 {
-    UIPrepareHtml();
+    UI_PrepareHtml();
     char *html = "\
                   <div>\
                   <input type=\"text\" name=\"text\" />\
@@ -14,11 +14,11 @@ TEST_CASE("fail html token parser test")
                   </div>\
                   ";
 
-    UIDocumentScanner UIHtmlScanner = {
-        html, html, UIHtmlScanToken
+    uiDocumentScanner_t UIHtmlScanner = {
+        html, html, UI_ScanHtmlToken
     };
 
-    UIDocumentScanToken *token = UIHtmlScanner.scan(&UIHtmlScanner);
+    uiDocumentScanToken_t *token = UIHtmlScanner.scan(&UIHtmlScanner);
 	REQUIRE(token, "should pass");
 
 	REQUIRE_EQ(token->type, UIHTML_TOKEN_START_TAG, "err: %s", token->content);
@@ -43,9 +43,9 @@ TEST_CASE("fail html token parser test")
 
 TEST_CASE("fail html parser test")
 {
-    UIPrepareHtml();
+    UI_PrepareHtml();
     listNode *ln;
-    UIHtmlDom *dom;
+    uiHtmlDom_t *dom;
     char *html = "\
                   <div id=\"top\" style=\"shit '' \\\" shit\" class=\"top hover\">\
                     <input type=\"text\" name=\"text\" />\
@@ -60,11 +60,11 @@ TEST_CASE("fail html parser test")
                     hello  &gt; &nbsp; sdlkfj \
                   </div>\
                   ";
-    UIHtmlDom *rootDom = UIParseHtml(html);
-    UIHtmlPrintDomTree(rootDom, 0);
+    uiHtmlDom_t *rootDom = UI_ParseHtml(html);
+    UI_PrintHtmlDomTree(rootDom, 0);
 
     ln = rootDom->children->head;
-    UIHtmlDom *rootDivDom = listNodeValue(ln);
+    uiHtmlDom_t *rootDivDom = listNodeValue(ln);
 
     REQUIRE_EQ(4, listLength(rootDivDom->children), "err");
 

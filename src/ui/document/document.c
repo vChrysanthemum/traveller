@@ -1,12 +1,12 @@
 #include "ui/ui.h"
 
-UIDocumentScanToken* UIDocumentNewScanToken() {
-    UIDocumentScanToken *token = (UIDocumentScanToken*)zmalloc(sizeof(UIDocumentScanToken));
+uiDocumentScanToken_t* UI_NewDocumentScanToken() {
+    uiDocumentScanToken_t *token = (uiDocumentScanToken_t*)zmalloc(sizeof(uiDocumentScanToken_t));
     token->content = sdsempty();
     return token;
 }
 
-void UIDocumentFreeScanToken(UIDocumentScanToken *token) {
+void UI_FreeDocumentScanToken(uiDocumentScanToken_t *token) {
     sdsfree(token->content);
     zfree(token);
 }

@@ -3,7 +3,7 @@
 #include "core/extern.h"
 #include "ui/extern.h"
 
-void UIPrepareColor() {
+int UI_PrepareColor() {
     start_color();
     init_pair(CP_CONSOLE_TAB_ACTIVE, COLOR_GREEN, COLOR_BLUE);
     init_pair(CP_CONSOLE_TAB, COLOR_BLACK, COLOR_WHITE);
@@ -23,8 +23,10 @@ void UIPrepareColor() {
     int i, j;
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
-            UIColorPair[types[i]][types[j]] = (types[i]+1)*100 + (types[j]+1);
-            init_pair(UIColorPair[types[i]][types[j]], types[i], types[j]);
+            ui_ColorPair[types[i]][types[j]] = (types[i]+1)*100 + (types[j]+1);
+            init_pair(ui_ColorPair[types[i]][types[j]], types[i], types[j]);
         }
     }
+
+    return 0;
 }

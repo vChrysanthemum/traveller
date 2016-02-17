@@ -15,29 +15,29 @@
 #include "core/extern.h"
 
 aeLooper *nt_el;
-NTServer nt_server;
+ntServer_t nt_server;
 
-static void setProtocolError(NTSnode *sn, int pos);
-static void resetNTSnodeArgs(NTSnode *sn);
-static int parseInputBufferGetSegment(NTSnode *sn, sds *target_addr);
-static int parseInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num);
-static void parseInputBufferStatus(NTSnode *sn);
-static void parseInputBufferString(NTSnode *sn);
-static void parseInputBufferArray(NTSnode *sn);
-static void parseInputBuffer(NTSnode *sn);
-static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask);
-static NTSnode* createNTSnode(int fd);
+static void setProtocolError(ntSnode_t *sn, int pos);
+static void resetSnodeArgs(ntSnode_t *sn);
+static int parseInputBufferGetSegment(ntSnode_t *sn, sds *target_addr);
+static int parseInputBufferGetNum(ntSnode_t *sn, sds *target_addr, int *target_num);
+static void parseInputBufferStatus(ntSnode_t *sn);
+static void parseInputBufferString(ntSnode_t *sn);
+static void parseInputBufferArray(ntSnode_t *sn);
+static void parseInputBuffer(ntSnode_t *sn);
+static void readQueryFromSnode(aeLooper *el, int fd, void *privdata, int mask);
+static ntSnode_t* createSnode(int fd);
 static void acceptCommonHandler(int fd, int flags);
 static void acceptTcpHandler(aeLooper *el, int fd, void *privdata, int mask);
 static int listenToPort(int port, int *fds, int *count);
-static void prepareNTSnodeToWrite(NTSnode *sn);
-static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask);
-static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count);
-static NTSnode* snodeArgvClear(NTSnode *sn);
-static NTSnode* snodeArgvEmpty(NTSnode *sn);
-static NTSnode* snodeArgvFree(NTSnode *sn);
+static void prepareSnodeToWrite(ntSnode_t *sn);
+static void sendReplyToSnode(aeLooper *el, int fd, void *privdata, int mask);
+static ntSnode_t* snodeArgvMakeRoomFor(ntSnode_t *sn, int count);
+static ntSnode_t* snodeArgvClear(ntSnode_t *sn);
+static ntSnode_t* snodeArgvEmpty(ntSnode_t *sn);
+static ntSnode_t* snodeArgvFree(ntSnode_t *sn);
 
-static NTSnode* snodeArgvFree(NTSnode *sn) {
+static ntSnode_t* snodeArgvFree(ntSnode_t *sn) {
     if (0 == sn->argv) return sn;
 
     int loopJ;
@@ -49,13 +49,13 @@ static NTSnode* snodeArgvFree(NTSnode *sn) {
     return sn;
 }
 
-static NTSnode* snodeArgvEmpty(NTSnode *sn) {
+static ntSnode_t* snodeArgvEmpty(ntSnode_t *sn) {
     sn->argv = 0;
     sn->argvSize = 0;
     return sn;
 }
 
-static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count) {
+static ntSnode_t* snodeArgvMakeRoomFor(ntSnode_t *sn, int count) {
     if (sn->argvSize >= count) return sn;
 
     int loopJ;
@@ -74,7 +74,7 @@ static NTSnode* snodeArgvMakeRoomFor(NTSnode *sn, int count) {
     return sn;
 }
 
-static NTSnode* snodeArgvClear(NTSnode *sn) {
+static ntSnode_t* snodeArgvClear(ntSnode_t *sn) {
     if (0 == sn->argvSize) return sn;
 
     int loopJ;
@@ -85,17 +85,17 @@ static NTSnode* snodeArgvClear(NTSnode *sn) {
     return sn;
 }
 
-static void prepareNTSnodeToWrite(NTSnode *sn) {
+static void prepareSnodeToWrite(ntSnode_t *sn) {
     if (sn->isWriteMod) return;
 
-    aeCreateFileEvent(nt_el, sn->fd, AE_WRITABLE, sendReplyToNTSnode, sn);
+    aeCreateFileEvent(nt_el, sn->fd, AE_WRITABLE, sendReplyToSnode, sn);
     sn->isWriteMod = 1;
 }
 
-static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
+static void sendReplyToSnode(aeLooper *el, int fd, void *privdata, int mask) {
     int nwritten = 0;
     int bufpos = 0;
-    NTSnode *sn = privdata;
+    ntSnode_t *sn = privdata;
     int tmpsize = sdslen(sn->writebuf);
 
     while(bufpos < tmpsize) {
@@ -111,7 +111,7 @@ static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
                 if (0 != sn->proc) {
                     sn->proc(sn);
                 }
-                NTFreeNTSnode(sn);
+                NT_FreeSnode(sn);
                 return;
             }
         }
@@ -125,33 +125,33 @@ static void sendReplyToNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
         sn->isWriteMod = 0;
 
         if (sn->flags & SNODE_CLOSE_AFTER_REPLY) {
-            NTFreeNTSnode(sn);
+            NT_FreeSnode(sn);
         }
     }
 }
 
-void NTAddReplySds(NTSnode *sn, sds data) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplySds(ntSnode_t *sn, sds data) {
+    prepareSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)sdslen(data), data);
 }
 
-void NTAddReplyRawSds(NTSnode *sn, sds data) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplyRawSds(ntSnode_t *sn, sds data) {
+    prepareSnodeToWrite(sn);
     sn->writebuf = sdscatsds(sn->writebuf, data);
 }
 
-void NTAddReplyString(NTSnode *sn, char *data) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplyString(ntSnode_t *sn, char *data) {
+    prepareSnodeToWrite(sn);
     sn->writebuf = sdscatfmt(sn->writebuf, "$%u\r\n%s\r\n", (unsigned int)strlen(data), data);
 }
 
-void NTAddReplyRawString(NTSnode *sn, char *data) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplyRawString(ntSnode_t *sn, char *data) {
+    prepareSnodeToWrite(sn);
     sn->writebuf = sdscat(sn->writebuf, data);
 }
 
-void NTAddReplyMultiSds(NTSnode *sn, int count, ...) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplyMultiSds(ntSnode_t *sn, int count, ...) {
+    prepareSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
     int loopJ;
@@ -166,8 +166,8 @@ void NTAddReplyMultiSds(NTSnode *sn, int count, ...) {
 }
 
 
-void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplyStringArgv(ntSnode_t *sn, int argc, char **argv) {
+    prepareSnodeToWrite(sn);
     int loopJ;
     sn->writebuf = sdscatfmt(sn->writebuf, "*%i\r\n", argc);
     for (loopJ = 0; loopJ < argc; loopJ++) {
@@ -176,8 +176,8 @@ void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv) {
 }
 
 
-void NTAddReplyMultiString(NTSnode *sn, int count, ...) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplyMultiString(ntSnode_t *sn, int count, ...) {
+    prepareSnodeToWrite(sn);
     va_list ap;
     sds tmpptr;
     int loopJ;
@@ -191,29 +191,29 @@ void NTAddReplyMultiString(NTSnode *sn, int count, ...) {
     va_end(ap); 
 }
 
-void NTAddReplyError(NTSnode *sn, char *err) {
-    prepareNTSnodeToWrite(sn);
+void NT_AddReplyError(ntSnode_t *sn, char *err) {
+    prepareSnodeToWrite(sn);
     sn->writebuf = sdscatlen(sn->writebuf, "-", 1);
     sn->writebuf = sdscat(sn->writebuf, err);
     sn->writebuf = sdscatlen(sn->writebuf, "\r\n", 2);
 }
 
 
-sds NTCatNTSnodeInfoString(sds s, NTSnode *sn) {
-    return sdscatfmt(s, "NTSnode");
+sds NT_CatSnodeInfoString(sds s, ntSnode_t *sn) {
+    return sdscatfmt(s, "ntSnode_t");
 }
 
 
-static void setProtocolError(NTSnode *sn, int pos) {
+static void setProtocolError(ntSnode_t *sn, int pos) {
     sn->flags |= SNODE_CLOSE_AFTER_REPLY;
     sdsrange(sn->querybuf,pos,-1);
 }
 
 
-/* 重新使 NTSnode 准备就绪 可以读取新的指令
+/* 重新使 ntSnode_t 准备就绪 可以读取新的指令
  * 该函数在 parseInputBuffer 完成时调用
  */
-static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
+static void rePreparentSnodeToReadQuery(ntSnode_t *sn) {
     sn->recvStat = SNODE_RECV_STAT_PREPARE;
     sn->recvType = ERRNO_NULL;
     sn->recvParsingStat = ERRNO_NULL;
@@ -232,7 +232,7 @@ static void rePrepareNTSnodeToReadQuery(NTSnode *sn) {
     sn->proc = 0;
 }
 
-static void resetNTSnodeArgs(NTSnode *sn) {
+static void resetSnodeArgs(ntSnode_t *sn) {
     sn->flags = ERRNO_NULL;
     sn->recvStat = ERRNO_NULL;
     sn->recvType = ERRNO_NULL;
@@ -253,7 +253,7 @@ static void resetNTSnodeArgs(NTSnode *sn) {
 /* 移动 querybuf 到 target_addr 一直到遇到 \r\n，或者最后一个\n，
  * 如果一直没遇到，则直接读取所有
  */
-static int parseInputBufferGetSegment(NTSnode *sn, sds *target_addr) {
+static int parseInputBufferGetSegment(ntSnode_t *sn, sds *target_addr) {
     char *newline;
     int offset;
     int readlen = 0;
@@ -285,7 +285,7 @@ static int parseInputBufferGetSegment(NTSnode *sn, sds *target_addr) {
 
 /* 从querybuf中读取数字，并使用tmpQuerybuf
  */
-static int parseInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num) {
+static int parseInputBufferGetNum(ntSnode_t *sn, sds *target_addr, int *target_num) {
     int readlen = 1;
     readlen = parseInputBufferGetSegment(sn, target_addr);
 
@@ -305,7 +305,7 @@ static int parseInputBufferGetNum(NTSnode *sn, sds *target_addr, int *target_num
     return readlen;
 }
 
-static void parseInputBufferStatus(NTSnode *sn) {
+static void parseInputBufferStatus(ntSnode_t *sn) {
     int readlen = 0;
 
     TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat, "parseInputBufferStatus error");
@@ -329,7 +329,7 @@ static void parseInputBufferStatus(NTSnode *sn) {
 
 }
 
-static void parseInputBufferString(NTSnode *sn) {
+static void parseInputBufferString(ntSnode_t *sn) {
     int readlen = 0, len;
 
     TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat, "parseInputBufferString error");
@@ -390,7 +390,7 @@ static void parseInputBufferString(NTSnode *sn) {
     }
 }
 
-static void parseInputBufferArray(NTSnode *sn) {
+static void parseInputBufferArray(ntSnode_t *sn) {
     int readlen = 0, len, argJ;
 
     TrvAssert(SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat, "parseInputBufferArray error");
@@ -490,7 +490,7 @@ PARSING_ARGV_START:
 
 /* 解析读取数据
  */
-static void parseInputBuffer(NTSnode *sn) {
+static void parseInputBuffer(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_ACCEPT == sn->recvStat || SNODE_RECV_STAT_PREPARE == sn->recvStat) {
 
         switch(sn->querybuf[0]) {
@@ -511,7 +511,7 @@ static void parseInputBuffer(NTSnode *sn) {
                 break;
 
             default :
-                NTAddReplyError(sn, "Protocol error: Unrecognized type");
+                NT_AddReplyError(sn, "Protocol error: Unrecognized type");
                 setProtocolError(sn, 0);
                 return;
         }
@@ -540,7 +540,7 @@ static void parseInputBuffer(NTSnode *sn) {
         }
 
     } else {
-        NTAddReplyError(sn, "Protocol error: Unrecognized");
+        NT_AddReplyError(sn, "Protocol error: Unrecognized");
         setProtocolError(sn, 0);
         return;
     }
@@ -549,7 +549,7 @@ static void parseInputBuffer(NTSnode *sn) {
     if (SNODE_RECV_STAT_PARSED == sn->recvStat) {
         if (0 != sn->responseProc) {
             sn->responseProc(sn);
-            rePrepareNTSnodeToReadQuery(sn);
+            rePreparentSnodeToReadQuery(sn);
             return;
         }
     }
@@ -557,20 +557,20 @@ static void parseInputBuffer(NTSnode *sn) {
     // 如果没有等待数据的回调函数，则认为是一个新的命令
     if (0 == sn->proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recvStat) {
-            NTAddReplyError(sn, "command not found");
-            rePrepareNTSnodeToReadQuery(sn);
+            NT_AddReplyError(sn, "command not found");
+            rePreparentSnodeToReadQuery(sn);
         }
     } else {
         sn->proc(sn);
 
         if (SNODE_RECV_STAT_EXCUTED == sn->recvStat) {
-            rePrepareNTSnodeToReadQuery(sn);
+            rePreparentSnodeToReadQuery(sn);
         }
     }
 }
 
-static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask) {
-    NTSnode *sn = (NTSnode*) privdata;
+static void readQueryFromSnode(aeLooper *el, int fd, void *privdata, int mask) {
+    ntSnode_t *sn = (ntSnode_t*) privdata;
     int nread;
     NOTUSED(el);
     NOTUSED(mask);
@@ -596,11 +596,11 @@ static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask)
             nread = 0;
         }  else {
             TrvLogD("Reading from client: %s",strerror(errno));
-            NTFreeNTSnode(sn);
+            NT_FreeSnode(sn);
         }
         return;
     } else if (0 == nread) {
-        NTFreeNTSnode(sn);
+        NT_FreeSnode(sn);
         return;
     }
 
@@ -609,24 +609,24 @@ static void readQueryFromNTSnode(aeLooper *el, int fd, void *privdata, int mask)
     }
 }
 
-static inline void freeScriptServiceRequestCtx(NTScriptServiceRequestCtx* ctx) {
+static inline void freeScriptServiceRequestCtx(ntScriptServiceRequestCtx_t* ctx) {
     sdsfree(ctx->ScriptServiceCallbackUrl);
     sdsfree(ctx->ScriptServiceCallbackArg);
     zfree(ctx);
 }
 
-static inline void resetScriptServiceRequestCtx(NTScriptServiceRequestCtx *ctx) {
+static inline void resetScriptServiceRequestCtx(ntScriptServiceRequestCtx_t *ctx) {
     sdsclear(ctx->ScriptServiceCallbackUrl);
     sdsclear(ctx->ScriptServiceCallbackArg);
     ctx->ScriptServiceLua = 0;
 }
 
-NTScriptServiceRequestCtx* NTNewScriptServiceRequestCtx() {
-    NTScriptServiceRequestCtx *ctx;
+ntScriptServiceRequestCtx_t* NT_NewScriptServiceRequestCtx() {
+    ntScriptServiceRequestCtx_t *ctx;
     if (0 == listLength(nt_server.scriptServiceRequestCtxPool)) {
         for (int i = 0; i < 20; i++) {
-            ctx = (NTScriptServiceRequestCtx*)zmalloc(sizeof(NTScriptServiceRequestCtx));
-            memset(ctx, 0, sizeof(NTScriptServiceRequestCtx));
+            ctx = (ntScriptServiceRequestCtx_t*)zmalloc(sizeof(ntScriptServiceRequestCtx_t));
+            memset(ctx, 0, sizeof(ntScriptServiceRequestCtx_t));
             ctx->ScriptServiceCallbackUrl = sdsempty();
             ctx->ScriptServiceCallbackArg = sdsempty();
 
@@ -635,7 +635,7 @@ NTScriptServiceRequestCtx* NTNewScriptServiceRequestCtx() {
     }
 
     listNode *ln = listFirst(nt_server.scriptServiceRequestCtxPool);
-    ctx = (NTScriptServiceRequestCtx*)ln->value;
+    ctx = (ntScriptServiceRequestCtx_t*)ln->value;
     listDelNode(nt_server.scriptServiceRequestCtxPool, ln);
 
     resetScriptServiceRequestCtx(ctx);
@@ -643,14 +643,14 @@ NTScriptServiceRequestCtx* NTNewScriptServiceRequestCtx() {
     return ctx;
 }
 
-void NTRecycleScriptServiceRequestCtx(void *_ctx) {
-    NTScriptServiceRequestCtx *ctx = (NTScriptServiceRequestCtx*)_ctx;
+void NT_RecycleScriptServiceRequestCtx(void *_ctx) {
+    ntScriptServiceRequestCtx_t *ctx = (ntScriptServiceRequestCtx_t*)_ctx;
     if (listLength(nt_server.scriptServiceRequestCtxPool) > 200) {
         listIter *li;
         listNode *ln;
         li = listGetIterator(nt_server.scriptServiceRequestCtxPool, AL_START_HEAD);
         for (int i = 0; i < 100 && NULL != (ln = listNext(li)); i++) {
-            freeScriptServiceRequestCtx((NTScriptServiceRequestCtx*)listNodeValue(ln));
+            freeScriptServiceRequestCtx((ntScriptServiceRequestCtx_t*)listNodeValue(ln));
             listDelNode(nt_server.scriptServiceRequestCtxPool, ln);
         }
         listReleaseIterator(li);
@@ -659,9 +659,9 @@ void NTRecycleScriptServiceRequestCtx(void *_ctx) {
     nt_server.scriptServiceRequestCtxPool = listAddNodeTail(nt_server.scriptServiceRequestCtxPool, ctx);
 }
 
-static NTSnode* createNTSnode(int fd) {
-    NTSnode *sn = zmalloc(sizeof(NTSnode));
-    memset(sn, 0, sizeof(NTSnode));
+static ntSnode_t* createSnode(int fd) {
+    ntSnode_t *sn = zmalloc(sizeof(ntSnode_t));
+    memset(sn, 0, sizeof(ntSnode_t));
 
     if (-1 == fd) {
         return 0;
@@ -672,7 +672,7 @@ static NTSnode* createNTSnode(int fd) {
     if (nt_server.tcpkeepalive)
         anetKeepAlive(0,fd,nt_server.tcpkeepalive);
     if (aeCreateFileEvent(nt_el,fd,AE_READABLE,
-                readQueryFromNTSnode, sn) == AE_ERR)
+                readQueryFromSnode, sn) == AE_ERR)
     {
         close(fd);
         zfree(sn);
@@ -686,14 +686,14 @@ static NTSnode* createNTSnode(int fd) {
     sn->writebuf = sdsempty();
     sn = snodeArgvEmpty(sn);
     sn->isWriteMod = 0;
-    resetNTSnodeArgs(sn);
+    resetSnodeArgs(sn);
 
     sn->recvStat = SNODE_RECV_STAT_ACCEPT;
     
     sn->responseProc = 0;
 
     sn->scriptServiceRequestCtxList = listCreate();
-    sn->scriptServiceRequestCtxList->free = NTRecycleScriptServiceRequestCtx;
+    sn->scriptServiceRequestCtxList->free = NT_RecycleScriptServiceRequestCtx;
     sn->scriptServiceRequestCtxListMaxId = 0;
 
     nt_server.statNumConnections++;
@@ -702,8 +702,8 @@ static NTSnode* createNTSnode(int fd) {
     return sn;
 }
 
-void NTFreeNTSnode(NTSnode *sn) {
-    TrvLogD("Free NTSnode %d", sn->fd);
+void NT_FreeSnode(ntSnode_t *sn) {
+    TrvLogD("Free ntSnode_t %d", sn->fd);
 
     if (-1 != sn->fd) {
         aeDeleteFileEvent(nt_el, sn->fd, AE_READABLE);
@@ -725,9 +725,9 @@ void NTFreeNTSnode(NTSnode *sn) {
     nt_server.statNumConnections--;
 }
 
-NTSnode *NTConnectNTSnode(char *addr, int port) {
+ntSnode_t *NT_ConnectSnode(char *addr, int port) {
     int fd;
-    NTSnode *sn;
+    ntSnode_t *sn;
 
     memset(nt_server.neterr, 0, ANET_ERR_LEN);
     fd = anetPeerSocket(nt_server.neterr, 0, "0.0.0.0", AF_INET);
@@ -738,13 +738,13 @@ NTSnode *NTConnectNTSnode(char *addr, int port) {
         return 0;
     }
     
-    sn = createNTSnode(fd);
+    sn = createSnode(fd);
     return sn;
 }
 
 static void acceptCommonHandler(int fd, int flags) {
-    NTSnode *sn;
-    if (0 == (sn = createNTSnode(fd))) {
+    ntSnode_t *sn;
+    if (0 == (sn = createSnode(fd))) {
         TrvLogW("Error registering fd event for the new snode: %s (fd=%d)",
                 strerror(errno),fd);
         close(fd); /* May be already closed, just ignore errors */
@@ -759,7 +759,7 @@ static void acceptCommonHandler(int fd, int flags) {
             /* Nothing to do, Just to avoid the warning... */
         }
         nt_server.statRejectedConn++;
-        NTFreeNTSnode(sn);
+        NT_FreeSnode(sn);
         return;
     }
     sn->flags |= flags;
@@ -816,7 +816,7 @@ static int listenToPort() {
     return ERRNO_OK;
 }
 
-NTSnode* NTGetNTSnodeByFDS(const char *fdstr) {
+ntSnode_t* NT_GetSnodeByFDS(const char *fdstr) {
     dictEntry *de;
 
     de = dictFind(nt_server.snodes, fdstr);
@@ -827,7 +827,7 @@ NTSnode* NTGetNTSnodeByFDS(const char *fdstr) {
     return dictGetVal(de);
 }
 
-int NTPrepare(int listenPort) {
+int NT_Prepare(int listenPort) {
     nt_el = aeNewLooper(1024*1024);
     nt_server.unixtime = -1;
     nt_server.maxSnodes = TRV_NET_MAX_SNODE;
@@ -854,7 +854,7 @@ int NTPrepare(int listenPort) {
 
     nt_server.scriptServiceRequestCtxPool = listCreate();
 
-    SVPrepare();
+    SV_Prepare();
 
     return ERRNO_OK;
 }

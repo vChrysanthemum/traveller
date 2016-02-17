@@ -20,7 +20,7 @@ function db:Instance()
     obj.__gc = function(p)
         p:Close()
     end
-    obj.conn = DBConnect(obj.dbpath)
+    obj.conn = DB_Connect(obj.dbpath)
     assert(nil ~= obj.conn, "连接数据库失败")
     self.instance = setmetatable(obj, self)
 
@@ -32,11 +32,11 @@ function db:escape(str)
 end
 
 function db:close()
-    DBClose(self.conn)
+    DB_Close(self.conn)
 end
 
 function db:Query(sql)
-    return DBQuery(self.conn, sql)
+    return DB_Query(self.conn, sql)
 end
 
 function db:Create(tablename, data)

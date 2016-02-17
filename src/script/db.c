@@ -8,7 +8,7 @@
 // for lua
 // 连接db
 // @param filepath string
-int STDBConnect(lua_State *L) {
+int STDB_Connect(lua_State *L) {
     int errno;
     sqlite3 *db;
 
@@ -28,11 +28,11 @@ int STDBConnect(lua_State *L) {
 // for lua
 // 关闭db连接
 // @param db *db
-int STDBClose(lua_State *L) {
+int STDB_Close(lua_State *L) {
     int errno;
     sqlite3 *db;
     db = lua_touserdata(L, 1);
-    TrvAssert((0 != db), "STDBClose error");
+    TrvAssert((0 != db), "STDB_Close error");
 
     sqlite3_close(db);
 
@@ -44,9 +44,9 @@ int STDBClose(lua_State *L) {
 // 执行sql语句
 // @param db  *db
 // @param sql string
-int STDBQuery(lua_State *L) {
+int STDB_Query(lua_State *L) {
     sqlite3 *db = lua_touserdata(L, 1);
-    TrvAssert((0 != db), "STDBClose error");
+    TrvAssert((0 != db), "STDB_Close error");
 
     const char *sql = lua_tostring(L, 2);
     char **dbresult;
@@ -64,7 +64,7 @@ int STDBQuery(lua_State *L) {
             &errmsg);
 
     if (SQLITE_OK != errno) {
-        TrvLogW("STDBQuery Error: %s", errmsg);
+        TrvLogW("STDB_Query Error: %s", errmsg);
         sqlite3_free(errmsg);
 
         lua_pushnil(L);
