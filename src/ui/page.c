@@ -20,7 +20,12 @@ void UI_FreePage(uiPage_t *page) {
 
 void* UI_LoadPageActor(etActor_t *actor, int args, void **argv) {
     uiPage_t *page = (uiPage_t*)argv[0];
-    uiHtmlDom_t *dom = listNodeValue(UI_ParseHtml(page->content)->children->head);
+
+    uiDocument_t *document = UI_NewDocument();
+    document->content = page->content;
+    UI_ParseHtml(document);
+
+    uiHtmlDom_t *dom = listNodeValue(document->rootDom->children->head);
     TrvLogI("%s", dom->title);
     page->uiwin = UI_createWindow(20, ui_width, 0, 0);
     wprintw(page->uiwin->win, page->content);

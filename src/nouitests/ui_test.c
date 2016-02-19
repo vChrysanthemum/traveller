@@ -60,7 +60,11 @@ TEST_CASE("fail html parser test")
                     hello  &gt; &nbsp; sdlkfj \
                   </div>\
                   ";
-    uiHtmlDom_t *rootDom = UI_ParseHtml(html);
+    uiDocument_t *document = UI_NewDocument();
+    document->content = html;
+    UI_ParseHtml(document);
+
+    uiHtmlDom_t *rootDom = document->rootDom;
     UI_PrintHtmlDomTree(rootDom, 0);
 
     ln = rootDom->children->head;

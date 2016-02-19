@@ -17,6 +17,8 @@ typedef struct uiDocumentScanner_s {
     uiDocumentScanToken_t* (*scan) (uiDocumentScanner_t *scanner);
 } uiDocumentScanner_t;
 
+typedef struct uiDocument_s uiDocument_t;
+
 /**
  * html 相关
  */
@@ -56,13 +58,13 @@ typedef struct uiHtmlDom_s {
     sds         id;
     list        *classes;
     sds         content;
-    uiHtmlDom_t   *parentDom;
+    uiHtmlDom_t *parent;
     list        *children;
     enum uiHtmlDomType_e type;
 } uiHtmlDom_t;
 uiHtmlDom_t* UI_NewHtmlDom();
 void UI_FreeHtmlDom(void *_dom);
-uiHtmlDom_t* UI_ParseHtml(char *html);
+int UI_ParseHtml(uiDocument_t *document);
 
 void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent);
 
@@ -84,6 +86,7 @@ typedef struct uiCssPropertyInfo_s {
 } uiCssPropertyInfo_t;
 
 typedef struct uiCssProperty_s {
+    int ReferenceCount;
     enum uiCssPropertyType_e type;
 } uiCssProperty_t;
 
@@ -91,13 +94,14 @@ typedef struct uiCssSelector_s {
 } uiCssSelector_t;
 
 typedef struct uiCssRule_s {
-    list *selectors;
+    uiCssSelector_t *selector;
+    uiCssProperty_t *property;
 } uiCssRule_t;
 
 typedef struct uiCssStyleSheet_s {
     list * rulers;
 } uiCssStyleSheet_t;
-uiCssStyleSheet_t* UI_ParseCssStyleSheet(char *css);
+int UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent);
 
 typedef struct uiCssObject_s uiCssObject_t;
 typedef struct uiCssObject_s {
@@ -114,5 +118,13 @@ typedef struct uiRenderObject_s {
     int   height;
     list  *children;
 } uiRenderObject_t;
+
+typedef struct uiDocument_s {
+    char              *content;
+    uiHtmlDom_t       *rootDom;
+    uiCssStyleSheet_t *cssStyleSheet;
+} uiDocument_t;
+uiDocument_t* UI_NewDocument();
+uiDocument_t* UI_ParseDocument(char *documentContent);
 
 #endif

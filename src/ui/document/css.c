@@ -21,6 +21,6 @@ void UI_PrepareCss() {
     }
 }
 
-uiCssStyleSheet_t* UI_ParseCssStyleSheet(char *css) {
+int UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
     return 0;
 }

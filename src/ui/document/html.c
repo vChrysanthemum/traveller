@@ -380,7 +380,7 @@ PARSE_HTML_DOM_TAG_END:
 static inline uiHtmlDom_t* parseHtmlTokenStartTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     sdsrange(token->content, 1, -2);
     uiHtmlDom_t *newdom = UI_NewHtmlDom();
-    newdom->parentDom = dom;
+    newdom->parent = dom;
     parseHtmlDomTag(newdom, token);
     dom->children = listAddNodeTail(dom->children, newdom);
     return newdom;
@@ -389,14 +389,14 @@ static inline uiHtmlDom_t* parseHtmlTokenStartTag(uiHtmlDom_t *dom, uiDocumentSc
 // </tag>
 static inline uiHtmlDom_t* parseHtmlTokenEndTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     sdsrange(token->content, 2, -2);
-    return dom->parentDom;
+    return dom->parent;
 }
 
 // <tag/>
 static inline uiHtmlDom_t* parseHtmlTokenSelfClosingTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     sdsrange(token->content, 1, -3);
     uiHtmlDom_t *newdom = UI_NewHtmlDom();
-    newdom->parentDom = dom;
+    newdom->parent = dom;
     parseHtmlDomTag(newdom, token);
     dom->children = listAddNodeTail(dom->children, newdom);
     return dom;
@@ -414,7 +414,7 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiHtmlDom_t *dom, uiDocumentScanTo
     } else {
         // 除了 script 以外的dom内容，均作特殊处理
         uiHtmlDom_t *newdom = UI_NewHtmlDom();
-        newdom->parentDom = dom;
+        newdom->parent = dom;
         newdom->content = sdsempty();
         dom->children = listAddNodeTail(dom->children, newdom);
 
@@ -472,11 +472,11 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiHtmlDom_t *dom, uiDocumentScanTo
     return dom;
 }
 
-uiHtmlDom_t* UI_ParseHtml(char *html) {
-    uiHtmlDom_t *rootDom = UI_NewHtmlDom();
-    uiHtmlDom_t *dom = rootDom;
+int UI_ParseHtml(uiDocument_t *document) {
+    document->rootDom = UI_NewHtmlDom();
+    uiHtmlDom_t *dom = document->rootDom;
     uiDocumentScanner_t UIHtmlScanner = {
-        html, html, UI_ScanHtmlToken
+        document->content, document->content, UI_ScanHtmlToken
     };
 
     uiDocumentScanToken_t *token;
@@ -495,10 +495,17 @@ uiHtmlDom_t* UI_ParseHtml(char *html) {
                 dom = parseHtmlTokenText(dom, token);
                 break;
         }
+
+        if (UIHTML_DOM_TYPE_TEXT == dom->type &&
+                0 != dom->parent &&
+                UIHTML_DOM_TYPE_STYLE == dom->parent->type) {
+            UI_ParseCssStyleSheet(document, dom->content);
+        }
+
         UI_FreeDocumentScanToken(token);
     }
 
-    return rootDom;
+    return 0;
 }
 
 void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {

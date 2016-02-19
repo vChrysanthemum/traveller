@@ -100,9 +100,9 @@ int UI_Prepare() {
 int UI_Init() {
     initscr();
     clear();
-    cbreak();
     noecho();
-    //raw();
+    //cbreak();
+    raw();
 
     getmaxyx(stdscr, ui_height, ui_width);
 
