@@ -15,7 +15,7 @@ travellerobjects := ./traveller.o $(baseobjects)
 uitestobjects := ./uitests/main.o $(baseobjects) ./uitests/ui_test.o
 
 nouitestobjects = ./nouitests/main.o ./nouitests/case.o $(baseobjects) \
-				  ./nouitests/core_test.o ./nouitests/ui_test.o
+				  ./nouitests/core_test.o ./nouitests/ui_html_test.o ./nouitests/ui_css_test.o
 
 ALL_INCS= -I ./ \
 		  -I ../deps/lua/src/ \

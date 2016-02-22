@@ -6,8 +6,7 @@
 
 TEST_CASE("fail html token parser test")
 {
-    UI_PrepareHtml();
-    UI_PrepareCss();
+    UI_PrepareDocument();
     char *html = "\
                   <div>\
                   <input type=\"text\" name=\"text\" />\
@@ -44,8 +43,7 @@ TEST_CASE("fail html token parser test")
 
 TEST_CASE("fail html parser test")
 {
-    UI_PrepareHtml();
-    UI_PrepareCss();
+    UI_PrepareDocument();
     listNode *ln;
     uiHtmlDom_t *dom;
     char *html = "\
@@ -100,19 +98,4 @@ TEST_CASE("fail html parser test")
     ln = dom->children->head;
     dom = listNodeValue(ln);
     REQUIRE_EQ(0, strcmp("hello world !", dom->content), "err");
-}
-
-TEST_CASE("fail css parser test")
-{
-    char *html = "\
-                  <style>\
-                  body { background-color:black; } \
-                  div div { width:30px; }\
-                  #head { width:30px; }\
-                  #head div { width:20px; }\
-                  #head div div div a input { width:20px; }\
-                  </style>\
-                  ";
-    uiDocument_t *document = UI_ParseDocument(html);
-    UI_PrintCssStyleSheet(document->cssStyleSheet);
 }
