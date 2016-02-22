@@ -507,7 +507,9 @@ int UI_ParseHtml(uiDocument_t *document) {
 void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
-    printf("%s", dom->title);
+    if (UIHTML_DOM_TYPE_TEXT != dom->type) {
+        printf("<%s>", dom->title);
+    }
     if (0 != dom->attribute && dictSize(dom->attribute) > 0) {
         dictEntry *de;
         dictIterator *di = dictGetIterator(dom->attribute);
@@ -519,11 +521,6 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
 
     if (UIHTML_DOM_TYPE_TEXT == dom->type) {
         printf("%s\n", dom->content);
-
-    } else if (UIHTML_DOM_TYPE_SCRIPT == dom->type) {
-        printf("\n");
-        for (i = 0; i < indent; i++) { printf("  "); }
-        printf("  %s\n", dom->content);
 
     } else {
         printf("\n");

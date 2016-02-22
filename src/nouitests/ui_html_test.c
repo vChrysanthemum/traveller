@@ -59,6 +59,10 @@ TEST_CASE("fail html parser test")
                     </script>\
                     hello  &gt; &nbsp; sdlkfj \
                   </div>\
+                  <style>\
+                  .hello {} \
+                  div {} \
+                  </style>\
                   ";
     uiDocument_t *document = UI_NewDocument();
     document->content = html;
