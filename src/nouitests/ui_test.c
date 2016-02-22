@@ -7,6 +7,7 @@
 TEST_CASE("fail html token parser test")
 {
     UI_PrepareHtml();
+    UI_PrepareCss();
     char *html = "\
                   <div>\
                   <input type=\"text\" name=\"text\" />\
@@ -14,36 +15,37 @@ TEST_CASE("fail html token parser test")
                   </div>\
                   ";
 
-    uiDocumentScanner_t UIHtmlScanner = {
-        html, html, UI_ScanHtmlToken
+    uiDocumentScanner_t htmlScanner = {
+        0, html, html, UI_ScanHtmlToken
     };
 
-    uiDocumentScanToken_t *token = UIHtmlScanner.scan(&UIHtmlScanner);
+    uiDocumentScanToken_t *token = htmlScanner.scan(&htmlScanner);
 	REQUIRE(token, "should pass");
 
 	REQUIRE_EQ(token->type, UIHTML_TOKEN_START_TAG, "err: %s", token->content);
     REQUIRE_EQ(0, strcmp("<div>", token->content), "err: %s", token->content);
     //freeHtmlToken
 
-    token = UIHtmlScanner.scan(&UIHtmlScanner);
+    token = htmlScanner.scan(&htmlScanner);
 	REQUIRE_EQ(token->type, UIHTML_TOKEN_SELF_CLOSING_TAG, "err: %s", token->content);
     REQUIRE_EQ(0, strcmp("<input type=\"text\" name=\"text\" />", token->content), "err: %s", token->content);
 
-    token = UIHtmlScanner.scan(&UIHtmlScanner);
+    token = htmlScanner.scan(&htmlScanner);
 	REQUIRE_EQ(token->type, UIHTML_TOKEN_TEXT, "err: %s", token->content);
     REQUIRE_EQ(0, strcmp("hello world !", token->content), "err: %s", token->content);
 
-    token = UIHtmlScanner.scan(&UIHtmlScanner);
+    token = htmlScanner.scan(&htmlScanner);
 	REQUIRE_EQ(token->type, UIHTML_TOKEN_END_TAG, "err: %s", token->content);
     REQUIRE_EQ(0, strcmp("</div>", token->content), "err: %s", token->content);
 
-    token = UIHtmlScanner.scan(&UIHtmlScanner);
+    token = htmlScanner.scan(&htmlScanner);
     REQUIRE(0 == token, "err");
 }
 
 TEST_CASE("fail html parser test")
 {
     UI_PrepareHtml();
+    UI_PrepareCss();
     listNode *ln;
     uiHtmlDom_t *dom;
     char *html = "\
@@ -98,4 +100,19 @@ TEST_CASE("fail html parser test")
     ln = dom->children->head;
     dom = listNodeValue(ln);
     REQUIRE_EQ(0, strcmp("hello world !", dom->content), "err");
+}
+
+TEST_CASE("fail css parser test")
+{
+    char *html = "\
+                  <style>\
+                  body { background-color:black; } \
+                  div div { width:30px; }\
+                  #head { width:30px; }\
+                  #head div { width:20px; }\
+                  #head div div div a input { width:20px; }\
+                  </style>\
+                  ";
+    uiDocument_t *document = UI_ParseDocument(html);
+    UI_PrintCssStyleSheet(document->cssStyleSheet);
 }

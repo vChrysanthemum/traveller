@@ -3,6 +3,10 @@
 
 #include "core/adlist.h"
 
+const char* UIERROR_CSS_PARSE_STATE_NOT_SELECTOR;
+const char* UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_KEY;
+const char* UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_VALUE;
+
 typedef struct uiDocumentScanToken_s {
     int  type;
     sds  content;
@@ -12,6 +16,7 @@ void UI_FreeDocumentScanToken(uiDocumentScanToken_t *token);
 
 typedef struct uiDocumentScanner_s uiDocumentScanner_t;
 typedef struct uiDocumentScanner_s {
+    int  state;
     char *content;
     char *current;
     uiDocumentScanToken_t* (*scan) (uiDocumentScanner_t *scanner);
@@ -25,9 +30,9 @@ typedef struct uiDocument_s uiDocument_t;
 void UI_PrepareHtml();
 
 #define UIHTML_TOKEN_TEXT               -1 // 标记中的字符串
-#define UIHTML_TOKEN_START_TAG          0  // <tag>
-#define UIHTML_TOKEN_END_TAG            1  // </tag>
-#define UIHTML_TOKEN_SELF_CLOSING_TAG   2  // <tag />
+#define UIHTML_TOKEN_START_TAG          -2 // <tag>
+#define UIHTML_TOKEN_END_TAG            -3 // </tag>
+#define UIHTML_TOKEN_SELF_CLOSING_TAG   -4 // <tag />
 
 #define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
@@ -48,6 +53,7 @@ typedef struct uiHtmlDomInfo_s {
         UIHTML_DOM_TYPE_TR,
         UIHTML_DOM_TYPE_TD,
         UIHTML_DOM_TYPE_STYLE,
+        UIHTML_DOM_TYPE_INPUT,
     } type;
 } uiHtmlDomInfo_t;
 
@@ -71,11 +77,23 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent);
 /**
  * css 相关
  */
+#define UICSS_PARSE_STATE_SELECTOR         2 // 解析selector阶段
+#define UICSS_PARSE_STATE_PROPERTY_KEY     5 // 解析property中的key阶段
+#define UICSS_PARSE_STATE_PROPERTY_VALUE   6 // 解析property中的value阶段
+
+#define UICSS_TOKEN_TEXT            '*' // 字符串
+#define UICSS_TOKEN_COMMA           ',' // ,
+#define UICSS_TOKEN_COLON           ':' // :
+#define UICSS_TOKEN_SEMICOLON       ';' // ;
+#define UICSS_TOKEN_BLOCK_START     '{' // {
+#define UICSS_TOKEN_BLOCK_END       '}' // }
+
 void UI_PrepareCss();
 
 typedef struct uiCssPropertyInfo_s {
     char *name;
     enum uiCssPropertyType_e {
+        UICSS_PROPERTY_TYPE_UNKNOWN,
         UICSS_PROPERTY_TYPE_BACKGROUND_COLOR,
         UICSS_PROPERTY_TYPE_COLOR,
         UICSS_PROPERTY_TYPE_PADDING,
@@ -86,27 +104,45 @@ typedef struct uiCssPropertyInfo_s {
 } uiCssPropertyInfo_t;
 
 typedef struct uiCssProperty_s {
-    int ReferenceCount;
     enum uiCssPropertyType_e type;
+    sds value;
 } uiCssProperty_t;
+uiCssProperty_t* UI_NewCssProperty();
+void UI_FreeCssProperty(void *_property);
+
+typedef struct uiCssSelectorSection_s {
+    enum cssSelectorType {
+        UICSS_SELECTOR_TYPE_UNKNOWN,
+        UICSS_SELECTOR_TYPE_TAG,
+        UICSS_SELECTOR_TYPE_CLASS,
+        UICSS_SELECTOR_TYPE_ID,
+    } type;
+    sds value;
+} uiCssSelectorSection_t;
+uiCssSelectorSection_t* UI_NewCssSelectorSection();
+void UI_FreeCssSelectorSection(void *_section);
 
 typedef struct uiCssSelector_s {
+    list *sections;
 } uiCssSelector_t;
+uiCssSelector_t* UI_NewCssSelector();
+void UI_FreeCssSelector(uiCssSelector_t *selector);
 
 typedef struct uiCssRule_s {
     uiCssSelector_t *selector;
-    uiCssProperty_t *property;
+    list *properties;
 } uiCssRule_t;
+uiCssRule_t* UI_NewCssRule();
+void UI_FreeCssRule(void *_rule);
 
 typedef struct uiCssStyleSheet_s {
-    list * rulers;
+    list * rules;
 } uiCssStyleSheet_t;
-int UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent);
-
-typedef struct uiCssObject_s uiCssObject_t;
-typedef struct uiCssObject_s {
-    uiCssProperty_t *property;
-} uiCssObject_t;
+uiCssStyleSheet_t* UI_NewCssStyleSheet();
+uiDocumentScanToken_t* UI_ScanCssToken(uiDocumentScanner_t *scanner);
+void UI_CssStyleSheetMergeRule(uiCssStyleSheet_t *cssStyleSheet, uiCssRule_t *rule);
+const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent);
+void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet);
 
 
 /**
@@ -119,10 +155,14 @@ typedef struct uiRenderObject_s {
     list  *children;
 } uiRenderObject_t;
 
+
+void UI_PrepareDocument();
 typedef struct uiDocument_s {
     char              *content;
     uiHtmlDom_t       *rootDom;
     uiCssStyleSheet_t *cssStyleSheet;
+    sds               script;
+    sds               style;
 } uiDocument_t;
 uiDocument_t* UI_NewDocument();
 uiDocument_t* UI_ParseDocument(char *documentContent);

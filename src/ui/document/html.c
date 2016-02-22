@@ -21,8 +21,15 @@ static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
     {"tr",      UIHTML_DOM_TYPE_TR},
     {"td",      UIHTML_DOM_TYPE_TD},
     {"style",   UIHTML_DOM_TYPE_STYLE},
+    {"input",   UIHTML_DOM_TYPE_INPUT},
     {0, 0},
 };
+
+static inline void skipStringNotConcern(char **ptr)  {
+    while(UIIsWhiteSpace(**ptr) && 0 != **ptr) {
+        (*ptr)++;
+    }
+}
 
 void UI_PrepareHtml() {
     uiHtmlDomInfoDict = dictCreate(&stackStringTableDictType, 0);
@@ -36,12 +43,6 @@ void UI_PrepareHtml() {
     dictAdd(UIHtmlSpecialStringTable, "&gt;",   ">");
     dictAdd(UIHtmlSpecialStringTable, "&lt;",   "<");
     dictAdd(UIHtmlSpecialStringTable, "&nbsp;", " ");
-}
-
-static inline void skipStringNotConcern(char **ptr)  {
-    while(UIIsWhiteSpace(**ptr) && 0 != **ptr) {
-        (*ptr)++;
-    }
 }
 
 uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
@@ -403,13 +404,14 @@ static inline uiHtmlDom_t* parseHtmlTokenSelfClosingTag(uiHtmlDom_t *dom, uiDocu
 }
 
 // text
-static inline uiHtmlDom_t* parseHtmlTokenText(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
+static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
+        uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
+
     if (UIHTML_DOM_TYPE_SCRIPT == dom->type) {
-        if (0 == dom->content) {
-            dom->content = sdsnewlen(token->content, sdslen(token->content));
-        } else {
-            dom->content = sdscatsds(dom->content, token->content);
-        }
+        document->script = sdscatsds(document->script, token->content);
+
+    } else if (UIHTML_DOM_TYPE_STYLE == dom->type) {
+        document->style = sdscatsds(document->style, token->content);
 
     } else {
         // 除了 script 以外的dom内容，均作特殊处理
@@ -475,12 +477,12 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiHtmlDom_t *dom, uiDocumentScanTo
 int UI_ParseHtml(uiDocument_t *document) {
     document->rootDom = UI_NewHtmlDom();
     uiHtmlDom_t *dom = document->rootDom;
-    uiDocumentScanner_t UIHtmlScanner = {
-        document->content, document->content, UI_ScanHtmlToken
+    uiDocumentScanner_t htmlScanner = {
+        0, document->content, document->content, UI_ScanHtmlToken
     };
 
     uiDocumentScanToken_t *token;
-    while(0 != (token = UIHtmlScanner.scan(&UIHtmlScanner))) {
+    while(0 != (token = htmlScanner.scan(&htmlScanner))) {
         switch(token->type) {
             case UIHTML_TOKEN_START_TAG:
                 dom = parseHtmlTokenStartTag(dom, token);
@@ -492,14 +494,8 @@ int UI_ParseHtml(uiDocument_t *document) {
                 dom = parseHtmlTokenSelfClosingTag(dom, token);
                 break;
             case UIHTML_TOKEN_TEXT:
-                dom = parseHtmlTokenText(dom, token);
+                dom = parseHtmlTokenText(document, dom, token);
                 break;
-        }
-
-        if (UIHTML_DOM_TYPE_TEXT == dom->type &&
-                0 != dom->parent &&
-                UIHTML_DOM_TYPE_STYLE == dom->parent->type) {
-            UI_ParseCssStyleSheet(document, dom->content);
         }
 
         UI_FreeDocumentScanToken(token);

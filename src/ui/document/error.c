@@ -1,0 +1,5 @@
+#include "ui/document/document.h"
+
+const char* UIERROR_CSS_PARSE_STATE_NOT_SELECTOR = "parse state is not UICSS_PARSE_STATE_SELECTOR";
+const char* UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_KEY = "parse state is not UICSS_PARSE_STATE_PROPERTY_KEY";
+const char* UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_VALUE = "parse state is not UICSS_PARSE_STATE_PROPERTY_VALUE";

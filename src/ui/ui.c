@@ -79,8 +79,7 @@ static void UI_PrepareLoadPageActor() {
 }
 
 int UI_Prepare() {
-    UI_PrepareHtml();
-    UI_PrepareCss();
+    UI_PrepareDocument();
 
     ui_panels = listCreate();
     ui_pages = listCreate();

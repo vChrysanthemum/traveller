@@ -26,6 +26,8 @@ typedef struct Log {
 /* Anti-warning macro... */
 #define NOTUSED(V) ((void) V)
 
+#define AssertOrReturnError(condition, error) if (!condition) return error; 
+
 #define TrvLog_ERROR 1
 #define TrvLog_WARNING 2
 #define TrvLog_NOTICE 3

@@ -31,11 +31,15 @@ all:traveller
 traveller:$(travellerobjects)
 	$(CC) -o traveller $(travellerobjects) $(LIBRARY)  $(CFLAGS)
 
-uitest:$(uitestobjects)
+build_uitest:$(uitestobjects)
 	$(CC) -o uitest $(uitestobjects) $(LIBRARY)  $(CFLAGS)
 
-nouitest:$(nouitestobjects)
+build_nouitest:$(nouitestobjects)
 	$(CC) -o nouitest $(nouitestobjects) $(LIBRARY)  $(CFLAGS)
+
+test_noui:
+	make build_nouitest
+	./nouitest
 
 %.o: %.c 
 	$(CC) -static -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o
