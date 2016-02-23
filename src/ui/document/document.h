@@ -100,15 +100,26 @@ typedef struct uiCssPropertyInfo_s {
         UICSS_PROPERTY_TYPE_MARGIN,
         UICSS_PROPERTY_TYPE_DISPLAY,
         UICSS_PROPERTY_TYPE_TEXT_ALIGN,
+        UICSS_PROPERTY_TYPE_WIDTH,
+        UICSS_PROPERTY_TYPE_HEIGHT,
     } type;
 } uiCssPropertyInfo_t;
 
 typedef struct uiCssProperty_s {
     enum uiCssPropertyType_e type;
+    sds key;
     sds value;
 } uiCssProperty_t;
 uiCssProperty_t* UI_NewCssProperty();
 void UI_FreeCssProperty(void *_property);
+
+typedef struct uiCssPropertyList_s {
+    int referenceCount;
+    list *data;
+} uiCssPropertyList_t;
+uiCssPropertyList_t* UI_DuplicateCssPropertyList(uiCssPropertyList_t* propertyList);
+uiCssPropertyList_t* UI_NewCssPropertyList();
+void UI_FreeCssPropertyList(uiCssPropertyList_t *propertyList);
 
 typedef struct uiCssSelectorSection_s {
     enum cssSelectorType {
@@ -130,7 +141,7 @@ void UI_FreeCssSelector(uiCssSelector_t *selector);
 
 typedef struct uiCssRule_s {
     uiCssSelector_t *selector;
-    list *properties;
+    uiCssPropertyList_t *propertyList;
 } uiCssRule_t;
 uiCssRule_t* UI_NewCssRule();
 void UI_FreeCssRule(void *_rule);

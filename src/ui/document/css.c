@@ -11,6 +11,8 @@ static uiCssPropertyInfo_t uiCssPropertyInfoTable[] = {
     {"margin",           UICSS_PROPERTY_TYPE_MARGIN},
     {"display",          UICSS_PROPERTY_TYPE_DISPLAY},
     {"text-align",       UICSS_PROPERTY_TYPE_TEXT_ALIGN},
+    {"width",            UICSS_PROPERTY_TYPE_WIDTH},
+    {"height",           UICSS_PROPERTY_TYPE_HEIGHT},
     {0},
 };
 
@@ -39,19 +41,25 @@ void UI_FreeCssProperty(void *_property) {
     zfree(property);
 }
 
-list* UI_DuplicateCssProperties(list *properties) {
-    list *newProperties = listCreate();
-    newProperties->free = UI_FreeCssProperty;
+uiCssPropertyList_t* UI_DuplicateCssPropertyList(uiCssPropertyList_t* propertyList) {
+    propertyList->referenceCount++;
+    return propertyList;
+}
 
-    listIter *li;
-    listNode *ln;
-    li = listGetIterator(properties, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
-        newProperties = listAddNodeTail(newProperties, listNodeValue(ln));
+uiCssPropertyList_t* UI_NewCssPropertyList() {
+    uiCssPropertyList_t *propertyList = (uiCssPropertyList_t*)zmalloc(sizeof(uiCssPropertyList_t));
+    propertyList->referenceCount = 1;
+    propertyList->data = listCreate();
+    propertyList->data->free = UI_FreeCssProperty;
+    return propertyList;
+}
+
+void UI_FreeCssPropertyList(uiCssPropertyList_t *propertyList) {
+    propertyList--;
+    if (propertyList < 0) {
+        listRelease(propertyList->data);
+        zfree(propertyList);
     }
-    listReleaseIterator(li);
-
-    return newProperties;
 }
 
 uiCssSelectorSection_t* UI_NewCssSelectorSection() {
@@ -82,15 +90,13 @@ void UI_FreeCssSelector(uiCssSelector_t *selector) {
 uiCssRule_t* UI_NewCssRule() {
     uiCssRule_t* rule = (uiCssRule_t*)zmalloc(sizeof(uiCssRule_t));
     memset(rule, 0, sizeof(uiCssRule_t));
-    rule->properties = listCreate();
-    rule->properties->free = UI_FreeCssProperty;
     return rule;
 }
 
 void UI_FreeCssRule(void *_rule) {
     uiCssRule_t *rule = (uiCssRule_t*)_rule;
     UI_FreeCssSelector(rule->selector);
-    listRelease(rule->properties);
+    UI_FreeCssPropertyList(rule->propertyList);
     zfree(rule);
 }
 
@@ -165,6 +171,7 @@ static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t
 
         case UICSS_PARSE_STATE_PROPERTY_KEY:
             *property = UI_NewCssProperty();
+            (*property)->key = sdsnewlen(token->content, sdslen(token->content));
             uiCssPropertyInfo_t *propertyInfo = dictFetchValue(uiCssPropertyInfoDict, token->content);
             if (0 != propertyInfo) {
                 (*property)->type = propertyInfo->type;
@@ -187,8 +194,8 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
     uiCssSelector_t *selector = 0;
     uiCssProperty_t *property = 0;
     list *selectors = listCreate();
-    list *properties = listCreate();
-    properties->free = UI_FreeCssProperty;
+    uiCssPropertyList_t* propertyList = UI_NewCssPropertyList();
+    //properties->free = UI_FreeCssProperty;
     while(0 != (token = cssScanner.scan(&cssScanner))) {
         switch (token->type) {
             case UICSS_TOKEN_TEXT:
@@ -199,16 +206,20 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
                 AssertOrReturnError(UICSS_PARSE_STATE_SELECTOR == cssScanner.state,
                         UIERROR_CSS_PARSE_STATE_NOT_SELECTOR);
 
-                selectors = listAddNodeTail(selectors, selector);
-                selector = 0;
+                if (0 != selector) {
+                    selectors = listAddNodeTail(selectors, selector);
+                    selector = 0;
+                }
                 break;
 
             case UICSS_TOKEN_BLOCK_START:
                 AssertOrReturnError(UICSS_PARSE_STATE_SELECTOR == cssScanner.state,
                         UIERROR_CSS_PARSE_STATE_NOT_SELECTOR);
 
-                selectors = listAddNodeTail(selectors, selector);
-                selector = 0;
+                if (0 != selector) {
+                    selectors = listAddNodeTail(selectors, selector);
+                    selector = 0;
+                }
                 cssScanner.state = UICSS_PARSE_STATE_PROPERTY_KEY;
                 break;
 
@@ -223,13 +234,18 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
                 AssertOrReturnError(UICSS_PARSE_STATE_PROPERTY_VALUE == cssScanner.state,
                         UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_VALUE);
 
-                properties = listAddNodeTail(properties, property);
-                property = 0;
+                if (0 != property) {
+                    propertyList->data = listAddNodeTail(propertyList->data, property);
+                    property = 0;
+                }
                 cssScanner.state = UICSS_PARSE_STATE_PROPERTY_KEY;
                 break;
 
             case UICSS_TOKEN_BLOCK_END:
-                properties = listAddNodeTail(properties, property);
+                if (0 != property) {
+                    propertyList->data = listAddNodeTail(propertyList->data, property);
+                    property = 0;
+                }
                 cssScanner.state = UICSS_PARSE_STATE_SELECTOR;
                 break;
         }
@@ -246,13 +262,13 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
     while (NULL != (ln = listNext(li))) {
         rule = UI_NewCssRule();
         rule->selector = listNodeValue(ln);
-        rule->properties = UI_DuplicateCssProperties(properties);
+        rule->propertyList = UI_DuplicateCssPropertyList(propertyList);
         UI_CssStyleSheetMergeRule(document->cssStyleSheet, rule);
     }
     listReleaseIterator(li);
 
     listRelease(selectors);
-    listRelease(properties);
+    UI_FreeCssPropertyList(propertyList);
 
     return 0;
 }
@@ -261,9 +277,13 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
 void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
     uiCssRule_t *rule;
     uiCssSelectorSection_t *selectorSection;
+    uiCssProperty_t *property;
 
     listIter *liSelectorSection;
     listNode *lnSelectorSection;
+
+    listIter *liProperty;
+    listNode *lnProperty;
 
     listIter *li;
     listNode *ln;
@@ -278,8 +298,18 @@ void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
 
             printf("%s ", selectorSection->value);
         }
-        printf("\n");
         listReleaseIterator(liSelectorSection);
+
+        printf(" {");
+        liProperty = listGetIterator(rule->propertyList->data, AL_START_HEAD);
+        while (NULL != (lnProperty = listNext(liProperty))) {
+            property = (uiCssProperty_t*)listNodeValue(lnProperty);
+
+            printf("%d %s:%s; ", property->type, property->key, property->value);
+        }
+        listReleaseIterator(liProperty);
+        printf("} ");
+        printf("\n");
     }
     listReleaseIterator(li);
 }
