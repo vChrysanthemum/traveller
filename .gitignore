@@ -7,7 +7,5 @@
 *.DS_Store
 *.log
 */tags
-tests/win
-tests/t 
 deps/lua/src/lua
 deps/lua/src/luac
