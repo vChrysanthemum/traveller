@@ -65,7 +65,7 @@ void UI_FreeCssPropertyList(uiCssPropertyList_t *propertyList) {
 uiCssSelectorSection_t* UI_NewCssSelectorSection() {
     uiCssSelectorSection_t *section = (uiCssSelectorSection_t*)zmalloc(sizeof(uiCssSelectorSection_t));
     memset(section, 0, sizeof(uiCssSelectorSection_t));
-    section->type = UICSS_SELECTOR_TYPE_UNKNOWN;
+    section->type = UICSS_SELECTOR_SECTION_TYPE_UNKNOWN;
     return section;
 }
 
@@ -155,17 +155,48 @@ static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t
             if (0 == *selector) {
                 *selector = UI_NewCssSelector();
             }
+
             uiCssSelectorSection_t *section = UI_NewCssSelectorSection();
-            if('#' == *token->content) {
-                section->type = UICSS_SELECTOR_TYPE_ID;
-                section->value = sdsnewlen(token->content+1, sdslen(token->content)-1);
-            } else if ('.' == *token->content) {
-                section->type = UICSS_SELECTOR_TYPE_CLASS;
-                section->value = sdsnewlen(token->content+1, sdslen(token->content)-1);
-            } else {
-                section->type = UICSS_SELECTOR_TYPE_TAG;
-                section->value = sdsnewlen(token->content, sdslen(token->content));
+
+            int isSelectorSectionAttributeFound = 0;
+            int selectorSectionAttributeIndex = 1;
+            section->attributeType = UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE;
+            while(1) {
+                if ('\0' == token->content[selectorSectionAttributeIndex]) {
+                    break;
+                }
+
+                if ('.' == token->content[selectorSectionAttributeIndex]) {
+                    section->attributeType = UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS;
+                    selectorSectionAttributeIndex++;
+                    section->attribute = sdsnewlen(&token->content[selectorSectionAttributeIndex], 
+                            sdslen(token->content)-selectorSectionAttributeIndex);
+                    isSelectorSectionAttributeFound = 1;
+                    break;
+                }
+
+                selectorSectionAttributeIndex++;
             }
+
+            int selectorSectionValueIndex = 0;
+            if('#' == *token->content) {
+                section->type = UICSS_SELECTOR_SECTION_TYPE_ID;
+                selectorSectionValueIndex = 1;
+            } else if ('.' == *token->content) {
+                section->type = UICSS_SELECTOR_SECTION_TYPE_CLASS;
+                selectorSectionValueIndex = 1;
+            } else {
+                section->type = UICSS_SELECTOR_SECTION_TYPE_TAG;
+            }
+
+            if (1 == isSelectorSectionAttributeFound) {
+                section->value = sdsnewlen(&token->content[selectorSectionValueIndex],
+                        selectorSectionAttributeIndex-selectorSectionValueIndex-1);
+            } else {
+                section->value = sdsnewlen(&token->content[selectorSectionValueIndex],
+                        sdslen(token->content)-selectorSectionValueIndex);
+            }
+
             (*selector)->sections = listAddNodeTail((*selector)->sections, section);
             break;
 
@@ -297,6 +328,10 @@ void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
             selectorSection = (uiCssSelectorSection_t*)listNodeValue(lnSelectorSection);
 
             printf("%s ", selectorSection->value);
+
+            if (UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE != selectorSection->attributeType) {
+                printf("%d %s", selectorSection->attributeType, selectorSection->attribute);
+            }
         }
         listReleaseIterator(liSelectorSection);
 

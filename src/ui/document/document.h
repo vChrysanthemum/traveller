@@ -122,13 +122,18 @@ uiCssPropertyList_t* UI_NewCssPropertyList();
 void UI_FreeCssPropertyList(uiCssPropertyList_t *propertyList);
 
 typedef struct uiCssSelectorSection_s {
-    enum cssSelectorType {
-        UICSS_SELECTOR_TYPE_UNKNOWN,
-        UICSS_SELECTOR_TYPE_TAG,
-        UICSS_SELECTOR_TYPE_CLASS,
-        UICSS_SELECTOR_TYPE_ID,
+    enum cssSelectorSectionType {
+        UICSS_SELECTOR_SECTION_TYPE_UNKNOWN,
+        UICSS_SELECTOR_SECTION_TYPE_TAG,
+        UICSS_SELECTOR_SECTION_TYPE_CLASS,
+        UICSS_SELECTOR_SECTION_TYPE_ID,
     } type;
     sds value;
+    enum cssSelectorSectionAttributeType {
+        UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE,
+        UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS,
+    } attributeType;
+    sds attribute;
 } uiCssSelectorSection_t;
 uiCssSelectorSection_t* UI_NewCssSelectorSection();
 void UI_FreeCssSelectorSection(void *_section);

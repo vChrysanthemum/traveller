@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <panel.h>
 #include <string.h>
 
 #include "core/adlist.h"

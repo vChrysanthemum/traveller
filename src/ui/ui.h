@@ -1,8 +1,8 @@
 #ifndef __UI_UI_H
 #define __UI_UI_H
 
-#include <panel.h>
 #include <curses.h>
+#include <panel.h>
 #include "core/errors.h"
 #include "core/util.h"
 #include "core/sds.h"
