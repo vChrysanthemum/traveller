@@ -8,4 +8,6 @@
 *.log
 */tags
 tests/win
-tests/t
+tests/t 
+deps/lua/src/lua
+deps/lua/src/luac
