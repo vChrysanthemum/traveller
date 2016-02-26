@@ -11,7 +11,7 @@ void SV_Test(ntSnode_t *sn) {
     NT_SnodeServiceSetFinishedFlag(sn);
  
     ntSnode_t *new_sn = NT_ConnectSnode("127.0.0.1", 1091);
-    if (NULL != new_sn) {
+    if (0 != new_sn) {
         NT_AddReplyMultiString(new_sn, 2, "close", "so;iafnonaioient");
     }
 }

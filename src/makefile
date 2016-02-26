@@ -8,14 +8,16 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./script/script.o ./script/util.o ./script/ui.o ./script/db.o ./script/net.o \
 				   ./service/service.o ./service/test.o ./service/script.o \
 				   ./ui/ui.o ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
-				   ./ui/document/document.o ./ui/document/html.o ./ui/document/css.o
+				   ./ui/document/document.o ./ui/document/html.o ./ui/document/css.o ./ui/document/select.o
 
 travellerobjects := ./traveller.o $(baseobjects)
 
 uitestobjects := ./uitests/main.o $(baseobjects) ./uitests/ui_test.o
 
 nouitestobjects = ./nouitests/main.o ./nouitests/case.o $(baseobjects) \
-				  ./nouitests/core_test.o ./nouitests/ui_html_test.o ./nouitests/ui_css_test.o
+				  ./nouitests/core_test.o \
+				  ./nouitests/ui_main_test.o \
+				  ./nouitests/ui_html_test.o ./nouitests/ui_css_test.o ./nouitests/ui_css_select_test.o
 
 ALL_INCS= -I ./ \
 		  -I ../deps/lua/src/ \

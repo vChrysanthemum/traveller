@@ -161,7 +161,7 @@ int STNT_ConnectSnode(lua_State *L) {
 
     sn = NT_ConnectSnode(host, port);
 
-    if (NULL == sn) {
+    if (0 == sn) {
         lua_pushnil(L);
     } else {
         lua_pushstring(L, sn->fdstr);

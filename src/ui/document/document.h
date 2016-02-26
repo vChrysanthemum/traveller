@@ -160,6 +160,11 @@ void UI_CssStyleSheetMergeRule(uiCssStyleSheet_t *cssStyleSheet, uiCssRule_t *ru
 const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent);
 void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet);
 
+/**
+ * css选择器
+ */
+list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom);
+uiHtmlDom_t* UI_GetHtmlDomByCssSelector(uiDocument_t* document, uiCssSelector_t *selector);
 
 /**
  * render 相关
@@ -179,6 +184,7 @@ typedef struct uiDocument_s {
     uiCssStyleSheet_t *cssStyleSheet;
     sds               script;
     sds               style;
+    list              *leafHtmlDoms;
 } uiDocument_t;
 uiDocument_t* UI_NewDocument();
 uiDocument_t* UI_ParseDocument(char *documentContent);

@@ -70,7 +70,7 @@ aeLooper_t *aeNewLooper(int setsize) {
     if ((eventLoop = zmalloc(sizeof(*eventLoop))) == NULL) goto err;
     eventLoop->events = zmalloc(sizeof(aeFileEvent_t)*setsize);
     eventLoop->fired = zmalloc(sizeof(aeFiredEvent_t)*setsize);
-    if (eventLoop->events == NULL || eventLoop->fired == NULL) goto err;
+    if (eventLoop->events == 0 || eventLoop->fired == NULL) goto err;
     eventLoop->setsize = setsize;
     eventLoop->lastTime = time(NULL);
     eventLoop->timeEventHead = NULL;
@@ -249,7 +249,7 @@ int aeDeleteTimeEvent(aeLooper_t *eventLoop, long long id)
 /* Search the first timer to fire.
  * This operation is useful to know how many time the select can be
  * put in sleep without to delay any event.
- * If there are no timers NULL is returned.
+ * If there are no timers 0 is returned.
  *
  * Note that's O(N) since time events are unsorted.
  * Possible optimizations (not needed by Redis so far, but...):

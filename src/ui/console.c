@@ -22,7 +22,7 @@ static void renderTabs() {
     listNode *ln;
     uiPage_t *page;
     listIter *li = listGetIterator(ui_pages, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         page = (uiPage_t*)ln->value;
 
         if (page == ui_activePage) {

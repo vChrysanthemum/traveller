@@ -12,7 +12,7 @@ dictType serviceTableDictType = {
     NULL,                      /* val dup */
     dictSdsKeyCaseCompare,     /* key compare */
     dictSdsDestructor,         /* key destructor */
-    NULL                       /* val destructor */
+    0                       /* val destructor */
 };
 
 svServiceRouter_t svServiceRouter_tTable[] = {

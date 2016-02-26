@@ -58,7 +58,7 @@ static void ST_InitScriptLua(stScript_t *script) {
     dictEntry *de;
     dictIterator *di = dictGetIterator(script->iniSection->options);
     lua_newtable(L);
-    while ((de = dictNext(di)) != NULL) {
+    while ((de = dictNext(di)) != 0) {
         iniOption = (IniOption*)dictGetVal(de);
 
         lua_pushstring(L, iniOption->key);
@@ -119,7 +119,7 @@ int ST_Prepare() {
     IniSection *section;
     dictEntry *de;
     dictIterator *di = dictGetIterator(g_conf->sections);
-    while ((de = dictNext(di)) != NULL) {
+    while ((de = dictNext(di)) != 0) {
         section = (IniSection*)dictGetVal(de);
         if (sdslen(section->key) < headerLen) {
             continue;

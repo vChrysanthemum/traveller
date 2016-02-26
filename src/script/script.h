@@ -42,7 +42,7 @@ int ST_Prepare();
 \
     fdstr = lua_tostring(L, 1);\
     sn = NT_GetSnodeByFDS(fdstr);\
-    if (NULL == sn) {\
+    if (0 == sn) {\
         TrvLogI("找不到链接: %s", fdstr);\
         lua_pushnumber(L, -2);\
         return 1;\

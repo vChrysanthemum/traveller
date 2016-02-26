@@ -6,7 +6,6 @@
 
 TEST_CASE("fail css parser test")
 {
-    UI_PrepareDocument();
     char *html = "\
                   <style>\
                   body { background-color:black; } \

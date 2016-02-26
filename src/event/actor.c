@@ -39,28 +39,28 @@ void ET_FreeFactoryActor(etFactoryActor_t *factoryActor) {
     listIter *li;
     listNode *ln;
     li = listGetIterator(factoryActor->actorEventPool, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         freeActorEvent((etActorEvent_t*)listNodeValue(ln));
     }
     listReleaseIterator(li);
 
     listRelease(factoryActor->actorPool);
     li = listGetIterator(factoryActor->actorPool, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         zfree(ln->value);
     }
     listReleaseIterator(li);
     listRelease(factoryActor->actorPool);
 
     li = listGetIterator(factoryActor->runningEventList, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         freeActorEvent((etActorEvent_t*)listNodeValue(ln));
     }
     listReleaseIterator(li);
     listRelease(factoryActor->runningEventList);
 
     li = listGetIterator(factoryActor->waitingEventList, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         freeActorEvent((etActorEvent_t*)listNodeValue(ln));
     }
     listReleaseIterator(li);
@@ -104,7 +104,7 @@ void ET_FactoryActorRecycleEvent(etFactoryActor_t *factoryActor,  etActorEvent_t
         listIter *li;
         listNode *ln;
         li = listGetIterator(factoryActor->actorEventPool, AL_START_HEAD);
-        for (int i = 0; i < 100 && NULL != (ln = listNext(li)); i++) {
+        for (int i = 0; i < 100 && 0 != (ln = listNext(li)); i++) {
             freeActorEvent((etActorEvent_t*)listNodeValue(ln));
             listDelNode(factoryActor->actorEventPool, ln);
         }
@@ -135,7 +135,7 @@ void ET_FactoryActorProcessEvent(etFactoryActor_t *factoryActor, etActorEvent_t 
 
         if (0 != channel) {
             liActor = listGetIterator(channel->subscribers, AL_START_HEAD);
-            while (NULL != (lnActor = listNext(liActor))) {
+            while (0 != (lnActor = listNext(liActor))) {
                 actor = (etActor_t*)lnActor->value;
                 actor->proc(actor, event->mailArgs, event->mailArgv);
             }
@@ -177,7 +177,7 @@ void ET_UnSubscribeChannel(etActor_t *actor, etChannelActor_t *channelActor) {
     listNode *ln;
 
     li = listGetIterator(actor->channels, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         if ((void*)channelActor == listNodeValue(ln)) {
             listDelNode(actor->channels, ln);
             break;
@@ -186,7 +186,7 @@ void ET_UnSubscribeChannel(etActor_t *actor, etChannelActor_t *channelActor) {
     listReleaseIterator(li);
 
     li = listGetIterator(channelActor->subscribers, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         if ((void*)actor == listNodeValue(ln)) {
             listDelNode(channelActor->subscribers, ln);
             break;
@@ -200,7 +200,7 @@ static inline void freeActorChannels(etActor_t *actor) {
         listIter *li;
         listNode *ln;
         li = listGetIterator(actor->channels, AL_START_HEAD);
-        while (NULL != (ln = listNext(li))) {
+        while (0 != (ln = listNext(li))) {
             ET_UnSubscribeChannel(actor, (etChannelActor_t*)listNodeValue(ln));
         }
         listReleaseIterator(li);
@@ -243,7 +243,7 @@ void ET_FactoryActorRecycleActor(etFactoryActor_t *factoryActor, etActor_t *acto
         listIter *li;
         listNode *ln;
         li = listGetIterator(factoryActor->actorPool, AL_START_HEAD);
-        for (int i = 0; i < 100 && NULL != (ln = listNext(li)); i++) {
+        for (int i = 0; i < 100 && 0 != (ln = listNext(li)); i++) {
             freeActor((etActor_t*)listNodeValue(ln));
             listDelNode(factoryActor->actorPool, ln);
         }
@@ -267,7 +267,7 @@ void ET_DeviceFactoryActorLoopOnce(etDevice_t *device) {
     }
 
     li = listGetIterator(factoryActor->runningEventList, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         ET_FactoryActorProcessEvent(factoryActor, (etActorEvent_t*)ln->value);
 
         ET_FactoryActorRecycleEvent(factoryActor, (etActorEvent_t*)ln->value);
@@ -278,7 +278,7 @@ void ET_DeviceFactoryActorLoopOnce(etDevice_t *device) {
     _l = ET_DevicePopEventList(device);
     if (0 != _l) {
         li = listGetIterator(_l, AL_START_HEAD);
-        while (NULL != (ln = listNext(li))) {
+        while (0 != (ln = listNext(li))) {
             ET_FactoryActorProcessEvent(factoryActor, (etActorEvent_t*)ln->value);
 
             ET_FactoryActorRecycleEvent(factoryActor, (etActorEvent_t*)ln->value);

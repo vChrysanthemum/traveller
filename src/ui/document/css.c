@@ -290,7 +290,7 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
     listIter *li;
     listNode *ln;
     li = listGetIterator(selectors, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         rule = UI_NewCssRule();
         rule->selector = listNodeValue(ln);
         rule->propertyList = UI_DuplicateCssPropertyList(propertyList);
@@ -320,11 +320,11 @@ void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
     listNode *ln;
     li = listGetIterator(cssStyleSheet->rules, AL_START_HEAD);
     printf("\n");
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         rule = (uiCssRule_t*)listNodeValue(ln);
 
         liSelectorSection = listGetIterator(rule->selector->sections, AL_START_HEAD);
-        while (NULL != (lnSelectorSection = listNext(liSelectorSection))) {
+        while (0 != (lnSelectorSection = listNext(liSelectorSection))) {
             selectorSection = (uiCssSelectorSection_t*)listNodeValue(lnSelectorSection);
 
             printf("%s ", selectorSection->value);
@@ -337,7 +337,7 @@ void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
 
         printf(" {");
         liProperty = listGetIterator(rule->propertyList->data, AL_START_HEAD);
-        while (NULL != (lnProperty = listNext(liProperty))) {
+        while (0 != (lnProperty = listNext(liProperty))) {
             property = (uiCssProperty_t*)listNodeValue(lnProperty);
 
             printf("%d %s:%s; ", property->type, property->key, property->value);

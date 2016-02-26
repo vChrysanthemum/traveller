@@ -53,7 +53,7 @@ int STDB_Query(lua_State *L) {
     char *errmsg;
     int errno, nrow, ncolumn, loopI, loopJ, index;
 
-    if (NULL == sql) return 0;
+    if (0 == sql) return 0;
 
     errno = sqlite3_get_table(
             db,

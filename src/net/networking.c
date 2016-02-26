@@ -649,7 +649,7 @@ void NT_RecycleScriptServiceRequestCtx(void *_ctx) {
         listIter *li;
         listNode *ln;
         li = listGetIterator(nt_server.scriptServiceRequestCtxPool, AL_START_HEAD);
-        for (int i = 0; i < 100 && NULL != (ln = listNext(li)); i++) {
+        for (int i = 0; i < 100 && 0 != (ln = listNext(li)); i++) {
             freeScriptServiceRequestCtx((ntScriptServiceRequestCtx_t*)listNodeValue(ln));
             listDelNode(nt_server.scriptServiceRequestCtxPool, ln);
         }

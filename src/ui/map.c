@@ -265,7 +265,7 @@ void UIFreeUIMap(UIMap *map) {
 }
 
 UIMapNode* UIGetMapNodeByXY(int x, int y) {
-    return NULL;
+    return 0;
 }
 
 void UI_InitMap() {

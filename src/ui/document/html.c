@@ -513,7 +513,7 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     if (0 != dom->attribute && dictSize(dom->attribute) > 0) {
         dictEntry *de;
         dictIterator *di = dictGetIterator(dom->attribute);
-        while ((de = dictNext(di)) != NULL) {
+        while ((de = dictNext(di)) != 0) {
             printf(" %s=%s", dictGetKey(de), dictGetVal(de));
         }
         dictReleaseIterator(di);
@@ -530,7 +530,7 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     listNode *ln;
     li = listGetIterator(dom->children, AL_START_HEAD);
     indent++;
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         UI_PrintHtmlDomTree((uiHtmlDom_t*)listNodeValue(ln), indent);
     }
     listReleaseIterator(li);

@@ -77,7 +77,7 @@ static int SV_scriptServiceCallback(ntSnode_t *sn) {
     listNode *ln;
     li = listGetIterator(sn->scriptServiceRequestCtxList, AL_START_HEAD);
     ntScriptServiceRequestCtx_t *ctx, *ctxTarget = 0;
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         ctx = (ntScriptServiceRequestCtx_t*)listNodeValue(ln);
         if (requestId == ctx->requestId) {
             ctxTarget = ctx;
@@ -134,7 +134,7 @@ void SV_Script(ntSnode_t *sn) {
     listIter *li;
     listNode *ln;
     li = listGetIterator(sv_scriptServiceSubscriber, AL_START_HEAD);
-    while (NULL != (ln = listNext(li))) {
+    while (0 != (ln = listNext(li))) {
         script = (stScript_t*)listNodeValue(ln);
 
         errno = SV_scriptService(script, sn);

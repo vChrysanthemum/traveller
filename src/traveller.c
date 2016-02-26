@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     zmalloc_enable_thread_safeness();
 
     snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../", argv[0]);
-    if (NULL == realpath(tmpstr, g_basedir)) {
+    if (0 == realpath(tmpstr, g_basedir)) {
         TrvExit(0, "获取当前路径失败");
     }
 
@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 
     if (argc > 1) IniRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
-    if (NULL == g_conf->contents) {
+    if (0 == g_conf->contents) {
         TrvExit(0, "请选择配置文件");
     }
 

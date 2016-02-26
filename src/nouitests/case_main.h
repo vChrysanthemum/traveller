@@ -238,7 +238,7 @@ static char* case_parse_map_entry(char* buf_ptr, void** start, void** end, char*
     char *p;
     char *endp;
 
-    if (buf_ptr == NULL || *buf_ptr == '\0')
+    if (buf_ptr == 0 || *buf_ptr == '\0')
         return NULL;
 
     p = buf_ptr;

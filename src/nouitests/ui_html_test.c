@@ -6,7 +6,6 @@
 
 TEST_CASE("fail html token parser test")
 {
-    UI_PrepareDocument();
     char *html = "\
                   <div>\
                   <input type=\"text\" name=\"text\" />\
@@ -43,7 +42,6 @@ TEST_CASE("fail html token parser test")
 
 TEST_CASE("fail html parser test")
 {
-    UI_PrepareDocument();
     listNode *ln;
     uiHtmlDom_t *dom;
     char *html = "\

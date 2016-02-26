@@ -35,7 +35,7 @@ static void uiLoop() {
             UIKeyDownProcessor proc;
             listNode *node;
             listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
-            while (NULL != (node = listNext(iter))) {
+            while (0 != (node = listNext(iter))) {
                 proc = (UIKeyDownProcessor)node->value;
                 proc(ui_env->ch);
             }
@@ -56,7 +56,7 @@ int UI_SubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
 int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     listNode *node;
     listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
-    while (NULL != (node = listNext(iter))) {
+    while (0 != (node = listNext(iter))) {
         if (subscriber == node->value) {
             listDelNode(keyDownProcessors, node);
             break;
