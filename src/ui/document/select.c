@@ -6,9 +6,9 @@ static inline int IsHtmlDomCssSelectorIgnore(enum uiHtmlDomType_e type) {
     if (UIHTML_DOM_TYPE_TEXT == type ||
             UIHTML_DOM_TYPE_SCRIPT == type ||
             UIHTML_DOM_TYPE_STYLE == type) {
-        return 1;
+        return TRUE;
     } else {
-        return 0;
+        return FALSE;
     }
 }
 
@@ -30,7 +30,7 @@ list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
     while (0 != (ln = listNext(li))) {
         child = (uiHtmlDom_t*)listNodeValue(ln);
 
-        if (1 == IsHtmlDomCssSelectorIgnore(child->type)) {
+        if (TRUE == IsHtmlDomCssSelectorIgnore(child->type)) {
             continue;
         }
 
@@ -55,6 +55,73 @@ list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
     } else {
         return retLeafHtmlDoms;
     }
+}
+
+static int IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHtmlDom_t *dom) {
+    listNode *lnSelectorSection = listNext(liSelectorSection);
+    if (0 == lnSelectorSection) {
+        return TRUE;
+    }
+    uiCssSelectorSection_t *selectorSection = (uiCssSelectorSection_t*)listNodeValue(lnSelectorSection);
+
+    listIter *liClass;
+    listNode *lnClass;
+    int isMatch;
+    while(1) {
+        isMatch = FALSE;
+        switch(selectorSection->type) {
+            case UICSS_SELECTOR_SECTION_TYPE_UNKNOWN:
+                break;
+
+            case UICSS_SELECTOR_SECTION_TYPE_TAG:
+                if (0 == stringcmp(dom->title, selectorSection->value)) {
+                    isMatch = TRUE;
+                }
+                break;
+
+            case UICSS_SELECTOR_SECTION_TYPE_CLASS:
+                if (0 == dom->classes) {
+                    break;
+                }
+
+                liClass = listGetIterator(dom->classes, AL_START_HEAD);
+                while(0 != (lnClass = listNext(liClass))) {
+                    if (0 == stringcmp((char*)lnClass, selectorSection->value)) {
+                        isMatch = TRUE;
+                        break;
+                    }
+                }
+                listReleaseIterator(liClass);
+                break;
+
+            case UICSS_SELECTOR_SECTION_TYPE_ID:
+                if (0 == dom->id) {
+                    break;
+                }
+
+                if (0 == stringcmp(dom->id, selectorSection->value)) {
+                    isMatch = TRUE;
+                }
+                break;
+        }
+
+        // 如果该 selectorSection 匹配 该 dom，则继续下一轮匹配
+        if (TRUE == isMatch) {
+            break;
+        }
+
+        dom = dom->parent;
+
+        // 如果不匹配，且dom 为 rootDom，则匹配失败
+        if (0 == dom->parent) {
+            return FALSE;
+        }
+    }
+
+    return IsSelectorSectionsLeftMatchHtmlDoms(liSelectorSection, dom);
+}
+
+static uiHtmlDom_t* SelectorSectionsRightFindHtmlDom(listIter *liSelectorSection) {
 }
 
 uiHtmlDom_t* UI_GetHtmlDomByCssSelector(uiDocument_t* document, uiCssSelector_t *selector) {

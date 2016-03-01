@@ -26,7 +26,7 @@ static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
 };
 
 static inline void skipStringNotConcern(char **ptr)  {
-    while(UIIsWhiteSpace(**ptr) && 0 != **ptr) {
+    while(UI_IsWhiteSpace(**ptr) && 0 != **ptr) {
         (*ptr)++;
     }
 }
@@ -150,7 +150,7 @@ GET_TOKEN_SUCCESS:
     if (UIHTML_TOKEN_TEXT == token->type) {
         s = &((*ptr)[len-1]);
         for (int i = len-1; i >= 0; i--,s--) {
-            if (UIIsWhiteSpace(*s)) {
+            if (UI_IsWhiteSpace(*s)) {
                 continue;
             }
             break;
@@ -194,7 +194,7 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
     // 提取 title
     contentOffset = 0;
     for (contentEndOffset = 1; contentEndOffset < contentLen; contentEndOffset++) {
-        if (UIIsWhiteSpace(token->content[contentEndOffset])) {
+        if (UI_IsWhiteSpace(token->content[contentEndOffset])) {
             break;
         }
     }
@@ -227,7 +227,7 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
         // 开始解析新的 key 或 value
 
         // 跳过空格
-        if (UIIsWhiteSpace(token->content[contentOffset])) {
+        if (UI_IsWhiteSpace(token->content[contentOffset])) {
             if (0 != token->content[contentOffset]) {
                 goto PARSE_HTML_DOM_TAG_END;
             }
@@ -277,7 +277,7 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
                 goto PARSE_NEXT_CHARACTER;
             }
 
-            if (UIIsWhiteSpace(*attributeDataPtr)) {
+            if (UI_IsWhiteSpace(*attributeDataPtr)) {
                 attributeDataPtr++;
                 break;
             }
@@ -321,7 +321,7 @@ PARSE_ATTRIBUTE:
                     }
 
                     sptr = attributeValue;
-                    while(UIIsWhiteSpace(*sptr)) {
+                    while(UI_IsWhiteSpace(*sptr)) {
                         sptr++;
                     }
                     sptr2 = sptr + 1;
@@ -330,10 +330,10 @@ PARSE_ATTRIBUTE:
                             break;
                         }
 
-                        if (UIIsWhiteSpace(*sptr2)) {
+                        if (UI_IsWhiteSpace(*sptr2)) {
                             listAddNodeTail(dom->classes, sdsnewlen(sptr, sptr2-sptr));
 
-                            while(UIIsWhiteSpace(*sptr2)) {
+                            while(UI_IsWhiteSpace(*sptr2)) {
                                 sptr2++;
                             }
 
@@ -432,7 +432,7 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
         sds tmpString = sdsMakeRoomFor(sdsempty(), 12);
         for (int i = 0; i < len; i++,ptr++) {
             //合并空格
-            if (UIIsWhiteSpace(*ptr)) {
+            if (UI_IsWhiteSpace(*ptr)) {
                 if (0 == isWhiteSpaceFound) {
                     isWhiteSpaceFound = 1;
                     newdom->content[domPoi] = ' ';

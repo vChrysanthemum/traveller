@@ -17,7 +17,7 @@ static uiCssPropertyInfo_t uiCssPropertyInfoTable[] = {
 };
 
 static inline void skipStringNotConcern(char **ptr)  {
-    while(UIIsWhiteSpace(**ptr) && 0 != **ptr) {
+    while(UI_IsWhiteSpace(**ptr) && 0 != **ptr) {
         (*ptr)++;
     }
 }
@@ -125,7 +125,7 @@ uiDocumentScanToken_t* UI_ScanCssToken(uiDocumentScanner_t *scanner) {
     else {
         token->type = UICSS_TOKEN_TEXT;
         char *startPtr = ptr;
-        for (; !UIIsWhiteSpace(*ptr) &&
+        for (; !UI_IsWhiteSpace(*ptr) &&
                 ',' != *ptr &&
                 ':' != *ptr &&
                 ';' != *ptr &&

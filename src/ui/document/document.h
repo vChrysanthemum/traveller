@@ -34,7 +34,7 @@ void UI_PrepareHtml();
 #define UIHTML_TOKEN_END_TAG            -3 // </tag>
 #define UIHTML_TOKEN_SELF_CLOSING_TAG   -4 // <tag />
 
-#define UIIsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
+#define UI_IsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
 uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner);
 
@@ -62,7 +62,7 @@ typedef struct uiHtmlDom_s {
     sds         title;
     dict        *attribute;
     sds         id;
-    list        *classes;
+    list        *classes;  // list sds
     sds         content;
     uiHtmlDom_t *parent;
     list        *children;
