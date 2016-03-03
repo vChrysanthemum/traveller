@@ -1,6 +1,6 @@
 {
-    "map_width" : 100,
-    "map_height" : 50,
+    "map_width" : 120,
+    "map_height" : 300,
     "resourses_len" : 2,
     "resourses" : [
         {

@@ -41,7 +41,11 @@ void zlibc_free(void *ptr) {
 
 #include <string.h>
 #include <pthread.h>
+
 #include "core/platform.h"
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
 

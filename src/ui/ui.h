@@ -1,64 +1,81 @@
 #ifndef __UI_UI_H
 #define __UI_UI_H
 
-#include <ncurses.h>
+#include <curses.h>
+#include <panel.h>
 
-#define UIMoveUICursorLeft(count) do {\
-    g_cursor->x -= count;\
-    if (g_cursor->x < 0) {\
-        UIMoveCurMapX(g_cursor->x);\
-        g_cursor->x = 0;\
-    }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
-} while(0);
+#include "ui/map.h"
+#include "ui/document/document.h"
 
-#define UIMoveUICursorRight(count) do {\
-    g_cursor->x += count;\
-    if (g_cursor->x > g_rootUIWin->width) {\
-        UIMoveCurMapX(g_cursor->x - g_rootUIWin->width);\
-        g_cursor->x = g_rootUIWin->width;\
-    }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
-} while(0);
+//ColorPair
+#define CP_CONSOLE_TAB              1
+#define CP_CONSOLE_TAB_ACTIVE       2
+#define CP_CONSOLE_TAB_BG           3
 
-#define UIMoveUICursorUp(count) do {\
-    g_cursor->y -= count;\
-    if (g_cursor->y < 0) {\
-        UIMoveCurMapY(g_cursor->y);\
-        g_cursor->y = 0;\
-    }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
-} while(0);
+#define CONSOLE_MODE_CMD 1
 
-#define UIMoveUICursorDown(count) do {\
-    g_cursor->y += count;\
-    if (g_cursor->y > g_rootUIWin->height) {\
-        UIMoveCurMapY(g_cursor->y - g_rootUIWin->height);\
-        g_cursor->y = g_rootUIWin->height;\
-    }\
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);\
-} while(0);
+#define UI_MAX_PANELS 32
 
-typedef struct {
-    int x;
+typedef struct uiCursor_s {
     int y;
-    int number;
-    char snumber[8];     /* 已输入的数字 */
-    int snumber_len;
-} UICursor;
+    int x;
+    char             utf8char[4];
+    int              utf8charPoi;
+} uiCursor_t;
 
-enum UIWinMode {gamer_mode, pick_mode};
+typedef struct uiEnv_s {
+    int  ch;
+    int  cursorY;
+    int  cursorX;
+    int  number;      //已输入的数字
+    char snumber[8];  //已输入的数字
+    int  snumberLen;
+} uiEnv_t;
 
-typedef struct {
-    int height;         /* 行数 */
-    int width;            /* 列数 */
-    int startx;
-    int starty;
-    int ch;
-    enum UIWinMode mode;
-    WINDOW *window;
-} UIWin;
+typedef struct uiWindow_s {
+    int    height; //行数 
+    int    width;  //列数 
+    int    startx;
+    int    starty;
+    WINDOW *win;
+    PANEL  *panel;
+} uiWindow_t;
+uiWindow_t* UI_createWindow(int height, int width, int starty, int startx);
+void UI_FreeWindow(uiWindow_t* win);
 
-void UIInit();
+typedef struct uiPage_s {
+    sds      title;
+    sds      content;
+    uiWindow_t *uiwin;
+} uiPage_t;
+uiPage_t *UI_NewPage();
+void UI_FreePage(uiPage_t *page);
+void* UI_LoadPageActor(etActor_t *actor, int args, void **argv);
+
+typedef struct uiConsoleCommand_s {
+    sds line;
+    sds header;
+} uiConsoleCommand_t;
+
+typedef struct uiConsole_s{
+    uiWindow_t         *tabuiwin;
+    uiWindow_t         *uiwin;
+    int              mode;
+    uiCursor_t         cursor;
+    uiConsoleCommand_t cmd;
+} uiConsole_t;
+
+int UI_PrepareColor();
+int UI_Prepare();
+int UI_Init();
+
+typedef void (*UIKeyDownProcessor) (char ch);
+int UI_SubscribeKeyDownEvent(UIKeyDownProcessor subscriber);
+int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber);
+
+void UI_initConsole();
+void UI_reRenderConsole();
+
+void UI_InitMap();
 
 #endif

@@ -1,11 +1,42 @@
 #ifndef __NET_NETWORKING_H
 #define __NET_NETWORKING_H
 
-#include "core/adlist.h"
-#include "core/sds.h"
-#include "core/dict.h"
-#include "net/ae.h"
-#include "net/anet.h"
+#define ANET_OK 0
+#define ANET_ERR -1
+#define ANET_ERR_LEN 256
+
+/* Flags used with certain functions. */
+#define ANET_NONE 0
+#define ANET_IP_ONLY (1<<0)
+
+#if defined(__sun)
+#define AF_LOCAL AF_UNIX
+#endif
+
+int anetTcpConnect(char *err, char *addr, int port);
+int anetTcpNonBlockConnect(char *err, char *addr, int port);
+int anetTcpNonBlockBindConnect(char *err, char *addr, int port, char *source_addr);
+int anetUnixConnect(char *err, char *path);
+int anetUnixNonBlockConnect(char *err, char *path);
+int anetRead(int fd, char *buf, int count);
+int anetResolve(char *err, char *host, char *ipbuf, size_t ipbuf_len);
+int anetResolveIP(char *err, char *host, char *ipbuf, size_t ipbuf_len);
+int anetTcpServer(char *err, int port, char *bindaddr, int backlog);
+int anetTcp6Server(char *err, int port, char *bindaddr, int backlog);
+int anetUnixServer(char *err, char *path, mode_t perm, int backlog);
+int anetTcpAccept(char *err, int serversock, char *ip, size_t ip_len, int *port);
+int anetUnixAccept(char *err, int serversock);
+int anetWrite(int fd, char *buf, int count);
+int anetNonBlock(char *err, int fd);
+int anetEnableTcpNoDelay(char *err, int fd);
+int anetDisableTcpNoDelay(char *err, int fd);
+int anetTcpKeepAlive(char *err, int fd);
+int anetPeerToString(int fd, char *ip, size_t ip_len, int *port);
+int anetKeepAlive(char *err, int fd, int interval);
+int anetSockName(int fd, char *ip, size_t ip_len, int *port);
+int anetPeerSocket(char *err, int port, char *bindaddr, int af);
+int anetPeerConnect(int fd, char *err, char *addr, int port);
+int anetPeerListen(int fd, char *err, int backlog);
 
 /* networking，分装了所有的网络操作
  */
@@ -14,18 +45,18 @@
 #define TRV_NET_MAX_SNODE 1024 * 24
 #define TRV_NET_TCPKEEPALIVE 0 
 #define TRV_NET_MAX_ACCEPTS_PER_CALL 1000
-#define TRV_NET_IOBUF_LEN (1024)  /* Generic I/O buffer size */
+#define TRV_NET_IOBUF_LEN (1024)  // Generic I/O buffer size 
 
 /* 基于RESP通信协议，不过有点不一样
- * 通信NTSnode接受信息各个状态如下：
+ * 通信ntSnode_t接受信息各个状态如下：
  */
-#define SNODE_RECV_STAT_ACCEPT   0  /* 客户端首次连接，socket accept后 */
-#define SNODE_RECV_STAT_PREPARE  1  /* 准备就绪，等待数据中 */
-#define SNODE_RECV_STAT_PARSING  3  /* 解析数据中 */
-#define SNODE_RECV_STAT_PARSED   4  /* 数据完成 */
-#define SNODE_RECV_STAT_EXCUTING 5  /* 正在执行中 */
-#define SNODE_RECV_STAT_EXCUTED  6  /* 命令执行完成 */
-#define setNTSnodeExcuteCommandFinished(sn) sn->recv_stat = SNODE_RECV_STAT_EXCUTED;
+#define SNODE_RECV_STAT_ACCEPT   0  // 客户端首次连接，socket accept后 
+#define SNODE_RECV_STAT_PREPARE  1  // 准备就绪，等待数据中 
+#define SNODE_RECV_STAT_PARSING  3  // 解析数据中 
+#define SNODE_RECV_STAT_PARSED   4  // 数据完成 
+#define SNODE_RECV_STAT_EXCUTING 5  // 正在执行中 
+#define SNODE_RECV_STAT_EXCUTED  6  // 命令执行完成 
+#define NT_SnodeServiceSetFinishedFlag(sn) sn->recvStat = SNODE_RECV_STAT_EXCUTED;
 
 /* 各个类型解析状态
  */
@@ -36,83 +67,182 @@
 #define SNODE_RECV_STAT_PARSING_FINISHED    4
 
 
-/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 NTSnode (socket node)，
- * 包括连接traveller的client，或traveller主动连接的g_server
+/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 ntSnode_t (socket node)，
+ * 包括连接traveller的client，或traveller主动连接的nt_server
  */
-#define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) /* 1GB max query buffer. */
-#define SNODE_CLOSE_AFTER_REPLY (1<<0)  /* 发送完信息后，断开连接 */
+#define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
+#define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
 
-typedef struct NTSnode_s {
-    int flags;              /* SNODE_CLOSE_AFTER_REPLY | ... */
+typedef struct ntScriptServiceRequestCtx_s {
+    int requestId;
+    lua_State *ScriptServiceLua;
+    sds ScriptServiceCallbackUrl;
+    sds ScriptServiceCallbackArg;
+} ntScriptServiceRequestCtx_t;
+
+typedef struct ntSnode_s ntSnode_t;
+typedef struct ntSnode_s {
+    int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
     int fd;
-    char fds[16];           /* 字符串类型的fd */
-    int recv_stat;          /* SNODE_RECV_STAT_ACCEPT ... */
-    int recv_type;          /* SNODE_RECV_TYPE_ERR ... */
-    sds tmp_querybuf;       /* 临时存放未解析完的argc 或 参数长度 */
-    sds querybuf;           /* 读取到的数据 */
-    sds writebuf;           /* 等待发送的数据 */
-    int recv_parsing_stat;
+    char fdstr[16];           // 字符串类型的fd 
+    int recvStat;          // SNODE_RECV_STAT_ACCEPT ... 
+    int recvType;          // SNODE_RECV_TYPE_ERR ... 
+    sds tmpQuerybuf;       // 临时存放未解析完的argc 或 参数长度 
+    sds querybuf;           // 读取到的数据 
+    sds writebuf;           // 等待发送的数据 
+    int recvParsingStat;
     int argc;
 
     sds *argv;
-    int argv_size;
+    int argvSize;
 
-    int argc_remaining;     /* 还剩多少个argc没有解析完成 */
-    int argv_remaining;     /* 正在解析中的参数还有多少字符未获取 -1 为还没开始解析*/
-    time_t lastinteraction; /* time of the last interaction, used for timeout */
+    int argcRemaining;     // 还剩多少个argc没有解析完成 
+    int argvRemaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
+    time_t lastinteraction; // time of the last interaction, used for timeout 
 
-    void (*proc)(struct NTSnode_s *sn);
-    int is_write_mod;       /* 是否已处于写数据模式，避免重复进入写数据模式 */
-} NTSnode;
+    void (*responseProc) (ntSnode_t *sn); //在等待远程机器发来结果的回调函数
 
-#define SNODE_RECV_TYPE_ERR    -1 /* -:ERR */
-#define SNODE_RECV_TYPE_OK     1  /* +:OK */
+    int scriptServiceRequestCtxListMaxId;
+    list *scriptServiceRequestCtxList;
+
+    void (*proc) (ntSnode_t *sn);
+    void (*hupProc) (ntSnode_t *sn); //如果远程机器挂掉了，需要调用的函数
+
+    int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
+} ntSnode_t;
+
+#define SNODE_RECV_TYPE_HUP    -2 // 远程机器挂掉了
+#define SNODE_RECV_TYPE_ERR    -1 // -:ERR 
+#define SNODE_RECV_TYPE_OK     1  // +:OK 
 #define SNODE_RECV_TYPE_STRING 2
-#define SNODE_RECV_TYPE_ARRAY  3  /* 数组 且 命令 */
+#define SNODE_RECV_TYPE_ARRAY  3  // 数组 且 命令 
 
-struct TrvCommand {
-    char *key;
-    void (*proc)(struct NTSnode_s *sn);
-    int argc;
-};
+typedef struct ntServer_s {
+    time_t unixtime;        // Unix time sampled every cron cycle. 
 
-struct NTServer {
-    time_t unixtime;        /* Unix time sampled every cron cycle. */
-
-    int max_snodes;
-    aeEventLoop *el;
+    int maxSnodes;
     char *bindaddr;
     int port;
-    int tcp_backlog;
-    char neterr[ANET_ERR_LEN];   /* Error buffer for anet.c */
-    int ipfd[2];                 /* 默认0:ipv4、1:ipv6 */
-    int ipfd_count;              /* 已绑定总量 */
+    int tcpBacklog;
+    char neterr[ANET_ERR_LEN];   // Error buffer for anet.c 
+    int ipfd[2];                 // 默认0:ipv4、1:ipv6 
+    int ipfdCount;              // 已绑定总量 
 
-    int stat_rejected_conn;
-    int stat_numconnections;
+    int statRejectedConn;
+    int statNumConnections;
 
-    dict *snodes;                   /* key 是 fds */
-    size_t snode_max_querybuf_len;  /* Limit for client query buffer length */
+    dict *snodes;                   // key 是 fdstr 
+    size_t snodeMaxQuerybufLen;  // Limit for client query buffer length 
+
+    list *scriptServiceRequestCtxPool;
 
     int tcpkeepalive;
 
-    NTSnode* current_snode;
+    ntSnode_t* currentSnode;
 
-    dict* commands;
-};
+    dict* services;
+} ntServer_t;
 
-int NTInit(int port);
-sds NTCatNTSnodeInfoString(sds s, NTSnode *sn);
-NTSnode* NTConnectNTSnode(char *addr, int port);
-void NTAddReplyError(NTSnode *sn, char *err);
-void NTAddReplyStringArgv(NTSnode *sn, int argc, char **argv);
-void NTAddReplyMultiString(NTSnode *sn, int count, ...);
-void NTAddReplyMultiSds(NTSnode *sn, int count, ...);
-void NTAddReplySds(NTSnode *sn, sds data);
-void NTAddReplyRawSds(NTSnode *sn, sds data);
-void NTAddReplyString(NTSnode *sn, char *data);
-void NTAddReplyRawString(NTSnode *sn, char *data);
-void NTFreeNTSnode(NTSnode *sn);  /* dangerous */
-NTSnode* NTGetNTSnodeByFDS(const char *fds);
+int NT_Prepare(int port);
+sds NT_CatSnodeInfoString(sds s, ntSnode_t *sn);
+ntSnode_t* NT_ConnectSnode(char *addr, int port);
+void NT_AddReplyError(ntSnode_t *sn, char *err);
+void NT_AddReplyStringArgv(ntSnode_t *sn, int argc, char **argv);
+void NT_AddReplyMultiString(ntSnode_t *sn, int count, ...);
+void NT_AddReplyMultiSds(ntSnode_t *sn, int count, ...);
+void NT_AddReplySds(ntSnode_t *sn, sds data);
+void NT_AddReplyRawSds(ntSnode_t *sn, sds data);
+void NT_AddReplyString(ntSnode_t *sn, char *data);
+void NT_AddReplyRawString(ntSnode_t *sn, char *data);
+ntScriptServiceRequestCtx_t* NT_NewScriptServiceRequestCtx();
+void NT_RecycleScriptServiceRequestCtx(void *_ctx);
+void NT_FreeSnode(ntSnode_t *sn);  // dangerous 
+ntSnode_t* NT_GetSnodeByFDS(const char *fdstr);
+
+
+#define AE_OK 0
+#define AE_ERR -1
+
+#define AE_NONE 0
+#define AE_READABLE 1
+#define AE_WRITABLE 2
+
+#define AE_FILE_EVENTS 1
+#define AE_TIME_EVENTS 2
+#define AE_ALL_EVENTS (AE_FILE_EVENTS|AE_TIME_EVENTS)
+#define AE_DONT_WAIT 4
+
+#define AE_NOMORE -1
+
+/* Macros */
+#define AE_NOTUSED(V) ((void) V)
+
+struct aeLooper_s;
+
+/* Types and data structures */
+typedef void aeFileProc(struct aeLooper_s *eventLoop, int fd, void *clientData, int mask);
+typedef int aeTimeProc(struct aeLooper_s *eventLoop, long long id, void *clientData);
+typedef void aeEventFinalizerProc(struct aeLooper_s *eventLoop, void *clientData);
+typedef void aeBeforeSleepProc(struct aeLooper_s *eventLoop);
+
+/* File event structure */
+typedef struct aeFileEvent_s {
+    int mask; /* one of AE_(READABLE|WRITABLE) */
+    aeFileProc *rfileProc;
+    aeFileProc *wfileProc;
+    void *clientData;
+} aeFileEvent_t;
+
+/* Time event structure */
+typedef struct aeTimeEvent_s {
+    long long id; /* time event identifier. */
+    long whenSec; /* seconds */
+    long whenMs; /* milliseconds */
+    aeTimeProc *timeProc;
+    aeEventFinalizerProc *finalizerProc;
+    void *clientData;
+    struct aeTimeEvent_s *next;
+} aeTimeEvent_t;
+
+/* A fired event */
+typedef struct aeFiredEvent_s {
+    int fd;
+    int mask;
+} aeFiredEvent_t;
+
+/* State of an event based program */
+typedef struct aeLooper_s {
+    int maxfd;   /* highest file descriptor currently registered */
+    int setsize; /* max number of file descriptors tracked */
+    long long timeEventNextId;
+    time_t lastTime;     /* Used to detect system clock skew */
+    aeFileEvent_t *events; /* Registered events */
+    aeFiredEvent_t *fired; /* Fired events */
+    aeTimeEvent_t *timeEventHead;
+    int stop;
+    void *apidata; /* This is used for polling API specific data */
+    aeBeforeSleepProc *beforesleep;
+} aeLooper_t;
+
+/* Prototypes */
+aeLooper_t *aeNewLooper(int setsize);
+void aeStop(aeLooper_t *eventLoop);
+int aeCreateFileEvent(aeLooper_t *eventLoop, int fd, int mask,
+        aeFileProc *proc, void *clientData);
+void aeDeleteFileEvent(aeLooper_t *eventLoop, int fd, int mask);
+int aeGetFileEvents(aeLooper_t *eventLoop, int fd);
+long long aeCreateTimeEvent(aeLooper_t *eventLoop, long long milliseconds,
+        aeTimeProc *proc, void *clientData,
+        aeEventFinalizerProc *finalizerProc);
+int aeDeleteTimeEvent(aeLooper_t *eventLoop, long long id);
+int aeProcessEvents(aeLooper_t *eventLoop, int flags);
+int aeWait(int fd, int mask, long long milliseconds);
+char *aeGetApiName(void);
+void aeSetBeforeSleepProc(aeLooper_t *eventLoop, aeBeforeSleepProc *beforesleep);
+int aeGetSetSize(aeLooper_t *eventLoop);
+int aeResizeSetSize(aeLooper_t *eventLoop, int setsize);
+void aeDeleteLooper(aeLooper_t *eventLoop);
+void aeMain(aeLooper_t *eventLoop);
+void* aeMainDeviceWrap(void *_eventLoop);
 
 #endif

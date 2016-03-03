@@ -4,112 +4,89 @@
 #include <unistd.h> 
 #include <locale.h>
 
-#include "core/config.h"
+#include "lua.h"
+#include "sqlite3.h"
+
+#include "core/sds.h"
+#include "core/dict.h"
+#include "core/adlist.h"
+#include "core/errors.h"
+#include "core/ini.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
 #include "core/debug.h"
+#include "core/extern.h"
+
 #include "net/networking.h"
-#include "net/ae.h"
+#include "event/event.h"
 #include "script/script.h"
-#include "script/galaxies.h"
 #include "ui/ui.h"
 #include "ui/map.h"
 
-#include "lua.h"
-#include "sqlite3.h"
+#include "net/extern.h"
 
 /**
  * 运行流程
  *  Step1. 读取配置文件
  *  Step2. 开启界面
  *  Step3. 开启事件
- *  Step4. 事件不断循环，并传递消息给界面管理器，界面管理器更新界面
- *  Step5. 界面响应用户，并传递消息给事件管理器
- *  +------------+        +------------+
- *  |            |  ===>  |            |
- *  |  界面线程  |        |  事件线程  |
- *  |            |  <===  |            |
- *  +------------+        +------------+
+ *  Step4. 开启3块 etDevice_t g_mainDevice g_netDevice g_fooDevice
  */
 
 /* 全局变量 */
-struct NTServer g_server;
+etDevice_t *g_mainDevice;
+etDevice_t *g_fooDevice;
+etDevice_t *g_netDevice;
+
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
-char *g_logdir;
-FILE* g_logF;
-int g_logFInt;
-struct config *g_conf;
-void *g_tmpPtr;
+Ini  *g_conf;
 
-/* UI部分 */
-UIWin *g_rootUIWin;
-UICursor g_cursor;
-UIMap *g_curUIMap;
-
-/* 服务端模式所需变量 */
-char g_srvGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
-lua_State *g_srvLuaSt;
-sqlite3 *g_srvDB;
-
-/* 客户端模式所需变量 */
-char g_cliGalaxydir[ALLOW_PATH_SIZE] = {""}; /* 需要加载的星系路径 */
-lua_State *g_cliLuaSt;
-sqlite3 *g_cliDB;
-NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
-
-int serverCron(struct aeEventLoop *eventLoop, long long id, void *clientData) {
-    g_server.unixtime = time(NULL);
-    TrvLogI("serverCron");
-    return 0;
-}
+list *g_scripts;
 
 int main(int argc, char *argv[]) {
-    struct configOption *confOpt;
+    sds value;
     char tmpstr[ALLOW_PATH_SIZE] = {""};
     int listenPort;
 
-    g_logdir = NULL;
-    g_logF = stderr;
-    g_logFInt = STDERR_FILENO;
+    c_log.dir = 0;
+    c_log.f = stderr;
+    c_log.fd = STDERR_FILENO;
 
     setlocale(LC_ALL,"");
 
     zmalloc_enable_thread_safeness();
 
     snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../", argv[0]);
-    if (NULL == realpath(tmpstr, g_basedir)) {
+    if (0 == realpath(tmpstr, g_basedir)) {
         TrvExit(0, "获取当前路径失败");
     }
 
-    g_conf = initConfig();
+    g_conf = InitIni();
 
     snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../conf/default.conf", g_basedir);
-    configRead(g_conf, tmpstr);
+    IniRead(g_conf, tmpstr);
 
-    if (argc > 1) configRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
+    if (argc > 1) IniRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
-    if (NULL == g_conf->contents) {
+    if (0 == g_conf->contents) {
         TrvExit(0, "请选择配置文件");
     }
 
-    confOpt = configGet(g_conf, "traveller", "log_dir");
-    if (confOpt) {
-        g_logdir = (char *)zmalloc(confOpt->valueLen+1);
-        snprintf(g_logdir, ALLOW_PATH_SIZE, "%.*s", confOpt->valueLen, confOpt->value);
-        g_logF = fopen(g_logdir, "a+");
-        g_logFInt = fileno(g_logF);
+    value = IniGet(g_conf, "traveller", "log_dir");
+    if (0 != value) {
+        c_log.dir = stringnewlen(value, sdslen(value));
+        c_log.f = fopen(c_log.dir, "a+");
+        c_log.fd = fileno(c_log.f);
     }
 
-    confOpt = configGet(g_conf, "net_server", "port");
+    value = IniGet(g_conf, "traveller", "listen_port");
 
-    if (NULL != confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
+    if (0 != value) {
+        if (sdslen(value) > ALLOW_PATH_SIZE) {
             TrvExit(0, "监听端口太大");
         }
 
-        confOptToStr(confOpt, tmpstr);
-        listenPort = atoi(tmpstr);
+        listenPort = atoi(value);
     }
     else listenPort = -1; /* 输入一个不正常的监听端口，意味着不监听 */
 
@@ -117,48 +94,33 @@ int main(int argc, char *argv[]) {
     signal(SIGPIPE, SIG_IGN);
     setupSignalHandlers();
 
-    //开启界面
-    UIInit();
+    g_mainDevice = ET_NewDevice(0, 0);
+    g_fooDevice = ET_NewDevice(0, 0);
 
-    //开启事件
-    if (ERRNO_ERR == NTInit(listenPort)) {
+    //初始化UI
+    if (ERRNO_ERR == UI_Prepare()) {
+        TrvExit(0, "初始化UI失败");
+    }
+
+    //开启网络
+    if (ERRNO_ERR == NT_Prepare(listenPort)) {
         TrvExit(0, "初始化网络失败");
     }
+    g_netDevice = ET_NewDevice(aeMainDeviceWrap, nt_el);
 
-    /*
-    if(aeCreateTimeEvent(g_server.el, 1, serverCron, NULL, NULL) == AE_ERR) {
-        TrvLogE("Can't create the serverCron time event.");
-        exit(1);
-    }
-    */
-
-    /* 游戏服务端初始化 */
-    confOpt = configGet(g_conf, "galaxies_server", "relative_path");
-    if (confOpt) {
-
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_srvGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STServerInit();
+    //开启脚本支持
+    if (ERRNO_ERR == ST_Prepare()) {
+        TrvExit(0, "初始化脚本失败");
     }
 
-    /* 游戏客户端初始化 */
-    confOpt = configGet(g_conf, "galaxies_client", "relative_path");
-    if (confOpt) {
+    ET_StartDevice(g_mainDevice);
+    ET_StartDevice(g_fooDevice);
+    ET_StartDevice(g_netDevice);
 
-        if (confOpt->valueLen > ALLOW_PATH_SIZE) {
-            TrvExit(0, "星系文件地址太长");
-        }
-        confOptToStr(confOpt, tmpstr);
-        snprintf(g_cliGalaxydir, ALLOW_PATH_SIZE, "%s/../galaxies/%s", g_basedir, tmpstr);
-        STClientInit();
+    //开启界面，并阻塞在 uiLoop
+    if (ERRNO_ERR == UI_Init()) {
+        TrvExit(0, "初始化UI失败");
     }
 
-    //aeSetBeforeSleepProc(g_server.el, beforeSleep);
-
-    aeMain(g_server.el);
-    aeDeleteEventLoop(g_server.el);
     return 0;
 }

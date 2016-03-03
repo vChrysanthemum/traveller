@@ -43,8 +43,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "net/anet.h"
+#include "lua.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 #include "core/util.h"
+#include "core/extern.h"
+
+#include "net/networking.h"
 
 static void anetSetError(char *err, const char *fmt, ...)
 {
@@ -419,7 +426,7 @@ static int _anetTcpServer(char *err, int port, char *bindaddr, int af, int backl
     memset(&hints,0,sizeof(hints));
     hints.ai_family = af;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != NULL */
+    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != 0 */
 
     if ((rv = getaddrinfo(bindaddr,_port,&hints,&servinfo)) != 0) {
         anetSetError(err, "%s", gai_strerror(rv));
@@ -576,7 +583,7 @@ int anetPeerSocket(char *err, int port, char *bindaddr, int af) {
     memset(&hints,0,sizeof(hints));
     hints.ai_family = af;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != NULL */
+    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != 0 */
     struct sockaddr_in *addrin;
 
     if ((rv = getaddrinfo(bindaddr,_port,&hints,&servinfo)) != 0) {
@@ -655,7 +662,7 @@ int anetPeerListen(int fd, char *err, int backlog) {
     memset(&hints,0,sizeof(hints));
     hints.ai_family = sin.sin_family;
     hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != NULL */
+    hints.ai_flags = AI_PASSIVE;    /* No effect if bindaddr != 0 */
     bindaddr = inet_ntoa(sin.sin_addr);
 
     if ((rv = getaddrinfo(bindaddr,_port,&hints,&servinfo)) != 0) {

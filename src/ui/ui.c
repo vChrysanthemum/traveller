@@ -1,123 +1,126 @@
 #include <stdio.h>
-#include <ncurses.h>
-#include <panel.h>
 #include <string.h>
-#include <pthread.h>
 
+#include "lua.h"
+
+#include "core/sds.h"
+#include "core/dict.h"
+#include "core/adlist.h"
 #include "core/util.h"
 #include "core/zmalloc.h"
-#include "core/sds.h"
+#include "core/errors.h"
+
+#include "event/event.h"
 #include "ui/ui.h"
-#include "ui/map.h"
 
-extern UIWin *g_rootUIWin;
-extern UICursor *g_cursor;
-extern UIMap *g_curUIMap;
-extern void *g_tmpPtr;
+#include "g_extern.h"
 
-static UIWin* createUIWin(int height, int width, int starty, int startx) {
-    UIWin *win = (UIWin*)zmalloc(sizeof(UIWin));
-    win->startx = startx;
-    win->starty = starty;
-    win->height = height;
-    win->width = width;
-    win->window = newwin(height, width, starty, startx);
-    return win;
-}
+uiWindow_t  *ui_rootuiWindow;
+UIMap       *ui_curUIMap;
 
-static void initRootUIWin() {
-    int height, width;
-    getmaxyx(stdscr, height, width);
-    g_rootUIWin = createUIWin(height, width, 0, 0);
+uiEnv_t     *ui_env;
+list        *ui_panels;
+uiConsole_t *ui_console;
+int         ui_width, ui_height; //屏幕宽度、高度
+list        *ui_pages;
+uiPage_t    *ui_activePage;
 
-    g_cursor = (UICursor*)zmalloc(sizeof(UICursor));
-    g_cursor->number = 1;
-    g_cursor->snumber[0] = 0;
-    g_cursor->snumber_len = 0;
+etDevice_t  *ui_device;
 
-    getmaxyx(stdscr, g_rootUIWin->height, g_rootUIWin->width);
-    g_rootUIWin->height-=2; /* 最后一行不可写 */
-    g_rootUIWin->width--; /* 最后一列不可写 */
-    keypad(g_rootUIWin->window, TRUE);
-}
+int ui_ColorPair[8][8];
 
-static void* uiLoop(void* _) {
+static list *keyDownProcessors;
+
+static void uiLoop() {
+    etDevice_t *device = g_mainDevice;
 
     while(1) {
-        g_rootUIWin->ch = wgetch(g_rootUIWin->window);
-        if ('0' <= g_rootUIWin->ch && g_rootUIWin->ch <= '9') {
-            if (g_cursor->snumber_len > 6) 
-                continue;
-
-            g_cursor->snumber[g_cursor->snumber_len] = g_rootUIWin->ch;
-            g_cursor->snumber_len++;
-            g_cursor->snumber[g_cursor->snumber_len] = 0;
-
-            continue;
-        }
-        else if(g_cursor->snumber_len > 0) {
-            g_cursor->number = atoi(g_cursor->snumber);
-            g_cursor->snumber_len = 0;
-            g_cursor->snumber[0] = 0;
+        halfdelay(2);
+        ui_env->ch = getch();
+        if (ERR != ui_env->ch) {
+            UIKeyDownProcessor proc;
+            listNode *node;
+            listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
+            while (0 != (node = listNext(iter))) {
+                proc = (UIKeyDownProcessor)node->value;
+                proc(ui_env->ch);
+            }
+            listReleaseIterator(iter);
         }
 
-
-        if (KEY_UP == g_rootUIWin->ch || 'k' == g_rootUIWin->ch) {
-            UIMoveUICursorUp(g_cursor->number);
-        }
-
-        else if (KEY_DOWN == g_rootUIWin->ch || 'j' == g_rootUIWin->ch) {
-            UIMoveUICursorDown(g_cursor->number);
-        }
-
-        else if (KEY_LEFT == g_rootUIWin->ch || 'h' == g_rootUIWin->ch) {
-            UIMoveUICursorLeft(g_cursor->number);
-        }
-
-        else if (KEY_RIGHT == g_rootUIWin->ch || 'l' == g_rootUIWin->ch) {
-            UIMoveUICursorRight(g_cursor->number);
-        }
-
-        g_cursor->number = 1;
-
-        if (KEY_F(1) == g_rootUIWin->ch) break; /* ESC */ 
-
-        wrefresh(g_rootUIWin->window);
+        ET_DeviceFactoryActorLoopOnce(device);
     }
 
-    return 0;
+    endwin();
 }
 
-void UIInit() {
-    sds mapJSON;
-    char dir[ALLOW_PATH_SIZE] = {""};
+int UI_SubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+    keyDownProcessors = listAddNodeTail(keyDownProcessors, subscriber);
+    return ERRNO_OK;
+}
 
-    initscr();                   /* start the curses mode */
+int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
+    listNode *node;
+    listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
+    while (0 != (node = listNext(iter))) {
+        if (subscriber == node->value) {
+            listDelNode(keyDownProcessors, node);
+            break;
+        }
+    }
+    listReleaseIterator(iter);
+    return ERRNO_OK;
+}
+
+static void UI_PrepareLoadPageActor() {
+    etFactoryActor_t *factoryActor = ui_device->factoryActor;
+    etChannelActor_t *channelActor = ET_NewChannelActor();
+    channelActor->key = stringnew("/loadpage");
+    ET_FactoryActorAppendChannel(factoryActor, channelActor);
+
+    etActor_t *actor = ET_FactoryActorNewActor(factoryActor);
+    actor->proc = UI_LoadPageActor;
+    ET_SubscribeChannel(actor, channelActor);
+}
+
+int UI_Prepare() {
+    UI_PrepareDocument();
+
+    ui_panels = listCreate();
+    ui_pages = listCreate();
+    keyDownProcessors = listCreate();
+
+    ui_env = (uiEnv_t*)zmalloc(sizeof(uiEnv_t));
+    memset(ui_env, 0, sizeof(uiEnv_t));
+
+    setlocale(LC_ALL, "");
+
+    ui_device = g_mainDevice;
+    UI_PrepareLoadPageActor();
+
+    return ERRNO_OK;
+}
+
+int UI_Init() {
+    initscr();
     clear();
-    cbreak();
     noecho();
-    //raw();
+    //cbreak();
+    raw();
 
-    initRootUIWin();
+    getmaxyx(stdscr, ui_height, ui_width);
 
-    /* 画首幅地图 */
-    //sprintf(dir, "%s/arctic.map.json", m_galaxiesdir);
-    sprintf(dir, "/Users/j/github/my/traveller/galaxies/gemini/client/arctic.map.json");
-    mapJSON = fileGetContent(dir);
-    g_curUIMap = UIParseMap(mapJSON);
+    UI_PrepareColor();
 
-    UIDrawMap();
-    wrefresh(g_rootUIWin->window);
+    UI_initConsole();
+    //UI_InitMap();
 
+    top_panel(ui_console->uiwin->panel);
+    update_panels();
+    doupdate();
 
-    /* 光标置中 */
-    g_cursor->x = g_rootUIWin->width / 2;
-    g_cursor->y = g_rootUIWin->height / 2;
-    wmove(g_rootUIWin->window, g_cursor->y, g_cursor->x);
+    uiLoop();
 
-    /* 循环 */
-    pthread_t ntid;
-    pthread_create(&ntid, NULL, uiLoop, NULL);
+    return ERRNO_OK;
 
-    endwin();
 }

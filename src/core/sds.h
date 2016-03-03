@@ -54,6 +54,12 @@ static inline size_t sdsavail(const sds s) {
     return sh->free;
 }
 
+void listFreeSds(void* _ptr);
+int stringcmp(const void *s1, const void *s2);
+char* stringnewlen(const char *init, size_t initlen);
+char* stringnew(const char *init);
+int sdscmpstr(const sds s1, const char *s2);
+
 sds sdsnewlen(const void *init, size_t initlen);
 sds sdsnew(const char *init);
 sds sdsempty(void);
@@ -97,5 +103,6 @@ sds sdsMakeRoomFor(sds s, size_t addlen);
 void sdsIncrLen(sds s, int incr);
 sds sdsRemoveFreeSpace(sds s);
 size_t sdsAllocSize(sds s);
+int itoa(int v, char *s);
 
 #endif

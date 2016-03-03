@@ -9,17 +9,18 @@
 #include <sys/time.h>
 #include <locale.h>
 
-#include "core/sds.h"
 #include "core/frozen.h"
+
+typedef struct Log {
+    char *dir;
+    FILE *f;
+    int fd;
+} Log;
 
 /* Anti-warning macro... */
 #define NOTUSED(V) ((void) V)
 
-#define ERRNO_OK    0
-#define ERRNO_ERR   -500
-#define ERRNO_NULL  -404
-
-extern FILE* g_logF;
+#define AssertOrReturnError(condition, error) if (!condition) return error; 
 
 #define TrvLog_ERROR 1
 #define TrvLog_WARNING 2
@@ -32,10 +33,10 @@ extern FILE* g_logF;
     struct timeval tv;\
     gettimeofday(&tv,NULL);\
     strftime(timestr,sizeof(timestr),"%d %b %H:%M:%S.",localtime(&tv.tv_sec));\
-    fputc('[', g_logF); fputs(timestr, g_logF); fputs("]", g_logF); \
-    fprintf(g_logF, "(%s:%d) ", __FILE__, __LINE__); fprintf(g_logF, FMT, ##__VA_ARGS__); \
-    fputc('\n', g_logF); \
-    fflush(g_logF);\
+    fputc('[', c_log.f); fputs(timestr, c_log.f); fputs("]", c_log.f); \
+    fprintf(c_log.f, "(%s:%d) ", __FILE__, __LINE__); fprintf(c_log.f, FMT, ##__VA_ARGS__); \
+    fputc('\n', c_log.f); \
+    fflush(c_log.f);\
 } while(0);
 
 #define TrvLogD(FMT, ...) TrvLog(TrvLog_DEBUG, FMT, ##__VA_ARGS__)
@@ -44,24 +45,17 @@ extern FILE* g_logF;
 #define TrvLogN(FMT, ...) TrvLog(TrvLog_NOTICE, FMT, ##__VA_ARGS__)
 #define TrvLogI(FMT, ...) TrvLog(TrvLog_INFO, FMT, ##__VA_ARGS__)
 
-#ifdef IS_DEBUG
-#include <assert.h>
-#define TrvAssert(condition) assert(condition);
-#else
-#define TrvAssert(condition) {}
-#endif
+#define TrvAssert(condition, FMT, ...) do {\
+    if (!(condition)) {\
+        TrvLogI(FMT, ##__VA_ARGS__);\
+        exit(-1);\
+    }\
+} while(0);
 
 
 #define run_with_period(_ms_) if ((_ms_ <= 1000/server.hz) || !(server.cronloops%((_ms_)/(1000/server.hz))))
 
-
-int dictSdsKeyCaseCompare(void *privdata, const void *key1,
-        const void *key2);
-void dictSdsDestructor(void *privdata, void *val);
-unsigned int dictSdsCaseHash(const void *key);
-unsigned int dictStringCaseHash(const void *key);
-int dictStringCompare(void *privdata, const void *key1,
-        const void *key2);
+int utf8StrWidth (char *str);
 
 #define ALLOW_PATH_SIZE 256
 
@@ -77,5 +71,24 @@ sds fileGetContent(char *path);
     tmpchar[tok->len] = 0;\
     result = atoi(tmpchar);\
 } while(0);
+
+unsigned int dictStringHash(const void *key);
+int dictStringCompare(void *privdata, const void *key1,
+        const void *key2);
+void dictStringDestructor(void *privdata, void *val);
+int dictSdsKeyCaseCompare(void *privdata, const void *key1,
+        const void *key2);
+unsigned int dictSdsHash(const void *key);
+unsigned int dictSdsCaseHash(const void *key);
+void dictVanillaFree(void *privdata, void *val);
+void dictListDestructor(void *privdata, void *val);
+void dictSdsDestructor(void *privdata, void *val);
+int dictSdsKeyCompare(void *privdata, const void *key1,
+        const void *key2);
+int dictStringCompare(void *privdata, const void *key1,
+        const void *key2);
+unsigned int dictStringCaseHash(const void *key);
+
+sds file_get_contents(char* path);
 
 #endif

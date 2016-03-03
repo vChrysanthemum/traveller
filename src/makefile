@@ -1,36 +1,30 @@
-travellerobjects = ./traveller.o \
+baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./core/zmalloc.o \
-				   ./core/config.o \
-				   ./core/sds.o \
-				   ./core/util.o \
-				   ./core/adlist.o \
-				   ./core/dict.o \
-				   ./core/frozen.o \
-				   ./core/debug.o \
-				   ./core/sha1.o \
-				   ./core/crc64.o \
-				   ../deps/sqlite/sqlite3.o \
-				   ./net/anet.o \
-				   ./net/ae.o \
-				   ./net/networking.o \
-				   ./netcmd/test.o \
-				   ./netcmd/netcmd.o \
-				   ./netcmd/galaxies.o \
-				   ./script/script.o \
-				   ./script/citizen.o \
-				   ./script/galaxies.o \
-				   ./script/db.o \
-				   ./script/net.o \
-				   ./ui/ui.o \
-				   ./ui/map.o 
+				   ./core/ini.o ./core/sds.o ./core/util.o ./core/adlist.o \
+				   ./core/stack.o ./core/dict.o ./core/frozen.o ./core/debug.o \
+				   ./core/sha1.o ./core/crc64.o \
+				   ./event/device.o ./event/actor.o \
+				   ./net/anet.o ./net/ae.o ./net/networking.o \
+				   ./script/script.o ./script/util.o ./script/ui.o ./script/db.o ./script/net.o \
+				   ./service/service.o ./service/test.o ./service/script.o \
+				   ./ui/ui.o ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
+				   ./ui/document/document.o ./ui/document/html.o ./ui/document/css.o ./ui/document/select.o
 
+travellerobjects := ./traveller.o $(baseobjects)
+
+uitestobjects := ./uitests/main.o $(baseobjects) ./uitests/ui_test.o
+
+nouitestobjects = ./nouitests/main.o ./nouitests/case.o $(baseobjects) \
+				  ./nouitests/core_test.o \
+				  ./nouitests/ui_main_test.o \
+				  ./nouitests/ui_html_test.o ./nouitests/ui_css_test.o ./nouitests/ui_css_select_test.o
 
 ALL_INCS= -I ./ \
 		  -I ../deps/lua/src/ \
 		  -I ../deps/sqlite/ 
 
 STD=-g -Wall
-LIBRARY= /usr/local/lib/libncurses.a ../deps/lua/src/liblua.a 
+LIBRARY= -lcurses -lpanel ../deps/lua/src/liblua.a 
 CFLAGS=$(STD)
 CC:=gcc
 #CC:=$(shell sh -c 'type $(CC) >/dev/null 2>/dev/null && echo $(CC) || echo gcc') $(CFLAGS)
@@ -39,14 +33,27 @@ all:traveller
 traveller:$(travellerobjects)
 	$(CC) -o traveller $(travellerobjects) $(LIBRARY)  $(CFLAGS)
 
+build_uitest:$(uitestobjects)
+	$(CC) -o uitest $(uitestobjects) $(LIBRARY)  $(CFLAGS)
+
+build_nouitest:$(nouitestobjects)
+	$(CC) -o nouitest $(nouitestobjects) $(LIBRARY)  $(CFLAGS)
+
+test_noui:build_nouitest
+	./nouitest
+
 %.o: %.c 
 	$(CC) -static -c $(CFLAGS) $(ALL_INCS) $<  -o $*.o
 
 clean:
 	rm -f ./*.o ./*.a
-	rm -f ./core/*.o ./core/*.a
-	rm -f ./net/*.o ./net/*.a
-	rm -f ./ui/*.o ./ui/*.a
-	rm -f ./netcmd/*.o ./netcmd/*.a
-	rm -f ./script/*.o ./script/*.a
-	rm ./traveller
+	rm -f ./core/*.o
+	rm -f ./net/*.o
+	rm -f ./ui/*.o
+	rm -f ./ui/document/*.o
+	rm -f ./service/*.o
+	rm -f ./event/*.o
+	rm -f ./script/*.o
+	rm -f ./uitests/*.o
+	rm -f ./nouitests/*.o
+	rm -f ./traveller ./uitest ./nouitest

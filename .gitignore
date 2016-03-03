@@ -2,6 +2,10 @@
 *.swp
 *.a
 *src/traveller
+*src/uitest
+*src/nouitest
 *.DS_Store
 *.log
 */tags
+deps/lua/src/lua
+deps/lua/src/luac

@@ -1,116 +1,156 @@
-#include "core/util.h"
-#include "core/config.h"
-#include "core/zmalloc.h"
-#include "script/galaxies.h"
-#include "script/db.h"
-#include "script/net.h"
-#include "net/networking.h"
-#include "netcmd/netcmd.h"
-#include "ui/ui.h"
-
 #include "lua.h"
 #include "lauxlib.h"
 #include "lualib.h"
 
-extern struct config *g_conf;
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
+#include "core/util.h"
+#include "core/ini.h"
+#include "core/zmalloc.h"
+#include "core/errors.h"
+#include "core/extern.h"
 
-extern lua_State *g_srvLuaSt;
-extern sqlite3 *g_srvDB;
-extern char g_srvGalaxydir[ALLOW_PATH_SIZE];
+#include "event/event.h"
+#include "script/script.h"
+#include "net/networking.h"
+#include "service/service.h"
+#include "ui/ui.h"
 
-extern lua_State *g_cliLuaSt;
-extern sqlite3 *g_cliDB;
-extern char g_cliGalaxydir[ALLOW_PATH_SIZE];
-extern NTSnode *g_galaxiesSrvSnode; /* 星系服务端连接 */
+#include "g_extern.h"
 
-/* 基础部分初始化 */
-static void STInit(lua_State **L, char *dir) {
+etDevice_t *st_device;
+
+static void ST_InitScriptLua(stScript_t *script) {
+    lua_State *L;
+    L = luaL_newstate();
+    luaL_openlibs(L);
+    /*
+    luaopen_base(L);
+    */
+    luaopen_table(L);
+    luaopen_string(L);
+    luaopen_math(L);
+
+    lua_pushstring(L, script->basedir);lua_setglobal(L, "g_basedir");
+
+    lua_register(L, "LogI",                     ST_LogI);
+    lua_register(L, "LoadView",                 ST_LoadView);
+    lua_register(L, "NT_ConnectSnode",          STNT_ConnectSnode);
+    lua_register(L, "NT_ScriptServiceRequest",  STNT_ScriptServiceRequest);
+    lua_register(L, "NT_ScriptServiceResponse", STNT_ScriptServiceResponse);
+    lua_register(L, "NT_AddReplyString",        STNT_AddReplyString);
+    lua_register(L, "NT_AddReplyRawString",     STNT_AddReplyRawString);
+    lua_register(L, "NT_AddReplyMultiString",   STNT_AddReplyMultiString);
+    lua_register(L, "DB_Connect",               STDB_Connect);
+    lua_register(L, "DB_Close",                 STDB_Close);
+    lua_register(L, "DB_Query",                 STDB_Query);
+    lua_register(L, "UI_LoadPage",              STUI_LoadPage);
+
     int errno;
 
-    *L = luaL_newstate();
-    luaL_openlibs(*L);
-    /*
-    luaopen_base(*L);
-    luaopen_table(*L);
-    luaopen_string(*L);
-    luaopen_math(*L);
-    */
-
-    lua_pushstring(*L, dir);
-    lua_setglobal(*L, "basedir");
-
-    lua_register(*L, "NTConnectNTSnode", STConnectNTSnode);
-    lua_register(*L, "NTAddReplyString", STAddReplyString);
-    lua_register(*L, "NTAddReplyRawString", STAddReplyRawString);
-    lua_register(*L, "NTAddReplyMultiString", STAddReplyMultiString);
-    lua_register(*L, "DBQuery", STDBQuery);
-
-}
-
-/* 服务端模式初始化 */
-void STServerInit() {
-    STInit(&g_srvLuaSt, g_srvGalaxydir);
-
-    char *filepath = (char *)zmalloc(ALLOW_PATH_SIZE);
-    memset(filepath, 0, ALLOW_PATH_SIZE);
-
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/main.lua", g_srvGalaxydir);
-    TrvLogI("%s", filepath);
-    errno = luaL_loadfile(g_srvLuaSt, filepath);
+    sds filepath = sdscatprintf(sdsempty(), "%s/main.lua", script->basedir);
+    errno = luaL_loadfile(L, filepath);
     if (errno) {
-        TrvExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
+        TrvExit(0, "%s", lua_tostring(L, -1));
     }
-
-    memset(filepath, 0, ALLOW_PATH_SIZE);
-
-    snprintf(filepath, ALLOW_PATH_SIZE, "%s/sqlite.db", g_srvGalaxydir);
-    g_srvDB = STInitDB(filepath);
-
+    sdsfree(filepath);
 
     //初始化
-    errno = lua_pcall(g_srvLuaSt, 0, 0, 0);
+    errno = lua_pcall(L, 0, 0, 0);
     if (errno) {
-        TrvExit(0, "%s", lua_tostring(g_srvLuaSt, -1));
+        TrvExit(0, "%s", lua_tostring(L, -1));
     }
 
+    lua_settop(L, 0);
     //调用init函数  
-    lua_getglobal(g_srvLuaSt, "init");
-    if (!lua_isfunction(g_srvLuaSt, -1)) {
-        TrvExit(0, "lua: 找不到init函数");
-    }
-    lua_pcall(g_srvLuaSt, 0, 0, 0);
+    lua_getglobal(L, "Init");
 
-    zfree(filepath);
+    IniOption *iniOption;
+    dictEntry *de;
+    dictIterator *di = dictGetIterator(script->iniSection->options);
+    lua_newtable(L);
+    while ((de = dictNext(di)) != 0) {
+        iniOption = (IniOption*)dictGetVal(de);
+
+        lua_pushstring(L, iniOption->key);
+        lua_pushstring(L, iniOption->value);
+        lua_settable(L, -3);
+    }
+    dictReleaseIterator(di);
+
+    errno = lua_pcall(L, 1, 0, 0);
+    ST_AssertLuaPCallSuccess(L, errno);
+
+    script->L = L;
 }
 
-/* 客户端模式初始化 */
-void STClientInit() {
-    STInit(&g_cliLuaSt, g_cliGalaxydir);
-    char tmpstr[64];
-    char galaxiesSrvHost[128];
-    int galaxiesSrvPort;
-    struct configOption *confOpt;
 
-    confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_host");
-    if (NULL == confOpt) {
-        TrvExit(0, "请配置星系地址，[galaxies_client] galaxies_server_host");
+stScript_t* ST_NewScript(IniSection *iniSection) {
+    stScript_t *script = (stScript_t*)zmalloc(sizeof(stScript_t));
+    memset(script, 0, sizeof(stScript_t));
+    
+    script->iniSection = iniSection;
+
+    sds value;
+    sds dir = sdsempty();
+
+    value = IniGet(g_conf, script->iniSection->key, "basedir");
+    if (0 == value) {
+        TrvExit(0, "%s 缺失脚本路径", script->iniSection->key);
     }
-    confOptToStr(confOpt, galaxiesSrvHost);
+    dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
+    script->basedir = sdsnew(dir);
 
-    confOpt = configGet(g_conf, "galaxies_client", "galaxies_server_port");
-    if (NULL == confOpt) {
-        TrvExit(0, "请配置星系监听端口，[galaxies_client] galaxies_server_port");
+    ST_InitScriptLua(script);
+
+    sdsfree(dir);
+    return script;
+}
+
+void ST_FreeScript(void *_script) {
+    stScript_t *script = _script;
+    sdsfree(script->basedir);
+    lua_close(script->L);
+    zfree(script);
+}
+
+/* 基础部分初始化 */
+int ST_Prepare() {
+    st_device = g_netDevice;
+    g_scripts = listCreate();
+    g_scripts->free = ST_FreeScript;
+
+    sds value;
+
+    char *header = "script:";
+    int headerLen = strlen(header);
+
+    stScript_t *script;
+
+    IniSection *section;
+    dictEntry *de;
+    dictIterator *di = dictGetIterator(g_conf->sections);
+    while ((de = dictNext(di)) != 0) {
+        section = (IniSection*)dictGetVal(de);
+        if (sdslen(section->key) < headerLen) {
+            continue;
+        }
+
+        if (0 != memcmp(section->key, header, headerLen)) {
+            continue;
+        }
+
+        script = ST_NewScript(section);
+
+        g_scripts = listAddNodeTail(g_scripts, script);
+
+        value = IniGet(g_conf, section->key, "is_subscribe_net");
+        if (0 != value && 0 == sdscmpstr(value, "1")) {
+            SV_SubscribeScriptService(script);
+        }
     }
-    confOptToInt(confOpt, tmpstr, galaxiesSrvPort);
+    dictReleaseIterator(di);
 
-    g_galaxiesSrvSnode = NTConnectNTSnode(galaxiesSrvHost, galaxiesSrvPort);
-    if (NULL == g_galaxiesSrvSnode) {
-        TrvExit(0, "连接星系失败");
-    }
-    TrvLogI("连接星系成功 %d", g_galaxiesSrvSnode->fd);
-
-    char *email = "j@ioctl.cc";
-    STLoginGalaxy(email, "traveller");
-
-    TrvLogI("finshed");
+    return ERRNO_OK;
 }

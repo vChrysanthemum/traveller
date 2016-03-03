@@ -40,9 +40,19 @@
 #include <time.h>
 #include <errno.h>
 
+#include "lua.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
-#include "net/ae.h"
+#include "core/extern.h"
+
+#include "event/event.h"
+#include "net/networking.h"
+
+#include "g_extern.h"
 
 /* Include the best multiplexing layer supported by this system.
  * The following should be ordered by performances, descending. */
@@ -60,14 +70,14 @@
     #endif
 #endif
 
-aeEventLoop *aeCreateEventLoop(int setsize) {
-    aeEventLoop *eventLoop;
+aeLooper_t *aeNewLooper(int setsize) {
+    aeLooper_t *eventLoop;
     int i;
 
     if ((eventLoop = zmalloc(sizeof(*eventLoop))) == NULL) goto err;
-    eventLoop->events = zmalloc(sizeof(aeFileEvent)*setsize);
-    eventLoop->fired = zmalloc(sizeof(aeFiredEvent)*setsize);
-    if (eventLoop->events == NULL || eventLoop->fired == NULL) goto err;
+    eventLoop->events = zmalloc(sizeof(aeFileEvent_t)*setsize);
+    eventLoop->fired = zmalloc(sizeof(aeFiredEvent_t)*setsize);
+    if (eventLoop->events == 0 || eventLoop->fired == NULL) goto err;
     eventLoop->setsize = setsize;
     eventLoop->lastTime = time(NULL);
     eventLoop->timeEventHead = NULL;
@@ -80,6 +90,7 @@ aeEventLoop *aeCreateEventLoop(int setsize) {
      * vector with it. */
     for (i = 0; i < setsize; i++)
         eventLoop->events[i].mask = AE_NONE;
+
     return eventLoop;
 
 err:
@@ -92,7 +103,7 @@ err:
 }
 
 /* Return the current set size. */
-int aeGetSetSize(aeEventLoop *eventLoop) {
+int aeGetSetSize(aeLooper_t *eventLoop) {
     return eventLoop->setsize;
 }
 
@@ -103,15 +114,15 @@ int aeGetSetSize(aeEventLoop *eventLoop) {
  * performed at all.
  *
  * Otherwise AE_OK is returned and the operation is successful. */
-int aeResizeSetSize(aeEventLoop *eventLoop, int setsize) {
+int aeResizeSetSize(aeLooper_t *eventLoop, int setsize) {
     int i;
 
     if (setsize == eventLoop->setsize) return AE_OK;
     if (eventLoop->maxfd >= setsize) return AE_ERR;
     if (aeApiResize(eventLoop,setsize) == -1) return AE_ERR;
 
-    eventLoop->events = zrealloc(eventLoop->events,sizeof(aeFileEvent)*setsize);
-    eventLoop->fired = zrealloc(eventLoop->fired,sizeof(aeFiredEvent)*setsize);
+    eventLoop->events = zrealloc(eventLoop->events,sizeof(aeFileEvent_t)*setsize);
+    eventLoop->fired = zrealloc(eventLoop->fired,sizeof(aeFiredEvent_t)*setsize);
     eventLoop->setsize = setsize;
 
     /* Make sure that if we created new slots, they are initialized with
@@ -121,25 +132,26 @@ int aeResizeSetSize(aeEventLoop *eventLoop, int setsize) {
     return AE_OK;
 }
 
-void aeDeleteEventLoop(aeEventLoop *eventLoop) {
+void aeDeleteLooper(aeLooper_t *eventLoop) {
     aeApiFree(eventLoop);
     zfree(eventLoop->events);
     zfree(eventLoop->fired);
+
     zfree(eventLoop);
 }
 
-void aeStop(aeEventLoop *eventLoop) {
+void aeStop(aeLooper_t *eventLoop) {
     eventLoop->stop = 1;
 }
 
-int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
+int aeCreateFileEvent(aeLooper_t *eventLoop, int fd, int mask,
         aeFileProc *proc, void *clientData)
 {
     if (fd >= eventLoop->setsize) {
         errno = ERANGE;
         return AE_ERR;
     }
-    aeFileEvent *fe = &eventLoop->events[fd];
+    aeFileEvent_t *fe = &eventLoop->events[fd];
 
     if (aeApiAddEvent(eventLoop, fd, mask) == -1)
         return AE_ERR;
@@ -152,10 +164,10 @@ int aeCreateFileEvent(aeEventLoop *eventLoop, int fd, int mask,
     return AE_OK;
 }
 
-void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
+void aeDeleteFileEvent(aeLooper_t *eventLoop, int fd, int mask)
 {
     if (fd >= eventLoop->setsize) return;
-    aeFileEvent *fe = &eventLoop->events[fd];
+    aeFileEvent_t *fe = &eventLoop->events[fd];
 
     if (fe->mask == AE_NONE) return;
     fe->mask = fe->mask & (~mask);
@@ -170,9 +182,9 @@ void aeDeleteFileEvent(aeEventLoop *eventLoop, int fd, int mask)
     aeApiDelEvent(eventLoop, fd, mask);
 }
 
-int aeGetFileEvents(aeEventLoop *eventLoop, int fd) {
+int aeGetFileEvents(aeLooper_t *eventLoop, int fd) {
     if (fd >= eventLoop->setsize) return 0;
-    aeFileEvent *fe = &eventLoop->events[fd];
+    aeFileEvent_t *fe = &eventLoop->events[fd];
 
     return fe->mask;
 }
@@ -187,30 +199,30 @@ static void aeGetTime(long *seconds, long *milliseconds)
 }
 
 static void aeAddMillisecondsToNow(long long milliseconds, long *sec, long *ms) {
-    long cur_sec, cur_ms, when_sec, when_ms;
+    long cur_sec, cur_ms, whenSec, whenMs;
 
     aeGetTime(&cur_sec, &cur_ms);
-    when_sec = cur_sec + milliseconds/1000;
-    when_ms = cur_ms + milliseconds%1000;
-    if (when_ms >= 1000) {
-        when_sec ++;
-        when_ms -= 1000;
+    whenSec = cur_sec + milliseconds/1000;
+    whenMs = cur_ms + milliseconds%1000;
+    if (whenMs >= 1000) {
+        whenSec ++;
+        whenMs -= 1000;
     }
-    *sec = when_sec;
-    *ms = when_ms;
+    *sec = whenSec;
+    *ms = whenMs;
 }
 
-long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds,
+long long aeCreateTimeEvent(aeLooper_t *eventLoop, long long milliseconds,
         aeTimeProc *proc, void *clientData,
         aeEventFinalizerProc *finalizerProc)
 {
     long long id = eventLoop->timeEventNextId++;
-    aeTimeEvent *te;
+    aeTimeEvent_t *te;
 
     te = zmalloc(sizeof(*te));
     if (te == NULL) return AE_ERR;
     te->id = id;
-    aeAddMillisecondsToNow(milliseconds,&te->when_sec,&te->when_ms);
+    aeAddMillisecondsToNow(milliseconds,&te->whenSec,&te->whenMs);
     te->timeProc = proc;
     te->finalizerProc = finalizerProc;
     te->clientData = clientData;
@@ -219,9 +231,9 @@ long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds,
     return id;
 }
 
-int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id)
+int aeDeleteTimeEvent(aeLooper_t *eventLoop, long long id)
 {
-    aeTimeEvent *te, *prev = NULL;
+    aeTimeEvent_t *te, *prev = NULL;
 
     te = eventLoop->timeEventHead;
     while(te) {
@@ -244,7 +256,7 @@ int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id)
 /* Search the first timer to fire.
  * This operation is useful to know how many time the select can be
  * put in sleep without to delay any event.
- * If there are no timers NULL is returned.
+ * If there are no timers 0 is returned.
  *
  * Note that's O(N) since time events are unsorted.
  * Possible optimizations (not needed by Redis so far, but...):
@@ -252,15 +264,15 @@ int aeDeleteTimeEvent(aeEventLoop *eventLoop, long long id)
  *    Much better but still insertion or deletion of timers is O(N).
  * 2) Use a skiplist to have this operation as O(1) and insertion as O(log(N)).
  */
-static aeTimeEvent *aeSearchNearestTimer(aeEventLoop *eventLoop)
+static aeTimeEvent_t *aeSearchNearestTimer(aeLooper_t *eventLoop)
 {
-    aeTimeEvent *te = eventLoop->timeEventHead;
-    aeTimeEvent *nearest = NULL;
+    aeTimeEvent_t *te = eventLoop->timeEventHead;
+    aeTimeEvent_t *nearest = NULL;
 
     while(te) {
-        if (!nearest || te->when_sec < nearest->when_sec ||
-                (te->when_sec == nearest->when_sec &&
-                 te->when_ms < nearest->when_ms))
+        if (!nearest || te->whenSec < nearest->whenSec ||
+                (te->whenSec == nearest->whenSec &&
+                 te->whenMs < nearest->whenMs))
             nearest = te;
         te = te->next;
     }
@@ -268,9 +280,9 @@ static aeTimeEvent *aeSearchNearestTimer(aeEventLoop *eventLoop)
 }
 
 /* Process time events */
-static int processTimeEvents(aeEventLoop *eventLoop) {
+static int processTimeEvents(aeLooper_t *eventLoop) {
     int processed = 0;
-    aeTimeEvent *te;
+    aeTimeEvent_t *te;
     long long maxId;
     time_t now = time(NULL);
 
@@ -285,7 +297,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
     if (now < eventLoop->lastTime) {
         te = eventLoop->timeEventHead;
         while(te) {
-            te->when_sec = 0;
+            te->whenSec = 0;
             te = te->next;
         }
     }
@@ -302,8 +314,8 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
             continue;
         }
         aeGetTime(&now_sec, &now_ms);
-        if (now_sec > te->when_sec ||
-            (now_sec == te->when_sec && now_ms >= te->when_ms))
+        if (now_sec > te->whenSec ||
+            (now_sec == te->whenSec && now_ms >= te->whenMs))
         {
             int retval;
 
@@ -324,7 +336,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
              * deletion (putting references to the nodes to delete into
              * another linked list). */
             if (retval != AE_NOMORE) {
-                aeAddMillisecondsToNow(retval,&te->when_sec,&te->when_ms);
+                aeAddMillisecondsToNow(retval,&te->whenSec,&te->whenMs);
             } else {
                 aeDeleteTimeEvent(eventLoop, id);
             }
@@ -349,7 +361,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
  * the events that's possible to process without to wait are processed.
  *
  * The function returns the number of events processed. */
-int aeProcessEvents(aeEventLoop *eventLoop, int flags)
+int aeProcessEvents(aeLooper_t *eventLoop, int flags)
 {
     int processed = 0, numevents;
 
@@ -363,7 +375,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
     if (eventLoop->maxfd != -1 ||
         ((flags & AE_TIME_EVENTS) && !(flags & AE_DONT_WAIT))) {
         int j;
-        aeTimeEvent *shortest = NULL;
+        aeTimeEvent_t *shortest = NULL;
         struct timeval tv, *tvp;
 
         if (flags & AE_TIME_EVENTS && !(flags & AE_DONT_WAIT))
@@ -375,12 +387,12 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
              * timer to fire. */
             aeGetTime(&now_sec, &now_ms);
             tvp = &tv;
-            tvp->tv_sec = shortest->when_sec - now_sec;
-            if (shortest->when_ms < now_ms) {
-                tvp->tv_usec = ((shortest->when_ms+1000) - now_ms)*1000;
+            tvp->tv_sec = shortest->whenSec - now_sec;
+            if (shortest->whenMs < now_ms) {
+                tvp->tv_usec = ((shortest->whenMs+1000) - now_ms)*1000;
                 tvp->tv_sec --;
             } else {
-                tvp->tv_usec = (shortest->when_ms - now_ms)*1000;
+                tvp->tv_usec = (shortest->whenMs - now_ms)*1000;
             }
             if (tvp->tv_sec < 0) tvp->tv_sec = 0;
             if (tvp->tv_usec < 0) tvp->tv_usec = 0;
@@ -399,7 +411,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
 
         numevents = aeApiPoll(eventLoop, tvp);
         for (j = 0; j < numevents; j++) {
-            aeFileEvent *fe = &eventLoop->events[eventLoop->fired[j].fd];
+            aeFileEvent_t *fe = &eventLoop->events[eventLoop->fired[j].fd];
             int mask = eventLoop->fired[j].mask;
             int fd = eventLoop->fired[j].fd;
             int rfired = 0;
@@ -447,19 +459,30 @@ int aeWait(int fd, int mask, long long milliseconds) {
     }
 }
 
-void aeMain(aeEventLoop *eventLoop) {
+void aeMain(aeLooper_t *eventLoop) {
+    etDevice_t *device = g_netDevice;
+
     eventLoop->stop = 0;
     while (!eventLoop->stop) {
         if (eventLoop->beforesleep != NULL)
             eventLoop->beforesleep(eventLoop);
         aeProcessEvents(eventLoop, AE_ALL_EVENTS);
+
+        ET_DeviceFactoryActorLoopOnce(device);
     }
+
+    aeDeleteLooper(eventLoop);
+}
+
+void* aeMainDeviceWrap(void *_eventLoop) {
+    aeMain((aeLooper_t*)_eventLoop);
+    return 0;
 }
 
 char *aeGetApiName(void) {
     return aeApiName();
 }
 
-void aeSetBeforeSleepProc(aeEventLoop *eventLoop, aeBeforeSleepProc *beforesleep) {
+void aeSetBeforeSleepProc(aeLooper_t *eventLoop, aeBeforeSleepProc *beforesleep) {
     eventLoop->beforesleep = beforesleep;
 }

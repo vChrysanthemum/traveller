@@ -72,7 +72,7 @@ typedef struct aeApiState {
     int     pending_masks[MAX_EVENT_BATCHSZ];   /* pending fds' masks */
 } aeApiState;
 
-static int aeApiCreate(aeEventLoop *eventLoop) {
+static int aeApiCreate(aeLooper_t *eventLoop) {
     int i;
     aeApiState *state = zmalloc(sizeof(aeApiState));
     if (!state) return -1;
@@ -94,12 +94,12 @@ static int aeApiCreate(aeEventLoop *eventLoop) {
     return 0;
 }
 
-static int aeApiResize(aeEventLoop *eventLoop, int setsize) {
+static int aeApiResize(aeLooper_t *eventLoop, int setsize) {
     /* Nothing to resize here. */
     return 0;
 }
 
-static void aeApiFree(aeEventLoop *eventLoop) {
+static void aeApiFree(aeLooper_t *eventLoop) {
     aeApiState *state = eventLoop->apidata;
 
     close(state->portfd);
@@ -149,7 +149,7 @@ static int aeApiAssociate(const char *where, int portfd, int fd, int mask) {
     return rv;
 }
 
-static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
+static int aeApiAddEvent(aeLooper_t *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
     int fullmask, pfd;
 
@@ -180,7 +180,7 @@ static int aeApiAddEvent(aeEventLoop *eventLoop, int fd, int mask) {
     return (aeApiAssociate("aeApiAddEvent", state->portfd, fd, fullmask));
 }
 
-static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
+static void aeApiDelEvent(aeLooper_t *eventLoop, int fd, int mask) {
     aeApiState *state = eventLoop->apidata;
     int fullmask, pfd;
 
@@ -240,7 +240,7 @@ static void aeApiDelEvent(aeEventLoop *eventLoop, int fd, int mask) {
     }
 }
 
-static int aeApiPoll(aeEventLoop *eventLoop, struct timeval *tvp) {
+static int aeApiPoll(aeLooper_t *eventLoop, struct timeval *tvp) {
     aeApiState *state = eventLoop->apidata;
     struct timespec timeout, *tsp;
     int mask, i;
