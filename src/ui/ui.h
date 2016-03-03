@@ -3,11 +3,7 @@
 
 #include <curses.h>
 #include <panel.h>
-#include "core/errors.h"
-#include "core/util.h"
-#include "core/sds.h"
-#include "core/adlist.h"
-#include "core/zmalloc.h"
+
 #include "ui/map.h"
 #include "ui/document/document.h"
 

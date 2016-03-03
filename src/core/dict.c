@@ -43,9 +43,12 @@
 #include <sys/time.h>
 #include <ctype.h>
 
+#include "core/sds.h"
+#include "core/adlist.h"
 #include "core/dict.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
+#include "core/extern.h"
 
 /* Using dictEnableResize() / dictDisableResize() we make possible to
  * enable/disable resizing of the hash table as needed. This is very important

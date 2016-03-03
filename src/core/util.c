@@ -1,9 +1,13 @@
 #include <execinfo.h>
 #include <string.h>
 
-#include "core/util.h"
-#include "core/dict.h"
+#include "core/zmalloc.h"
 #include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
+#include "core/util.h"
+
+Log  c_log;
 
 dictType stringTableDictType = {
     dictStringCaseHash,        /* hash function */

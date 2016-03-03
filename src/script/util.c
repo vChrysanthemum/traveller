@@ -1,3 +1,14 @@
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
+#include "core/util.h"
+#include "core/ini.h"
+#include "core/extern.h"
+
 #include "script/script.h"
 
 const char* ST_getGlobalString(lua_State *L, char *key) {

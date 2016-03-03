@@ -1,9 +1,6 @@
 #ifndef __NETCMD_NETCMD_H
 #define __NETCMD_NETCMD_H
 
-#include "net/networking.h"
-#include "script/script.h"
-
 typedef struct svServiceRouter_s {
     char *key;
     void (*proc)(ntSnode_t *sn);

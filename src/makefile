@@ -39,8 +39,7 @@ build_uitest:$(uitestobjects)
 build_nouitest:$(nouitestobjects)
 	$(CC) -o nouitest $(nouitestobjects) $(LIBRARY)  $(CFLAGS)
 
-test_noui:
-	make build_nouitest
+test_noui:build_nouitest
 	./nouitest
 
 %.o: %.c 

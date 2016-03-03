@@ -1,4 +1,15 @@
-#include "ui.h"
+#include "lua.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
+#include "core/zmalloc.h"
+#include "core/util.h"
+#include "core/extern.h"
+
+#include "event/event.h"
+#include "ui/ui.h"
+
 #include "g_extern.h"
 #include "ui/extern.h"
 

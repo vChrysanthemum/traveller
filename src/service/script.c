@@ -1,12 +1,17 @@
 #include <stdlib.h>
 
-#include "core/util.h"
-#include "net/networking.h"
-#include "service/service.h"
-#include "script/script.h"
 #include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
+#include "core/util.h"
+#include "core/ini.h"
+#include "core/extern.h"
+
+#include "net/networking.h"
+#include "script/script.h"
+#include "service/service.h"
 
 #include "g_extern.h"
 #include "service/extern.h"

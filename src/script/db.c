@@ -1,9 +1,17 @@
+#include "lua.h"
+#include "lauxlib.h"
+#include "lualib.h"
+#include "sqlite3.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 #include "core/util.h"
 #include "core/zmalloc.h"
-#include "script/script.h"
+#include "core/ini.h"
+#include "core/extern.h"
 
-#include "lua.h"
-#include "sqlite3.h"
+#include "script/script.h"
 
 // for lua
 // 连接db

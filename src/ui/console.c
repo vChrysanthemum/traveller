@@ -1,5 +1,15 @@
 #include <string.h>
+
+#include "lua.h"
+
+#include "core/zmalloc.h"
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
+
+#include "event/event.h"
 #include "ui/ui.h"
+
 #include "g_extern.h"
 #include "ui/extern.h"
 

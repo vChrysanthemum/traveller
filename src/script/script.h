@@ -1,13 +1,6 @@
 #ifndef __SCRIPT_SCRIPT_H
 #define __SCRIPT_SCRIPT_H
 
-#include "core/util.h"
-#include "net/networking.h"
-#include "lua.h"
-#include "lauxlib.h"
-#include "lualib.h"
-#include "sqlite3.h"
-
 #define SCRIPT_SERVICE_ERRNO_OK         0
 #define SCRIPT_SERVICE_ERRNO_INNERERR   502
 

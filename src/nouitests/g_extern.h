@@ -14,7 +14,7 @@ extern etDevice_t *g_fooDevice;
 extern etDevice_t *g_netDevice;
 
 extern char g_basedir[];
-Log g_log;
+Log c_log;
 extern Ini *g_conf;
 
 list *g_scripts;

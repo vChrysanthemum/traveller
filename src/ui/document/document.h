@@ -1,8 +1,6 @@
 #ifndef __UI_UI_DOCUMENT_H
 #define __UI_UI_DOCUMENT_H
 
-#include "core/adlist.h"
-
 const char* UIERROR_CSS_PARSE_STATE_NOT_SELECTOR;
 const char* UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_KEY;
 const char* UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_VALUE;

@@ -3,10 +3,6 @@
 
 #include <sys/types.h>
 
-#include "core/sds.h"
-#include "core/dict.h"
-#include "core/adlist.h"
-
 #define HAVE_BACKTRACE 1
 
 typedef struct IniOption {

@@ -9,10 +9,6 @@
 #include <sys/time.h>
 #include <locale.h>
 
-#include "core/dict.h"
-#include "core/adlist.h"
-#include "core/zmalloc.h"
-#include "core/sds.h"
 #include "core/frozen.h"
 
 #define TRUE  1
@@ -23,8 +19,6 @@ typedef struct Log {
     FILE *f;
     int fd;
 } Log;
-
-#include "g_extern.h"
 
 /* Anti-warning macro... */
 #define NOTUSED(V) ((void) V)
@@ -42,10 +36,10 @@ typedef struct Log {
     struct timeval tv;\
     gettimeofday(&tv,NULL);\
     strftime(timestr,sizeof(timestr),"%d %b %H:%M:%S.",localtime(&tv.tv_sec));\
-    fputc('[', g_log.f); fputs(timestr, g_log.f); fputs("]", g_log.f); \
-    fprintf(g_log.f, "(%s:%d) ", __FILE__, __LINE__); fprintf(g_log.f, FMT, ##__VA_ARGS__); \
-    fputc('\n', g_log.f); \
-    fflush(g_log.f);\
+    fputc('[', c_log.f); fputs(timestr, c_log.f); fputs("]", c_log.f); \
+    fprintf(c_log.f, "(%s:%d) ", __FILE__, __LINE__); fprintf(c_log.f, FMT, ##__VA_ARGS__); \
+    fputc('\n', c_log.f); \
+    fflush(c_log.f);\
 } while(0);
 
 #define TrvLogD(FMT, ...) TrvLog(TrvLog_DEBUG, FMT, ##__VA_ARGS__)

@@ -43,8 +43,15 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include "net/anet.h"
+#include "lua.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 #include "core/util.h"
+#include "core/extern.h"
+
+#include "net/networking.h"
 
 static void anetSetError(char *err, const char *fmt, ...)
 {

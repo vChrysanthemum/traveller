@@ -1,14 +1,6 @@
 #ifndef __EVENT_EVENT_H__
 #define __EVENT_EVENT_H__
 
-#include <core/platform.h>
-#include <pthread.h>
-#include <string.h>
-#include "core/zmalloc.h"
-#include "core/sds.h"
-#include "core/adlist.h"
-#include "core/dict.h"
-
 typedef struct etActor_s etActor_t;
 typedef struct etActor_s {
     list *channels;

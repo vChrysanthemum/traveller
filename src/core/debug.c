@@ -3,11 +3,14 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 #include "core/platform.h"
 #include "core/ini.h"
 #include "core/util.h"
 #include "core/debug.h"
-#include "core/sds.h"
+#include "core/extern.h"
 
 #include <arpa/inet.h>
 #include <signal.h>
@@ -19,9 +22,6 @@
 #include <ucontext.h>
 #include <fcntl.h>
 #endif /* HAVE_BACKTRACE */
-
-#include "g_extern.h"
-
 
 static void sigtermHandler(int sig) {
     NOTUSED(sig);
@@ -214,7 +214,7 @@ void logStackTrace(ucontext_t *uc) {
     int log_to_stdout = '\0';
 
     /* Open the log file in append mode. */
-    fd = g_log.fd;
+    fd = c_log.fd;
 
     /* Generate the stack trace */
     trace_size = backtrace(trace, 100);

@@ -4,19 +4,24 @@
 #include <unistd.h> 
 #include <locale.h>
 
+#include "lua.h"
+#include "sqlite3.h"
+
+#include "core/sds.h"
+#include "core/dict.h"
+#include "core/adlist.h"
 #include "core/errors.h"
 #include "core/ini.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
 #include "core/debug.h"
+#include "core/extern.h"
+
 #include "net/networking.h"
 #include "event/event.h"
 #include "script/script.h"
 #include "ui/ui.h"
 #include "ui/map.h"
-
-#include "lua.h"
-#include "sqlite3.h"
 
 #include "net/extern.h"
 
@@ -34,7 +39,6 @@ etDevice_t *g_fooDevice;
 etDevice_t *g_netDevice;
 
 char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
-Log  g_log;
 Ini  *g_conf;
 
 list *g_scripts;
@@ -44,9 +48,9 @@ int main(int argc, char *argv[]) {
     char tmpstr[ALLOW_PATH_SIZE] = {""};
     int listenPort;
 
-    g_log.dir = 0;
-    g_log.f = stderr;
-    g_log.fd = STDERR_FILENO;
+    c_log.dir = 0;
+    c_log.f = stderr;
+    c_log.fd = STDERR_FILENO;
 
     setlocale(LC_ALL,"");
 
@@ -70,9 +74,9 @@ int main(int argc, char *argv[]) {
 
     value = IniGet(g_conf, "traveller", "log_dir");
     if (0 != value) {
-        g_log.dir = stringnewlen(value, sdslen(value));
-        g_log.f = fopen(g_log.dir, "a+");
-        g_log.fd = fileno(g_log.f);
+        c_log.dir = stringnewlen(value, sdslen(value));
+        c_log.f = fopen(c_log.dir, "a+");
+        c_log.fd = fileno(c_log.f);
     }
 
     value = IniGet(g_conf, "traveller", "listen_port");

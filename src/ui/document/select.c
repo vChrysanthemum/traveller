@@ -1,3 +1,9 @@
+#include "core/adlist.h"
+#include "core/dict.h"
+#include "core/sds.h"
+#include "core/zmalloc.h"
+
+#include "event/event.h"
 #include "ui/ui.h"
 
 // css选择器
@@ -122,6 +128,7 @@ static int IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHt
 }
 
 static uiHtmlDom_t* SelectorSectionsRightFindHtmlDom(listIter *liSelectorSection) {
+    return 0;
 }
 
 uiHtmlDom_t* UI_GetHtmlDomByCssSelector(uiDocument_t* document, uiCssSelector_t *selector) {

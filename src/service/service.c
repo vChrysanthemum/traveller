@@ -1,7 +1,16 @@
-#include "core/util.h"
+#include "lua.h"
+
+#include "core/sds.h"
+#include "core/adlist.h"
 #include "core/dict.h"
+#include "core/util.h"
+#include "core/ini.h"
+#include "core/extern.h"
+
 #include "net/networking.h"
+#include "script/script.h"
 #include "service/service.h"
+
 #include "net/extern.h"
 
 list *sv_scriptServiceSubscriber;

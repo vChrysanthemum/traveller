@@ -1,5 +1,13 @@
 #include <unistd.h>
+#include <pthread.h>
+
+#include "core/sds.h"
+#include "core/adlist.h"
+#include "core/dict.h"
 #include "core/util.h"
+#include "core/zmalloc.h"
+#include "core/extern.h"
+
 #include "event/event.h"
 
 void ET_FreeDeviceJob(void* _job) {
