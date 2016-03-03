@@ -11,9 +11,6 @@
 
 #include "core/frozen.h"
 
-#define TRUE  1
-#define FALSE 0
-
 typedef struct Log {
     char *dir;
     FILE *f;

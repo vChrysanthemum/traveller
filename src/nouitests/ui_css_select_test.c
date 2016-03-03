@@ -17,7 +17,7 @@ TEST_CASE("fail css scan leafHtmlDoms test")
                     <input type=\"text\" name=\"text\" />\
                     <table>\
                         <tr>\
-                            <td>   <a>hello</a>    world   ! </td>\
+                            <td>   <a><shit>sdfasdf</shit></a>    world   ! </td>\
                         </tr> \
                     </table>\
                     <script>\
@@ -46,4 +46,50 @@ TEST_CASE("fail css scan leafHtmlDoms test")
     listReleaseIterator(li);
 
     listRelease(leafHtmlDoms);
+}
+
+TEST_CASE("fail get dom by css selector test")
+{
+    char *html = "\
+                  <div id=\"top\" style=\"shit '' \\\" shit\" class=\"top hover\">\
+                    <input class=\"hello\" type=\"text\" name=\"text\" />\
+                    <table>\
+                        <tr class=\"hello\">\
+                            <td>   <a class=\"hello\"><shit>sdfasdf</shit></a>    world   ! </td>\
+                        </tr> \
+                    </table>\
+                    <table>\
+                        <shit class=\"hello\" />\
+                    </table>\
+                    <script>\
+                    hello sdlkfjsdfonounoi123oi12n3oin \
+                    </script>\
+                    hello  &gt; &nbsp; <img src="" /><div><a>.</a></div>sdlkfj \
+                  </div>\
+                  <style>\
+                  table .hello {} \
+                  </style>\
+                  ";
+    uiDocument_t *document = UI_ParseDocument(html);
+    uiCssRule_t *rule = (uiCssRule_t*)listNodeValue(document->cssStyleSheet->rules->head);
+    list *doms = UI_GetHtmlDomsByCssSelector(document, rule->selector);
+
+    uiHtmlDom_t *dom;
+    listNode *lndom;
+    listIter *lidom;
+    lidom = listGetIterator(doms, AL_START_HEAD);
+
+    lndom = listNext(lidom);
+    dom = (uiHtmlDom_t*)listNodeValue(lndom);
+    REQUIRE(0 == stringcmp(dom->title, "tr"), "err");
+
+    lndom = listNext(lidom);
+    dom = (uiHtmlDom_t*)listNodeValue(lndom);
+    REQUIRE(0 == stringcmp(dom->title, "a"), "err");
+
+    lndom = listNext(lidom);
+    dom = (uiHtmlDom_t*)listNodeValue(lndom);
+    REQUIRE(0 == stringcmp(dom->title, "shit"), "err");
+
+    listReleaseIterator(lidom);
 }
