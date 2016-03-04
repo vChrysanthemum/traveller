@@ -72,7 +72,7 @@ int STDB_Query(lua_State *L) {
             &errmsg);
 
     if (SQLITE_OK != errno) {
-        TrvLogW("STDB_Query Error: %s", errmsg);
+        C_LogW("STDB_Query Error: %s", errmsg);
         sqlite3_free(errmsg);
 
         lua_pushnil(L);

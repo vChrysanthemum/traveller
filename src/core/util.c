@@ -147,7 +147,7 @@ void dump(void) {
         exit(EXIT_FAILURE);
     }   
     for (j = 0; j < nptrs; j++)
-        TrvLogI("[%02d] %s", j, strings[j]);
+        C_LogI("[%02d] %s", j, strings[j]);
     free(strings);
 }
 

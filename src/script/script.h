@@ -36,7 +36,7 @@ int ST_Prepare();
     fdstr = lua_tostring(L, 1);\
     sn = NT_GetSnodeByFDS(fdstr);\
     if (0 == sn) {\
-        TrvLogI("找不到链接: %s", fdstr);\
+        C_LogI("找不到链接: %s", fdstr);\
         lua_pushnumber(L, -2);\
         return 1;\
     }\
