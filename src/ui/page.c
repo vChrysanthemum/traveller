@@ -37,7 +37,7 @@ void* UI_LoadPageActor(etActor_t *actor, int args, void **argv) {
     UI_ParseHtml(document);
 
     uiHtmlDom_t *dom = listNodeValue(document->rootDom->children->head);
-    C_LogI("%s", dom->title);
+    C_UtilLogI("%s", dom->title);
     page->uiwin = UI_createWindow(20, ui_width, 0, 0);
     wprintw(page->uiwin->win, page->content);
     wrefresh(page->uiwin->win);

@@ -1,9 +1,9 @@
 local CtrMain = {}
 
 function CtrMain.Index(connectId, requestId, argv)
-    content = LoadView("index")
+    content = core.util.LoadView("index")
 
-    NT_ScriptServiceResponse(connectId, requestId, "data", content)
+    core.nt.ScriptServiceResponse(connectId, requestId, "data", content)
 end
 
 return CtrMain

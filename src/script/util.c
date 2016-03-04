@@ -21,7 +21,7 @@ const char* ST_getGlobalString(lua_State *L, char *key) {
 int ST_LogI(lua_State *L) {
     char *log;
     log = (char *)lua_tostring(L, 1);
-    C_LogI("%s", log);
+    C_UtilLogI("%s", log);
     return 0;
 }
 

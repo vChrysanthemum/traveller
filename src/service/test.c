@@ -28,14 +28,14 @@ void SV_Test(ntSnode_t *sn) {
 void SV_Msg(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
-    C_LogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
+    C_UtilLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
     NT_SnodeServiceSetFinishedFlag(sn);
 }
 
 void SV_Close(ntSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
-    C_LogD("closed by other people");
+    C_UtilLogD("closed by other people");
     NT_AddReplyMultiString(sn, 2, "msg", "21oi4oaiwef");
     NT_SnodeServiceSetFinishedFlag(sn);
  

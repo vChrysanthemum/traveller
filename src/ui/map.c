@@ -228,7 +228,7 @@ void UIDrawMap() {
             }
         }
     }
-    //C_LogI("0x%8X 0x%8X", (unsigned int)ui_curUIMap, (unsigned int)ui_curUIMap->nodes);
+    //C_UtilLogI("0x%8X 0x%8X", (unsigned int)ui_curUIMap, (unsigned int)ui_curUIMap->nodes);
 
     return;
 }

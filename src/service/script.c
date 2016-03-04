@@ -52,7 +52,7 @@ static int SV_scriptService(stScript_t *script, ntSnode_t *sn) {
     errno = lua_pcall(L, 4, 0, 0);
 
     if (0 != errno) {
-        C_LogW("%s", lua_tostring(L, -1));
+        C_UtilLogW("%s", lua_tostring(L, -1));
         return SCRIPT_SERVICE_ERRNO_INNERERR;
     }
 
@@ -120,7 +120,7 @@ static int SV_scriptServiceCallback(ntSnode_t *sn) {
     listDelNode(sn->scriptServiceRequestCtxList, ln);
 
     if (0 != errno) {
-        C_LogW("%s", lua_tostring(L, -1));
+        C_UtilLogW("%s", lua_tostring(L, -1));
         return SCRIPT_SERVICE_ERRNO_INNERERR;
     }
 

@@ -28,7 +28,7 @@ typedef struct Log {
 #define C_LOG_INFO 4
 #define C_LOG_DEBUG 6
 
-#define C_Log(level, FMT, ...) do {\
+#define C_UtilLog(level, FMT, ...) do {\
     char timestr[64];\
     struct timeval tv;\
     gettimeofday(&tv,NULL);\
@@ -39,15 +39,15 @@ typedef struct Log {
     fflush(c_log.f);\
 } while(0);
 
-#define C_LogD(FMT, ...) C_Log(C_LOG_DEBUG, FMT, ##__VA_ARGS__)
-#define C_LogW(FMT, ...) C_Log(C_LOG_WARNING, FMT, ##__VA_ARGS__)
-#define C_LogE(FMT, ...) C_Log(C_LOG_ERROR, FMT, ##__VA_ARGS__)
-#define C_LogN(FMT, ...) C_Log(C_LOG_NOTICE, FMT, ##__VA_ARGS__)
-#define C_LogI(FMT, ...) C_Log(C_LOG_INFO, FMT, ##__VA_ARGS__)
+#define C_UtilLogD(FMT, ...) C_UtilLog(C_LOG_DEBUG, FMT, ##__VA_ARGS__)
+#define C_UtilLogW(FMT, ...) C_UtilLog(C_LOG_WARNING, FMT, ##__VA_ARGS__)
+#define C_UtilLogE(FMT, ...) C_UtilLog(C_LOG_ERROR, FMT, ##__VA_ARGS__)
+#define C_UtilLogN(FMT, ...) C_UtilLog(C_LOG_NOTICE, FMT, ##__VA_ARGS__)
+#define C_UtilLogI(FMT, ...) C_UtilLog(C_LOG_INFO, FMT, ##__VA_ARGS__)
 
 #define TrvAssert(condition, FMT, ...) do {\
     if (!(condition)) {\
-        C_LogI(FMT, ##__VA_ARGS__);\
+        C_UtilLogI(FMT, ##__VA_ARGS__);\
         exit(-1);\
     }\
 } while(0);
@@ -59,8 +59,8 @@ int utf8StrWidth (char *str);
 
 #define ALLOW_PATH_SIZE 256
 
-#define TrvExit(ERRNO, FMT, ...) do { \
-    C_Log(C_LOG_ERROR, FMT, ##__VA_ARGS__); \
+#define C_UtilExit(ERRNO, FMT, ...) do { \
+    C_UtilLog(C_LOG_ERROR, FMT, ##__VA_ARGS__); \
     exit(ERRNO); \
 } while(0);
 

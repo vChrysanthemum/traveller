@@ -28,10 +28,10 @@ function Init(conf)
     assert(nil ~= g_conf["galaxies_server_host"], "请配置 galaxies_server_host")
     assert(nil ~= g_conf["galaxies_server_port"], "请配置 galaxies_server_port")
 
-    g_serverContenctId = NT_ConnectSnode(g_conf["galaxies_server_host"], g_conf["galaxies_server_port"])
+    g_serverContenctId = core.nt.ConnectSnode(g_conf["galaxies_server_host"], g_conf["galaxies_server_port"])
     assert(nil ~= g_serverContenctId, "连接星系失败")
 
-    LogI("连接星系成功")
+    core.util.LogI("连接星系成功")
 
     local CtrMain = require "ctr/main"
     local CtrCitizen = require "ctr/citizen"
@@ -39,9 +39,9 @@ function Init(conf)
     g_ServiceCallbackRouteTable["/index"] = CtrMain.CbkIndex
     g_ServiceCallbackRouteTable["/login"] = CtrCitizen.CbkLogin
 
-    NT_ScriptServiceRequest(g_serverContenctId, "/index", "/index", nil)
+    core.nt.ScriptServiceRequest(g_serverContenctId, "/index", "/index", nil)
 
-    NT_ScriptServiceRequest(g_serverContenctId, "/login", "/login", nil,
+    core.nt.ScriptServiceRequest(g_serverContenctId, "/login", "/login", nil,
     "email", "j@ioctl", 
     "password", "fuckpassword")
 

@@ -601,7 +601,7 @@ static void readQueryFromSnode(aeLooper_t *el, int fd, void *privdata, int mask)
         if (EAGAIN == errno) {
             nread = 0;
         }  else {
-            C_LogD("Reading from client: %s",strerror(errno));
+            C_UtilLogD("Reading from client: %s",strerror(errno));
             NT_FreeSnode(sn);
         }
         return;
@@ -709,7 +709,7 @@ static ntSnode_t* createSnode(int fd) {
 }
 
 void NT_FreeSnode(ntSnode_t *sn) {
-    C_LogD("Free ntSnode_t %d", sn->fd);
+    C_UtilLogD("Free ntSnode_t %d", sn->fd);
 
     if (-1 != sn->fd) {
         aeDeleteFileEvent(nt_el, sn->fd, AE_READABLE);
@@ -740,7 +740,7 @@ ntSnode_t *NT_ConnectSnode(char *addr, int port) {
     fd = anetPeerConnect(fd, nt_server.neterr, addr, port);
     //fd = anetPeerConnect(fd, nt_server.neterr, addr, port);
     if (ANET_ERR == fd) {
-        C_LogW("Unable to connect to %s", addr);
+        C_UtilLogW("Unable to connect to %s", addr);
         return 0;
     }
     
@@ -751,7 +751,7 @@ ntSnode_t *NT_ConnectSnode(char *addr, int port) {
 static void acceptCommonHandler(int fd, int flags) {
     ntSnode_t *sn;
     if (0 == (sn = createSnode(fd))) {
-        C_LogW("Error registering fd event for the new snode: %s (fd=%d)",
+        C_UtilLogW("Error registering fd event for the new snode: %s (fd=%d)",
                 strerror(errno),fd);
         close(fd); /* May be already closed, just ignore errors */
         return;
@@ -782,7 +782,7 @@ static void acceptTcpHandler(aeLooper_t *el, int fd, void *privdata, int mask) {
         cfd = anetTcpAccept(nt_server.neterr, fd, cip, sizeof(cip), &cport);
         if (cfd == ANET_ERR) {
             if (errno != EWOULDBLOCK)
-                C_LogW("Accepting snode connection: %s", nt_server.neterr);
+                C_UtilLogW("Accepting snode connection: %s", nt_server.neterr);
             return;
         }
         acceptCommonHandler(cfd,0);
@@ -813,11 +813,11 @@ static int listenToPort() {
     for (loopJ = 0; loopJ < nt_server.ipfdCount; loopJ++) {
         if (aeCreateFileEvent(nt_el, nt_server.ipfd[loopJ], AE_READABLE,
                     acceptTcpHandler,0) == AE_ERR) {
-            C_LogE("Unrecoverable error creating nt_server.ipfd file event.");
+            C_UtilLogE("Unrecoverable error creating nt_server.ipfd file event.");
         }
     }
 
-    C_LogI("监听端口: %d", nt_server.port);
+    C_UtilLogI("监听端口: %d", nt_server.port);
 
     return ERRNO_OK;
 }
@@ -854,7 +854,7 @@ int NT_Prepare(int listenPort) {
     nt_server.ipfd[1] = anetPeerSocket(nt_server.neterr, nt_server.port, nt_server.bindaddr, AF_INET6);
 
     if (listenPort <= 0 || ERRNO_OK != listenToPort(nt_server.port, nt_server.ipfd, &nt_server.ipfdCount)) {
-        C_LogE("Listen to port err");
+        C_UtilLogE("Listen to port err");
         return ERRNO_ERR;
     }
 

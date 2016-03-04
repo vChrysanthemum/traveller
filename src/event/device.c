@@ -126,5 +126,5 @@ void ET_DeviceWaitEventList(etDevice_t *device) {
     if (listLength(device->waitingEventList) < 20) {
         usleep(300);
     }
-    C_LogI("%lu", listLength(device->waitingEventList));
+    C_UtilLogI("%lu", listLength(device->waitingEventList));
 }

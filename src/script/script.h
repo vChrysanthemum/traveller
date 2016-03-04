@@ -6,7 +6,7 @@
 
 #define ST_AssertLuaPCallSuccess(L, errno) do {\
     if (0 != errno) {\
-        TrvExit(errno, "%s %d", lua_tostring(L, -1), errno);\
+        C_UtilExit(errno, "%s %d", lua_tostring(L, -1), errno);\
     }\
 } while(0);
 
@@ -36,7 +36,7 @@ int ST_Prepare();
     fdstr = lua_tostring(L, 1);\
     sn = NT_GetSnodeByFDS(fdstr);\
     if (0 == sn) {\
-        C_LogI("找不到链接: %s", fdstr);\
+        C_UtilLogI("找不到链接: %s", fdstr);\
         lua_pushnumber(L, -2);\
         return 1;\
     }\

@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
 
     snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../", argv[0]);
     if (0 == realpath(tmpstr, g_basedir)) {
-        TrvExit(0, "获取当前路径失败");
+        C_UtilExit(0, "获取当前路径失败");
     }
 
     g_conf = InitIni();
@@ -69,7 +69,7 @@ int main(int argc, char *argv[]) {
     if (argc > 1) IniRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
     if (0 == g_conf->contents) {
-        TrvExit(0, "请选择配置文件");
+        C_UtilExit(0, "请选择配置文件");
     }
 
     value = IniGet(g_conf, "traveller", "log_dir");
@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 
     if (0 != value) {
         if (sdslen(value) > ALLOW_PATH_SIZE) {
-            TrvExit(0, "监听端口太大");
+            C_UtilExit(0, "监听端口太大");
         }
 
         listenPort = atoi(value);
@@ -99,18 +99,18 @@ int main(int argc, char *argv[]) {
 
     //初始化UI
     if (ERRNO_ERR == UI_Prepare()) {
-        TrvExit(0, "初始化UI失败");
+        C_UtilExit(0, "初始化UI失败");
     }
 
     //开启网络
     if (ERRNO_ERR == NT_Prepare(listenPort)) {
-        TrvExit(0, "初始化网络失败");
+        C_UtilExit(0, "初始化网络失败");
     }
     g_netDevice = ET_NewDevice(aeMainDeviceWrap, nt_el);
 
     //开启脚本支持
     if (ERRNO_ERR == ST_Prepare()) {
-        TrvExit(0, "初始化脚本失败");
+        C_UtilExit(0, "初始化脚本失败");
     }
 
     ET_StartDevice(g_mainDevice);
@@ -119,7 +119,7 @@ int main(int argc, char *argv[]) {
 
     //开启界面，并阻塞在 uiLoop
     if (ERRNO_ERR == UI_Init()) {
-        TrvExit(0, "初始化UI失败");
+        C_UtilExit(0, "初始化UI失败");
     }
 
     return 0;

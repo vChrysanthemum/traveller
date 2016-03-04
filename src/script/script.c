@@ -34,32 +34,49 @@ static void ST_InitScriptLua(stScript_t *script) {
 
     lua_pushstring(L, script->basedir);lua_setglobal(L, "g_basedir");
 
-    lua_register(L, "LogI",                     ST_LogI);
-    lua_register(L, "LoadView",                 ST_LoadView);
-    lua_register(L, "NT_ConnectSnode",          STNT_ConnectSnode);
-    lua_register(L, "NT_ScriptServiceRequest",  STNT_ScriptServiceRequest);
-    lua_register(L, "NT_ScriptServiceResponse", STNT_ScriptServiceResponse);
-    lua_register(L, "NT_AddReplyString",        STNT_AddReplyString);
-    lua_register(L, "NT_AddReplyRawString",     STNT_AddReplyRawString);
-    lua_register(L, "NT_AddReplyMultiString",   STNT_AddReplyMultiString);
-    lua_register(L, "DB_Connect",               STDB_Connect);
-    lua_register(L, "DB_Close",                 STDB_Close);
-    lua_register(L, "DB_Query",                 STDB_Query);
-    lua_register(L, "UI_LoadPage",              STUI_LoadPage);
+    lua_newtable(L);lua_setglobal(L, "core");
+
+    lua_getglobal(L, "core");
+
+    lua_pushstring(L, "util");                     lua_newtable(L);
+    lua_pushstring(L, "LogI");                     lua_pushcfunction(L, ST_LogI);lua_settable(L, -3);
+    lua_pushstring(L, "LoadView");                 lua_pushcfunction(L, ST_LoadView);lua_settable(L, -3);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "nt");                       lua_newtable(L);
+    lua_pushstring(L, "ConnectSnode");             lua_pushcfunction(L, STNT_ConnectSnode);lua_settable(L, -3);
+    lua_pushstring(L, "ScriptServiceRequest");     lua_pushcfunction(L, STNT_ScriptServiceRequest);lua_settable(L, -3);
+    lua_pushstring(L, "ScriptServiceResponse");    lua_pushcfunction(L, STNT_ScriptServiceResponse);lua_settable(L, -3);
+    lua_pushstring(L, "AddReplyString");           lua_pushcfunction(L, STNT_AddReplyString);lua_settable(L, -3);
+    lua_pushstring(L, "AddReplyRawString");        lua_pushcfunction(L, STNT_AddReplyRawString);lua_settable(L, -3);
+    lua_pushstring(L, "AddReplyMultiString");      lua_pushcfunction(L, STNT_AddReplyMultiString);lua_settable(L, -3);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "db");                       lua_newtable(L);
+    lua_pushstring(L, "Connect");                  lua_pushcfunction(L, STDB_Connect);lua_settable(L, -3);
+    lua_pushstring(L, "Close");                    lua_pushcfunction(L, STDB_Close);lua_settable(L, -3);
+    lua_pushstring(L, "Query");                    lua_pushcfunction(L, STDB_Query);lua_settable(L, -3);
+    lua_settable(L, -3);
+
+    lua_pushstring(L, "ui");                       lua_newtable(L);
+    lua_pushstring(L, "LoadPage");                 lua_pushcfunction(L, STUI_LoadPage);lua_settable(L, -3);
+    lua_settable(L, -3);
+
+    lua_settable(L, -3);
 
     int errno;
 
     sds filepath = sdscatprintf(sdsempty(), "%s/main.lua", script->basedir);
     errno = luaL_loadfile(L, filepath);
     if (errno) {
-        TrvExit(0, "%s", lua_tostring(L, -1));
+        C_UtilExit(0, "%s", lua_tostring(L, -1));
     }
     sdsfree(filepath);
 
     //初始化
     errno = lua_pcall(L, 0, 0, 0);
     if (errno) {
-        TrvExit(0, "%s", lua_tostring(L, -1));
+        C_UtilExit(0, "%s", lua_tostring(L, -1));
     }
 
     lua_settop(L, 0);
@@ -97,7 +114,7 @@ stScript_t* ST_NewScript(IniSection *iniSection) {
 
     value = IniGet(g_conf, script->iniSection->key, "basedir");
     if (0 == value) {
-        TrvExit(0, "%s 缺失脚本路径", script->iniSection->key);
+        C_UtilExit(0, "%s 缺失脚本路径", script->iniSection->key);
     }
     dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
     script->basedir = sdsnew(dir);
