@@ -42,8 +42,8 @@ function Init(conf)
     core.nt.ScriptServiceRequest(g_serverContenctId, "/index", "/index", nil)
 
     core.nt.ScriptServiceRequest(g_serverContenctId, "/login", "/login", nil,
-    "email", "j@ioctl", 
-    "password", "fuckpassword")
+    "email", "j@ioctl.cn", 
+    "password", "123123")
 
     return
     

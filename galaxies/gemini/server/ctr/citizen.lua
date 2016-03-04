@@ -5,10 +5,12 @@ local md5 = require "md5"
 local db = require "db"
 
 function CtrCitizen.Login(connectId, requestId, argv)
-    core.util.LogI("hi")
     core.util.LogI(connectId.. " connectId")
     core.util.LogI(argv["email"].." email")
     core.util.LogI(argv["password"].." password")
+
+    email = argv["email"]
+    password = argv["password"]
 
     g_db = db:Instance()
 
@@ -28,7 +30,6 @@ function CtrCitizen.Login(connectId, requestId, argv)
     end
     citizen = citizen[0]
 
-    g_loggedCitizens[connectId] = citizen
     core.nt.ScriptServiceResponse(connectId, requestId, "msg", "登陆成功")
 
 end
