@@ -138,13 +138,13 @@ void NTRespSV_Script(ntRespSnode_t *sn) {
     stScript_t *script;
     listIter *li;
     listNode *ln;
-    li = listGetIterator(ntRespSV_scriptServiceSubscriber, AL_START_HEAD);
+    li = listGetIterator(nt_respSVScriptServiceSubscriber, AL_START_HEAD);
     while (0 != (ln = listNext(li))) {
         script = (stScript_t*)listNodeValue(ln);
 
         errno = NTRespSV_scriptService(script, sn);
 
-        if(SCRIPT_SERVICE_ERRNO_OK != errno) {
+        if (SCRIPT_SERVICE_ERRNO_OK != errno) {
             NTResp_AddReplyError(sn, "script error");
             sn->flags = SNODE_CLOSE_AFTER_REPLY;
             NTResp_SnodeServiceSetFinishedFlag(sn);
@@ -163,7 +163,7 @@ void NTRespSV_ScriptCallback(ntRespSnode_t *sn) {
 
     int errno;
     errno = NTRespSV_scriptServiceCallback(sn);
-    if(SCRIPT_SERVICE_ERRNO_OK != errno) {
+    if (SCRIPT_SERVICE_ERRNO_OK != errno) {
         NTResp_AddReplyError(sn, "script callback error");
     }
 

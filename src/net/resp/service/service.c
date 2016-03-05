@@ -13,7 +13,7 @@
 
 #include "net/extern.h"
 
-list *ntRespSV_scriptServiceSubscriber;
+list *nt_respSVScriptServiceSubscriber;
 
 dictType serviceTableDictType = {
     dictSdsCaseHash,           /* hash function */
@@ -33,11 +33,11 @@ ntRespSVServiceRouter_t ntRespSVServiceRouter_tTable[] = {
 };
 
 void NTRespSV_SubscribeScriptService(stScript_t *script) {
-    listAddNodeTail(ntRespSV_scriptServiceSubscriber, script);
+    listAddNodeTail(nt_respSVScriptServiceSubscriber, script);
 }
 
 void NTRespSV_Prepare() {
-    ntRespSV_scriptServiceSubscriber = listCreate();
+    nt_respSVScriptServiceSubscriber = listCreate();
 
     int loopJ, tmpsize;
 

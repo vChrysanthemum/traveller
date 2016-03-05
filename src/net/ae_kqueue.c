@@ -120,7 +120,7 @@ static int aeApiPoll(aeLooper_t *eventLoop, struct timeval *tvp) {
         int j;
 
         numevents = retval;
-        for(j = 0; j < numevents; j++) {
+        for (j = 0; j < numevents; j++) {
             int mask = 0;
             struct kevent *e = state->events+j;
 

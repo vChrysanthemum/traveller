@@ -3,6 +3,6 @@
 
 extern aeLooper_t   *nt_el;
 extern ntRespServer_t nt_RespServer;
-extern list *ntRespSV_scriptServiceSubscriber;
+extern list *nt_respSVScriptServiceSubscriber;
 
 #endif
