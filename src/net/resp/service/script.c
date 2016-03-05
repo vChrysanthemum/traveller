@@ -138,7 +138,7 @@ void NTRespSV_Script(ntRespSnode_t *sn) {
     stScript_t *script;
     listIter *li;
     listNode *ln;
-    li = listGetIterator(nt_respSVScriptServiceSubscriber, AL_START_HEAD);
+    li = listGetIterator(nt_respScriptServiceSubscriber, AL_START_HEAD);
     while (0 != (ln = listNext(li))) {
         script = (stScript_t*)listNodeValue(ln);
 
