@@ -28,10 +28,10 @@
 // @param ScriptServicePath string
 // @param RequestId         string
 // @param Data              string...
-int STNT_ScriptServiceRequest(lua_State *L) {
+int STNTResp_ScriptServiceRequest(lua_State *L) {
     ST_AddReplyHeader(L);
 
-    ntScriptServiceRequestCtx_t *ctx = NT_NewScriptServiceRequestCtx();
+    ntScriptServiceRequestCtx_t *ctx = NTResp_NewScriptServiceRequestCtx();
     if (sn->scriptServiceRequestCtxListMaxId > 9999999) {
         sn->scriptServiceRequestCtxListMaxId = 0;
     }
@@ -57,7 +57,7 @@ int STNT_ScriptServiceRequest(lua_State *L) {
         replyArr[loopJ-2] = (char *)lua_tostring(L, loopJ);
     }
 
-    NT_AddReplyStringArgv(sn, argc-1, replyArr);
+    NTResp_AddReplyStringArgv(sn, argc-1, replyArr);
 
     lua_pushnumber(L, 0);
 
@@ -76,7 +76,7 @@ int STNT_ScriptServiceRequest(lua_State *L) {
 // @param scriptcbk     string
 // @param RequestId     string
 // @param Data          string...
-int STNT_ScriptServiceResponse(lua_State *L) {
+int STNTResp_ScriptServiceResponse(lua_State *L) {
     ST_AddReplyHeader(L);
 
     char **replyArr = (char**)zmalloc(sizeof(char**) * (argc-1+1));
@@ -88,7 +88,7 @@ int STNT_ScriptServiceResponse(lua_State *L) {
         replyArr[loopJ-1] = (char *)lua_tostring(L, loopJ);
     }
 
-    NT_AddReplyStringArgv(sn, argc, replyArr);
+    NTResp_AddReplyStringArgv(sn, argc, replyArr);
 
     lua_pushnumber(L, 0);
 
@@ -101,12 +101,12 @@ int STNT_ScriptServiceResponse(lua_State *L) {
 // 传输字符串
 // @param connectid     string
 // @param data          string
-int STNT_AddReplyString(lua_State *L) {
+int STNTResp_AddReplyString(lua_State *L) {
     ST_AddReplyHeader(L);
     char *replyStr;
     
     replyStr = (char *)lua_tostring(L, 2);
-    NT_AddReplyString(sn, replyStr);
+    NTResp_AddReplyString(sn, replyStr);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -116,7 +116,7 @@ int STNT_AddReplyString(lua_State *L) {
 // 传输多个字符串
 // @param connectid     string
 // @param argv...       string...
-int STNT_AddReplyMultiString(lua_State *L) {
+int STNTResp_AddReplyMultiString(lua_State *L) {
     ST_AddReplyHeader(L);
 
     char **replyArr;
@@ -130,7 +130,7 @@ int STNT_AddReplyMultiString(lua_State *L) {
         replyArr[loopJ-2] = (char *)lua_tostring(L, loopJ);
     }
 
-    NT_AddReplyStringArgv(sn, (argc-1), replyArr);
+    NTResp_AddReplyStringArgv(sn, (argc-1), replyArr);
 
     lua_pushnumber(L, 0);
 
@@ -143,12 +143,12 @@ int STNT_AddReplyMultiString(lua_State *L) {
 // 传输raw字符串
 // @param connectid     string
 // @param data          string
-int STNT_AddReplyRawString(lua_State *L) {
+int STNTResp_AddReplyRawString(lua_State *L) {
     ST_AddReplyHeader(L);
     char *replyStr;
      
     replyStr = (char *)lua_tostring(L, 2);
-    NT_AddReplyRawString(sn, replyStr);
+    NTResp_AddReplyRawString(sn, replyStr);
 
     lua_pushnumber(L, 0);
     return 1;
@@ -159,15 +159,15 @@ int STNT_AddReplyRawString(lua_State *L) {
 // 连接远程机器
 // @param host string  远程机器地址
 // @param port number
-int STNT_ConnectSnode(lua_State *L) {
+int STNTResp_ConnectSnode(lua_State *L) {
     char *host;
     int port;
-    ntSnode_t *sn;
+    ntRespSnode_t *sn;
     
     host = (char *)lua_tostring(L, 1);
     port = (int)lua_tonumber(L, 2);
 
-    sn = NT_ConnectSnode(host, port);
+    sn = NTResp_ConnectSnode(host, port);
 
     if (0 == sn) {
         lua_pushnil(L);

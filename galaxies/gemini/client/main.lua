@@ -28,7 +28,7 @@ function Init(conf)
     assert(nil ~= g_conf["galaxies_server_host"], "请配置 galaxies_server_host")
     assert(nil ~= g_conf["galaxies_server_port"], "请配置 galaxies_server_port")
 
-    g_serverContenctId = core.nt.ConnectSnode(g_conf["galaxies_server_host"], g_conf["galaxies_server_port"])
+    g_serverContenctId = core.net.resp.ConnectSnode(g_conf["galaxies_server_host"], g_conf["galaxies_server_port"])
     assert(nil ~= g_serverContenctId, "连接星系失败")
 
     core.util.LogI("连接星系成功")
@@ -39,9 +39,9 @@ function Init(conf)
     g_ServiceCallbackRouteTable["/index"] = CtrMain.CbkIndex
     g_ServiceCallbackRouteTable["/login"] = CtrCitizen.CbkLogin
 
-    core.nt.ScriptServiceRequest(g_serverContenctId, "/index", "/index", nil)
+    core.net.resp.ScriptServiceRequest(g_serverContenctId, "/index", "/index", nil)
 
-    core.nt.ScriptServiceRequest(g_serverContenctId, "/login", "/login", nil,
+    core.net.resp.ScriptServiceRequest(g_serverContenctId, "/login", "/login", nil,
     "email", "j@ioctl.cn", 
     "password", "123123")
 

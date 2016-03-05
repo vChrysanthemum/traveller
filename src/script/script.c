@@ -14,7 +14,7 @@
 #include "event/event.h"
 #include "script/script.h"
 #include "net/networking.h"
-#include "service/service.h"
+#include "net/resp/service/service.h"
 #include "ui/ui.h"
 
 #include "g_extern.h"
@@ -43,13 +43,15 @@ static void ST_InitScriptLua(stScript_t *script) {
     lua_pushstring(L, "LoadView");                 lua_pushcfunction(L, ST_LoadView);lua_settable(L, -3);
     lua_settable(L, -3);
 
-    lua_pushstring(L, "nt");                       lua_newtable(L);
-    lua_pushstring(L, "ConnectSnode");             lua_pushcfunction(L, STNT_ConnectSnode);lua_settable(L, -3);
-    lua_pushstring(L, "ScriptServiceRequest");     lua_pushcfunction(L, STNT_ScriptServiceRequest);lua_settable(L, -3);
-    lua_pushstring(L, "ScriptServiceResponse");    lua_pushcfunction(L, STNT_ScriptServiceResponse);lua_settable(L, -3);
-    lua_pushstring(L, "AddReplyString");           lua_pushcfunction(L, STNT_AddReplyString);lua_settable(L, -3);
-    lua_pushstring(L, "AddReplyRawString");        lua_pushcfunction(L, STNT_AddReplyRawString);lua_settable(L, -3);
-    lua_pushstring(L, "AddReplyMultiString");      lua_pushcfunction(L, STNT_AddReplyMultiString);lua_settable(L, -3);
+    lua_pushstring(L, "net");                      lua_newtable(L);
+    lua_pushstring(L, "resp");                     lua_newtable(L);
+    lua_pushstring(L, "ConnectSnode");             lua_pushcfunction(L, STNTResp_ConnectSnode);lua_settable(L, -3);
+    lua_pushstring(L, "ScriptServiceRequest");     lua_pushcfunction(L, STNTResp_ScriptServiceRequest);lua_settable(L, -3);
+    lua_pushstring(L, "ScriptServiceResponse");    lua_pushcfunction(L, STNTResp_ScriptServiceResponse);lua_settable(L, -3);
+    lua_pushstring(L, "AddReplyString");           lua_pushcfunction(L, STNTResp_AddReplyString);lua_settable(L, -3);
+    lua_pushstring(L, "AddReplyRawString");        lua_pushcfunction(L, STNTResp_AddReplyRawString);lua_settable(L, -3);
+    lua_pushstring(L, "AddReplyMultiString");      lua_pushcfunction(L, STNTResp_AddReplyMultiString);lua_settable(L, -3);
+    lua_settable(L, -3);
     lua_settable(L, -3);
 
     lua_pushstring(L, "db");                       lua_newtable(L);
@@ -164,7 +166,7 @@ int ST_Prepare() {
 
         value = IniGet(g_conf, section->key, "is_subscribe_net");
         if (0 != value && 0 == sdscmpstr(value, "1")) {
-            SV_SubscribeScriptService(script);
+            NTRespSV_SubscribeScriptService(script);
         }
     }
     dictReleaseIterator(di);

@@ -102,8 +102,8 @@ int main(int argc, char *argv[]) {
         C_UtilExit(0, "初始化UI失败");
     }
 
-    //开启网络
-    if (ERRNO_ERR == NT_Prepare(listenPort)) {
+    //开启RESP网络
+    if (ERRNO_ERR == NTResp_Prepare(listenPort)) {
         C_UtilExit(0, "初始化网络失败");
     }
     g_netDevice = ET_NewDevice(aeMainDeviceWrap, nt_el);

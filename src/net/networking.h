@@ -38,128 +38,6 @@ int anetPeerSocket(char *err, int port, char *bindaddr, int af);
 int anetPeerConnect(int fd, char *err, char *addr, int port);
 int anetPeerListen(int fd, char *err, int backlog);
 
-/* networking，分装了所有的网络操作
- */
-
-#define TRV_NET_TCP_BACKLOG 1024
-#define TRV_NET_MAX_SNODE 1024 * 24
-#define TRV_NET_TCPKEEPALIVE 0 
-#define TRV_NET_MAX_ACCEPTS_PER_CALL 1000
-#define TRV_NET_IOBUF_LEN (1024)  // Generic I/O buffer size 
-
-/* 基于RESP通信协议，不过有点不一样
- * 通信ntSnode_t接受信息各个状态如下：
- */
-#define SNODE_RECV_STAT_ACCEPT   0  // 客户端首次连接，socket accept后 
-#define SNODE_RECV_STAT_PREPARE  1  // 准备就绪，等待数据中 
-#define SNODE_RECV_STAT_PARSING  3  // 解析数据中 
-#define SNODE_RECV_STAT_PARSED   4  // 数据完成 
-#define SNODE_RECV_STAT_EXCUTING 5  // 正在执行中 
-#define SNODE_RECV_STAT_EXCUTED  6  // 命令执行完成 
-#define NT_SnodeServiceSetFinishedFlag(sn) sn->recvStat = SNODE_RECV_STAT_EXCUTED;
-
-/* 各个类型解析状态
- */
-#define SNODE_RECV_STAT_PARSING_START       0 
-#define SNODE_RECV_STAT_PARSING_ARGC        1
-#define SNODE_RECV_STAT_PARSING_ARGV_NUM    2
-#define SNODE_RECV_STAT_PARSING_ARGV_VALUE  3
-#define SNODE_RECV_STAT_PARSING_FINISHED    4
-
-
-/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 ntSnode_t (socket node)，
- * 包括连接traveller的client，或traveller主动连接的nt_server
- */
-#define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
-#define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
-
-typedef struct ntScriptServiceRequestCtx_s {
-    int requestId;
-    lua_State *ScriptServiceLua;
-    sds ScriptServiceCallbackUrl;
-    sds ScriptServiceCallbackArg;
-} ntScriptServiceRequestCtx_t;
-
-typedef struct ntSnode_s ntSnode_t;
-typedef struct ntSnode_s {
-    int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
-    int fd;
-    char fdstr[16];           // 字符串类型的fd 
-    int recvStat;          // SNODE_RECV_STAT_ACCEPT ... 
-    int recvType;          // SNODE_RECV_TYPE_ERR ... 
-    sds tmpQuerybuf;       // 临时存放未解析完的argc 或 参数长度 
-    sds querybuf;           // 读取到的数据 
-    sds writebuf;           // 等待发送的数据 
-    int recvParsingStat;
-    int argc;
-
-    sds *argv;
-    int argvSize;
-
-    int argcRemaining;     // 还剩多少个argc没有解析完成 
-    int argvRemaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
-    time_t lastinteraction; // time of the last interaction, used for timeout 
-
-    void (*responseProc) (ntSnode_t *sn); //在等待远程机器发来结果的回调函数
-
-    int scriptServiceRequestCtxListMaxId;
-    list *scriptServiceRequestCtxList;
-
-    void (*proc) (ntSnode_t *sn);
-    void (*hupProc) (ntSnode_t *sn); //如果远程机器挂掉了，需要调用的函数
-
-    int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
-} ntSnode_t;
-
-#define SNODE_RECV_TYPE_HUP    -2 // 远程机器挂掉了
-#define SNODE_RECV_TYPE_ERR    -1 // -:ERR 
-#define SNODE_RECV_TYPE_OK     1  // +:OK 
-#define SNODE_RECV_TYPE_STRING 2
-#define SNODE_RECV_TYPE_ARRAY  3  // 数组 且 命令 
-
-typedef struct ntServer_s {
-    time_t unixtime;        // Unix time sampled every cron cycle. 
-
-    int maxSnodes;
-    char *bindaddr;
-    int port;
-    int tcpBacklog;
-    char neterr[ANET_ERR_LEN];   // Error buffer for anet.c 
-    int ipfd[2];                 // 默认0:ipv4、1:ipv6 
-    int ipfdCount;              // 已绑定总量 
-
-    int statRejectedConn;
-    int statNumConnections;
-
-    dict *snodes;                   // key 是 fdstr 
-    size_t snodeMaxQuerybufLen;  // Limit for client query buffer length 
-
-    list *scriptServiceRequestCtxPool;
-
-    int tcpkeepalive;
-
-    ntSnode_t* currentSnode;
-
-    dict* services;
-} ntServer_t;
-
-int NT_Prepare(int port);
-sds NT_CatSnodeInfoString(sds s, ntSnode_t *sn);
-ntSnode_t* NT_ConnectSnode(char *addr, int port);
-void NT_AddReplyError(ntSnode_t *sn, char *err);
-void NT_AddReplyStringArgv(ntSnode_t *sn, int argc, char **argv);
-void NT_AddReplyMultiString(ntSnode_t *sn, int count, ...);
-void NT_AddReplyMultiSds(ntSnode_t *sn, int count, ...);
-void NT_AddReplySds(ntSnode_t *sn, sds data);
-void NT_AddReplyRawSds(ntSnode_t *sn, sds data);
-void NT_AddReplyString(ntSnode_t *sn, char *data);
-void NT_AddReplyRawString(ntSnode_t *sn, char *data);
-ntScriptServiceRequestCtx_t* NT_NewScriptServiceRequestCtx();
-void NT_RecycleScriptServiceRequestCtx(void *_ctx);
-void NT_FreeSnode(ntSnode_t *sn);  // dangerous 
-ntSnode_t* NT_GetSnodeByFDS(const char *fdstr);
-
-
 #define AE_OK 0
 #define AE_ERR -1
 
@@ -244,5 +122,130 @@ int aeResizeSetSize(aeLooper_t *eventLoop, int setsize);
 void aeDeleteLooper(aeLooper_t *eventLoop);
 void aeMain(aeLooper_t *eventLoop);
 void* aeMainDeviceWrap(void *_eventLoop);
+
+/* networking，分装了所有的网络操作
+ */
+
+#define TRV_NET_TCP_BACKLOG 1024
+#define TRV_NET_MAX_SNODE 1024 * 24
+#define TRV_NET_TCPKEEPALIVE 0 
+#define TRV_NET_MAX_ACCEPTS_PER_CALL 1000
+#define TRV_NET_IOBUF_LEN (1024)  // Generic I/O buffer size 
+
+/* 基于RESP通信协议，不过有点不一样
+ * 通信ntRespSnode_t接受信息各个状态如下：
+ */
+#define SNODE_RECV_STAT_ACCEPT   0  // 客户端首次连接，socket accept后 
+#define SNODE_RECV_STAT_PREPARE  1  // 准备就绪，等待数据中 
+#define SNODE_RECV_STAT_PARSING  3  // 解析数据中 
+#define SNODE_RECV_STAT_PARSED   4  // 数据完成 
+#define SNODE_RECV_STAT_EXCUTING 5  // 正在执行中 
+#define SNODE_RECV_STAT_EXCUTED  6  // 命令执行完成 
+#define NTResp_SnodeServiceSetFinishedFlag(sn) sn->recvStat = SNODE_RECV_STAT_EXCUTED;
+
+/* 各个类型解析状态
+ */
+#define SNODE_RECV_STAT_PARSING_START       0 
+#define SNODE_RECV_STAT_PARSING_ARGC        1
+#define SNODE_RECV_STAT_PARSING_ARGV_NUM    2
+#define SNODE_RECV_STAT_PARSING_ARGV_VALUE  3
+#define SNODE_RECV_STAT_PARSING_FINISHED    4
+
+/* 对于traveller的网络库来说，每个与travler连接的socket，都将分装成 ntRespSnode_t (socket node)，
+ * 包括连接traveller的client，或traveller主动连接的nt_RespServer
+ */
+#define SNODE_MAX_QUERYBUF_LEN (1024*1024*1024) // 1GB max query buffer. 
+#define SNODE_CLOSE_AFTER_REPLY (1<<0)  // 发送完信息后，断开连接 
+
+typedef struct ntScriptServiceRequestCtx_s {
+    int requestId;
+    lua_State *ScriptServiceLua;
+    sds ScriptServiceCallbackUrl;
+    sds ScriptServiceCallbackArg;
+} ntScriptServiceRequestCtx_t;
+
+typedef struct ntRespSnode_s ntRespSnode_t;
+typedef struct ntRespSnode_s {
+    int flags;              // SNODE_CLOSE_AFTER_REPLY | ... 
+    int fd;
+    char fdstr[16];           // 字符串类型的fd 
+    int recvStat;          // SNODE_RECV_STAT_ACCEPT ... 
+    int recvType;          // SNODE_RECV_TYPE_ERR ... 
+    sds tmpQuerybuf;       // 临时存放未解析完的argc 或 参数长度 
+    sds querybuf;           // 读取到的数据 
+    sds writebuf;           // 等待发送的数据 
+    int recvParsingStat;
+    int argc;
+
+    sds *argv;
+    int argvSize;
+
+    int argcRemaining;     // 还剩多少个argc没有解析完成 
+    int argvRemaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
+    time_t lastinteraction; // time of the last interaction, used for timeout 
+
+    void (*responseProc) (ntRespSnode_t *sn); //在等待远程机器发来结果的回调函数
+
+    int scriptServiceRequestCtxListMaxId;
+    list *scriptServiceRequestCtxList;
+
+    void (*proc) (ntRespSnode_t *sn);
+    void (*hupProc) (ntRespSnode_t *sn); //如果远程机器挂掉了，需要调用的函数
+
+    int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 
+} ntRespSnode_t;
+
+#define SNODE_RECV_TYPE_HUP    -2 // 远程机器挂掉了
+#define SNODE_RECV_TYPE_ERR    -1 // -:ERR 
+#define SNODE_RECV_TYPE_OK     1  // +:OK 
+#define SNODE_RECV_TYPE_STRING 2
+#define SNODE_RECV_TYPE_ARRAY  3  // 数组 且 命令 
+
+typedef struct ntServer_s {
+    time_t unixtime;        // Unix time sampled every cron cycle. 
+
+    int maxSnodes;
+    char *bindaddr;
+    int port;
+    int tcpBacklog;
+    char neterr[ANET_ERR_LEN];   // Error buffer for anet.c 
+    int ipfd[2];                 // 默认0:ipv4、1:ipv6 
+    int ipfdCount;              // 已绑定总量 
+
+    int statRejectedConn;
+    int statNumConnections;
+
+    dict *snodes;                   // key 是 fdstr 
+    size_t snodeMaxQuerybufLen;  // Limit for client query buffer length 
+
+    list *scriptServiceRequestCtxPool;
+
+    int tcpkeepalive;
+
+    ntRespSnode_t* currentRespSnode;
+
+    dict* services;
+} ntRespServer_t;
+
+void NTResp_readQueryFromSnode(aeLooper_t *el, int fd, void *privdata, int mask);
+ntRespSnode_t* NTResp_snodeArgvEmpty(ntRespSnode_t *sn);
+ntRespSnode_t* NTResp_snodeArgvFree(ntRespSnode_t *sn);
+void NTResp_resetSnodeArgs(ntRespSnode_t *sn);
+
+int NTResp_Prepare(int port);
+sds NTResp_CatSnodeInfoString(sds s, ntRespSnode_t *sn);
+ntRespSnode_t* NTResp_ConnectSnode(char *addr, int port);
+void NTResp_AddReplyError(ntRespSnode_t *sn, char *err);
+void NTResp_AddReplyStringArgv(ntRespSnode_t *sn, int argc, char **argv);
+void NTResp_AddReplyMultiString(ntRespSnode_t *sn, int count, ...);
+void NTResp_AddReplyMultiSds(ntRespSnode_t *sn, int count, ...);
+void NTResp_AddReplySds(ntRespSnode_t *sn, sds data);
+void NTResp_AddReplyRawSds(ntRespSnode_t *sn, sds data);
+void NTResp_AddReplyString(ntRespSnode_t *sn, char *data);
+void NTResp_AddReplyRawString(ntRespSnode_t *sn, char *data);
+ntScriptServiceRequestCtx_t* NTResp_NewScriptServiceRequestCtx();
+void NTResp_RecycleScriptServiceRequestCtx(void *_ctx);
+void NTResp_FreeSnode(ntRespSnode_t *sn);  // dangerous 
+ntRespSnode_t* NTResp_GetSnodeByFDS(const char *fdstr);
 
 #endif

@@ -25,7 +25,7 @@ int ST_Prepare();
 #define ST_AddReplyHeader(L) \
     const char *fdstr;\
     int argc;\
-    ntSnode_t *sn;\
+    ntRespSnode_t *sn;\
 \
     argc = lua_gettop(L);\
     if (argc < 3) {\
@@ -34,7 +34,7 @@ int ST_Prepare();
     }\
 \
     fdstr = lua_tostring(L, 1);\
-    sn = NT_GetSnodeByFDS(fdstr);\
+    sn = NTResp_GetSnodeByFDS(fdstr);\
     if (0 == sn) {\
         C_UtilLogI("找不到链接: %s", fdstr);\
         lua_pushnumber(L, -2);\
@@ -45,12 +45,12 @@ int ST_Prepare();
 const char* ST_getGlobalString(lua_State *L, char *key);
 int ST_LogI(lua_State *L);
 int ST_LoadView(lua_State *L);
-int STNT_ScriptServiceRequest(lua_State *L);
-int STNT_ScriptServiceResponse(lua_State *L);
-int STNT_AddReplyString(lua_State *L);
-int STNT_AddReplyMultiString(lua_State *L);
-int STNT_AddReplyRawString(lua_State *L);
-int STNT_ConnectSnode(lua_State *L);
+int STNTResp_ScriptServiceRequest(lua_State *L);
+int STNTResp_ScriptServiceResponse(lua_State *L);
+int STNTResp_AddReplyString(lua_State *L);
+int STNTResp_AddReplyMultiString(lua_State *L);
+int STNTResp_AddReplyRawString(lua_State *L);
+int STNTResp_ConnectSnode(lua_State *L);
 int STDB_Connect(lua_State *L);
 int STDB_Close(lua_State *L);
 int STDB_Query(lua_State *L);

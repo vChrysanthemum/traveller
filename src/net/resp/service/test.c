@@ -11,33 +11,33 @@
 
 #include "net/networking.h"
 #include "script/script.h"
-#include "service/service.h"
+#include "net/resp/service/service.h"
 
-void SV_Test(ntSnode_t *sn) {
+void NTRespSV_Test(ntRespSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
-    NT_AddReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
-    NT_SnodeServiceSetFinishedFlag(sn);
+    NTResp_AddReplyMultiString(sn, 3, "osdinc", "21oi4", "oaiwef");
+    NTResp_SnodeServiceSetFinishedFlag(sn);
  
-    ntSnode_t *new_sn = NT_ConnectSnode("127.0.0.1", 1091);
+    ntRespSnode_t *new_sn = NTResp_ConnectSnode("127.0.0.1", 1091);
     if (0 != new_sn) {
-        NT_AddReplyMultiString(new_sn, 2, "close", "so;iafnonaioient");
+        NTResp_AddReplyMultiString(new_sn, 2, "close", "so;iafnonaioient");
     }
 }
 
-void SV_Msg(ntSnode_t *sn) {
+void NTRespSV_Msg(ntRespSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     C_UtilLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
-    NT_SnodeServiceSetFinishedFlag(sn);
+    NTResp_SnodeServiceSetFinishedFlag(sn);
 }
 
-void SV_Close(ntSnode_t *sn) {
+void NTRespSV_Close(ntRespSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
     C_UtilLogD("closed by other people");
-    NT_AddReplyMultiString(sn, 2, "msg", "21oi4oaiwef");
-    NT_SnodeServiceSetFinishedFlag(sn);
+    NTResp_AddReplyMultiString(sn, 2, "msg", "21oi4oaiwef");
+    NTResp_SnodeServiceSetFinishedFlag(sn);
  
     sn->flags |= SNODE_CLOSE_AFTER_REPLY;
 

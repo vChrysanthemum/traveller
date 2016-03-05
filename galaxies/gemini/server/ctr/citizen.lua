@@ -15,7 +15,7 @@ function CtrCitizen.Login(connectId, requestId, argv)
     g_db = db:Instance()
 
     if nil == email or nil == password then
-        core.nt.ScriptServiceResponse(connectId, requestId, "err", "请输入用户名或密码")
+        core.net.resp.ScriptServiceResponse(connectId, requestId, "err", "请输入用户名或密码")
         return
     end
 
@@ -25,12 +25,12 @@ function CtrCitizen.Login(connectId, requestId, argv)
     {email=email, password=md5.sumhexa(password)})
 
     if not citizen[0] then
-        core.nt.ScriptServiceResponse(connectId, requestId, "err", "用户名或密码错误哈哈哈")
+        core.net.resp.ScriptServiceResponse(connectId, requestId, "err", "用户名或密码错误哈哈哈")
         return
     end
     citizen = citizen[0]
 
-    core.nt.ScriptServiceResponse(connectId, requestId, "msg", "登陆成功")
+    core.net.resp.ScriptServiceResponse(connectId, requestId, "msg", "登陆成功")
 
 end
 
