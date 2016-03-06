@@ -31,7 +31,7 @@ static void keyDownProcessor (int ch) {
         ui_env->snumber[ui_env->snumberLen] = 0;
 
         return;
-    } else if(ui_env->snumberLen > 0) {
+    } else if (ui_env->snumberLen > 0) {
         ui_env->number = atoi(ui_env->snumber);
         ui_env->snumberLen = 0;
         ui_env->snumber[0] = 0;

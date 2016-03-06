@@ -89,6 +89,14 @@ int dictStringCompare(void *privdata, const void *key1,
         const void *key2);
 unsigned int dictStringCaseHash(const void *key);
 
-sds file_get_contents(char* path);
+sds fileGetContent(char* path);
+void escapeQuoteContent(sds result, char **content);
+
+typedef struct doubleString_s {
+    char *v1;
+    char *v2;
+} doubleString_t;
+doubleString_t *newDoubleString();
+void freeDoubleString(void *_data);
 
 #endif

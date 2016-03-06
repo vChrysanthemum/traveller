@@ -9,6 +9,18 @@
 
 #include "ui/extern.h"
 
+int UI_GetColorIntByColorString(char *color) {
+    if (0 == stringcmp("black", color)) return COLOR_BLACK;
+    else if (0 == stringcmp("red", color)) return COLOR_RED;
+    else if (0 == stringcmp("green", color)) return COLOR_GREEN;
+    else if (0 == stringcmp("yellow", color)) return COLOR_YELLOW;
+    else if (0 == stringcmp("blue", color)) return COLOR_BLUE;
+    else if (0 == stringcmp("magenta", color)) return COLOR_MAGENTA;
+    else if (0 == stringcmp("cyan", color)) return COLOR_CYAN;
+    else if (0 == stringcmp("white", color)) return COLOR_WHITE;
+    return COLOR_UNKNOWN;
+}
+
 int UI_PrepareColor() {
     start_color();
     init_pair(CP_CONSOLE_TAB_ACTIVE, COLOR_GREEN, COLOR_BLUE);

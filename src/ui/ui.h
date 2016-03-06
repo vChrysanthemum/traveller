@@ -5,7 +5,6 @@
 #include <panel.h>
 
 #include "ui/map.h"
-#include "ui/document/document.h"
 
 //ColorPair
 #define CP_CONSOLE_TAB              1
@@ -15,6 +14,8 @@
 #define CONSOLE_MODE_CMD 1
 
 #define UI_MAX_PANELS 32
+
+#define UI_IsWhiteSpace(c) (' ' == c || '\t' == c || '\r' == c || '\n' == c)
 
 typedef struct uiCursor_s {
     int y;
@@ -65,7 +66,10 @@ typedef struct uiConsole_s{
     uiConsoleCommand_t cmd;
 } uiConsole_t;
 
+#define COLOR_UNKNOWN -1
+int UI_GetColorIntByColorString(char *color);
 int UI_PrepareColor();
+
 int UI_Prepare();
 int UI_Init();
 

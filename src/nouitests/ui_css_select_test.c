@@ -9,6 +9,7 @@
 #include "case.h"
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
 
 TEST_CASE("fail css scan leafHtmlDoms test")
 {

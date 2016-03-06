@@ -110,7 +110,7 @@ static int parseOptionKeyAndSkip(char **ptr) {
 
     skipStringNotConcern(ptr);
 
-    if(1 == isEqualFound) {
+    if (1 == isEqualFound) {
         (*ptr)++;
 
     } else {
@@ -179,7 +179,7 @@ void IniRead(Ini *conf, char *path) {
     IniOption *option = 0;
     IniSection *section = 0;
 
-    content = file_get_contents(path);
+    content = fileGetContent(path);
 
     if (0 == content) {
         return;

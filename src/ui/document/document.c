@@ -7,6 +7,11 @@
 
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
+
+const char* UIERROR_CSS_PARSE_STATE_NOT_SELECTOR;
+const char* UIERROR_CSS_PARSE_STATE_NOT_CSS_DECLARATION_KEY;
+const char* UIERROR_CSS_PARSE_STATE_NOT_CSS_DECLARATION_VALUE;
 
 void UI_PrepareDocument() {
     UI_PrepareHtml();

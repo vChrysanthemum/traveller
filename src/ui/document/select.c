@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "core/adlist.h"
 #include "core/dict.h"
 #include "core/sds.h"
@@ -5,18 +7,9 @@
 
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
 
 // css选择器
-
-static inline int IsHtmlDomCssSelectorIgnore(enum uiHtmlDomType_e type) {
-    if (UIHTML_DOM_TYPE_TEXT == type ||
-            UIHTML_DOM_TYPE_SCRIPT == type ||
-            UIHTML_DOM_TYPE_STYLE == type) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
 
 list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
     if (0 == listLength(dom->children)) {
@@ -36,7 +29,7 @@ list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
     while (0 != (ln = listNext(li))) {
         child = (uiHtmlDom_t*)listNodeValue(ln);
 
-        if (1 == IsHtmlDomCssSelectorIgnore(child->type)) {
+        if (1 == IsHtmlDomNotCareCssDeclaration(child->type)) {
             continue;
         }
 
@@ -64,21 +57,21 @@ list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
 }
 
 static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selectorSection, uiHtmlDom_t *dom) {
-    if (1 == IsHtmlDomCssSelectorIgnore(dom->type)) {
+    if (1 == IsHtmlDomNotCareCssDeclaration(dom->type)) {
         return 0;
     }
 
-    switch(selectorSection->type) {
-        case UICSS_SELECTOR_SECTION_TYPE_UNKNOWN:
+    switch (selectorSection->type) {
+        case UI_SELECTOR_SECTION_TYPE_UNKNOWN:
             break;
 
-        case UICSS_SELECTOR_SECTION_TYPE_TAG:
+        case UI_SELECTOR_SECTION_TYPE_TAG:
             if (0 == stringcmp(dom->title, selectorSection->value)) {
                 return true;
             }
             break;
 
-        case UICSS_SELECTOR_SECTION_TYPE_CLASS:
+        case UI_SELECTOR_SECTION_TYPE_CLASS:
             if (0 == dom->classes) {
                 break;
             }
@@ -86,7 +79,7 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
             listIter *liClass;
             listNode *lnClass;
             liClass = listGetIterator(dom->classes, AL_START_HEAD);
-            while(0 != (lnClass = listNext(liClass))) {
+            while (0 != (lnClass = listNext(liClass))) {
                 if (0 == stringcmp((char*)listNodeValue(lnClass), selectorSection->value)) {
                     return true;
                 }
@@ -94,7 +87,7 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
             listReleaseIterator(liClass);
             break;
 
-        case UICSS_SELECTOR_SECTION_TYPE_ID:
+        case UI_SELECTOR_SECTION_TYPE_ID:
             if (0 == dom->id) {
                 break;
             }
@@ -116,7 +109,7 @@ static int IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHt
     }
     uiCssSelectorSection_t *selectorSection = (uiCssSelectorSection_t*)listNodeValue(lnSelectorSection);
 
-    while(1) {
+    while (1) {
         // 如果该 selectorSection 匹配 该 dom，则继续下一轮匹配
         if (1 == IsSelectorSectionMatchHtmlDom(selectorSection, dom)) {
             break;
@@ -148,7 +141,7 @@ static list* SelectorSectionSelectHtmlDoms(uiCssSelectorSection_t *selectorSecti
         doms = listAddNodeTail(doms, dom);
     }
 
-    if (1 == IsHtmlDomCssSelectorIgnore(dom->type) && 0 == listLength(dom->children)) {
+    if (1 == IsHtmlDomNotCareCssDeclaration(dom->type) && 0 == listLength(dom->children)) {
         return doms;
     }
 
@@ -160,10 +153,10 @@ static list* SelectorSectionSelectHtmlDoms(uiCssSelectorSection_t *selectorSecti
     listNode *lnSubDom;
 
     lidom = listGetIterator(dom->children, AL_START_HEAD);
-    while(0 != (lndom = listNext(lidom))) {
+    while (0 != (lndom = listNext(lidom))) {
         subDoms = SelectorSectionSelectHtmlDoms(selectorSection, (uiHtmlDom_t*)listNodeValue(lndom));
         liSubDom = listGetIterator(subDoms, AL_START_HEAD);
-        while(0 != (lnSubDom = listNext(liSubDom))) {
+        while (0 != (lnSubDom = listNext(liSubDom))) {
             doms = listAddNodeTail(doms, (uiHtmlDom_t*)listNodeValue(lnSubDom));
         }
         listReleaseIterator(liSubDom);
@@ -175,7 +168,7 @@ static list* SelectorSectionSelectHtmlDoms(uiCssSelectorSection_t *selectorSecti
 
 // return doms
 static list* SelectorSectionsRightFindHtmlDoms(listIter *liSelectorSection, uiHtmlDom_t *dom) {
-    if (0 == dom || 1 == IsHtmlDomCssSelectorIgnore(dom->type)) {
+    if (0 == dom || 1 == IsHtmlDomNotCareCssDeclaration(dom->type)) {
         return 0;
     }
 
@@ -200,7 +193,7 @@ static list* SelectorSectionsRightFindHtmlDoms(listIter *liSelectorSection, uiHt
     listIter *liGrandDom;
     listNode *lnGrandDom;
     liSubDom = listGetIterator(dom->children, AL_START_HEAD);
-    while(0 != (lnSubDom = listNext(liSubDom))) {
+    while (0 != (lnSubDom = listNext(liSubDom))) {
         grandDoms = SelectorSectionsRightFindHtmlDoms(liSelectorSection,
                 (uiHtmlDom_t*)listNodeValue(lnSubDom));
 
@@ -209,7 +202,7 @@ static list* SelectorSectionsRightFindHtmlDoms(listIter *liSelectorSection, uiHt
         }
 
         liGrandDom = listGetIterator(grandDoms, AL_START_HEAD);
-        while(0 != (lnGrandDom = listNext(liGrandDom))) {
+        while (0 != (lnGrandDom = listNext(liGrandDom))) {
             doms = listAddNodeTail(doms, listNodeValue(lnGrandDom));
         }
         listReleaseIterator(liGrandDom);

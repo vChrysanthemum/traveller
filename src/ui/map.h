@@ -33,7 +33,7 @@
         ui_env->cursorX = 0;\
     }\
     wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
-} while(0);
+} while (0);
 
 #define UIMoveuiCursor_tRight(count) do {\
     ui_env->cursorX += count;\
@@ -42,7 +42,7 @@
         ui_env->cursorX = ui_rootuiWindow->width;\
     }\
     wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
-} while(0);
+} while (0);
 
 #define UI_MoveuiCursorUp(count) do {\
     ui_env->cursorY -= count;\
@@ -51,7 +51,7 @@
         ui_env->cursorY = 0;\
     }\
     wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
-} while(0);
+} while (0);
 
 #define UIMoveuiCursor_tDown(count) do {\
     ui_env->cursorY += count;\
@@ -60,7 +60,7 @@
         ui_env->cursorY = ui_rootuiWindow->height;\
     }\
     wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
-} while(0);
+} while (0);
 
 /* 地图上的物体 */
 typedef struct {

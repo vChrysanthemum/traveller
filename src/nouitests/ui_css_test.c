@@ -9,16 +9,17 @@
 #include "case.h"
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
 
 TEST_CASE("fail css parser test")
 {
     char *html = "\
                   <style>\
                   body { background-color:black; } \
-                  div div.test { width:30px; }\
-                  #head { width:30px; }\
-                  #head div { width:20px; }\
-                  #head div div div a input { width:20px; }\
+                  div div.test { width:30; }\
+                  #head { width:30; }\
+                  #head div { width:20; }\
+                  #head div div div a input { width:20; }\
                   </style>\
                   ";
     uiDocument_t *document = UI_ParseDocument(html);

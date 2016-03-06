@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "core/zmalloc.h"
 #include "core/sds.h"
 #include "core/adlist.h"

@@ -380,7 +380,7 @@ PARSING_ARGV_START:
 static void parseInputBuffer(ntRespSnode_t *sn) {
     if (SNODE_RECV_STAT_ACCEPT == sn->recvStat || SNODE_RECV_STAT_PREPARE == sn->recvStat) {
 
-        switch(sn->querybuf[0]) {
+        switch (sn->querybuf[0]) {
             case '+' :
                 sn->recvType = SNODE_RECV_TYPE_OK;
                 break;

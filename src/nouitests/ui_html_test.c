@@ -9,6 +9,7 @@
 #include "case.h"
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
 
 TEST_CASE("fail html token parser test")
 {
@@ -51,7 +52,7 @@ TEST_CASE("fail html parser test")
     listNode *ln;
     uiHtmlDom_t *dom;
     char *html = "\
-                  <div id=\"top\" style=\"shit '' \\\" shit\" class=\"top hover\">\
+                  <div id=\"top\" style=\"background:black\" data=\"shit '' \\\" shit\" class=\"top hover\">\
                     <input type=\"text\" name=\"text\" />\
                     <table>\
                         <tr>\

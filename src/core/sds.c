@@ -528,11 +528,11 @@ sds sdscatfmt(sds s, char const *fmt, ...) {
             sh = (void*) (s-(sizeof(struct sdshdr)));
         }
 
-        switch(*f) {
+        switch (*f) {
         case '%':
             next = *(f+1);
             f++;
-            switch(next) {
+            switch (next) {
             case 's':
             case 'S':
                 str = va_arg(ap,char*);
@@ -814,7 +814,7 @@ void sdsfreesplitres(sds *tokens, int count) {
 sds sdscatrepr(sds s, const char *p, size_t len) {
     s = sdscatlen(s,"\"",1);
     while(len--) {
-        switch(*p) {
+        switch (*p) {
         case '\\':
         case '"':
             s = sdscatprintf(s,"\\%c",*p);
@@ -846,7 +846,7 @@ int is_hex_digit(char c) {
 /* Helper function for sdssplitargs() that converts a hex digit into an
  * integer from 0 to 15 */
 int hex_digit_to_int(char c) {
-    switch(c) {
+    switch (c) {
     case '0': return 0;
     case '1': return 1;
     case '2': return 2;
@@ -918,7 +918,7 @@ sds *sdssplitargs(const char *line, int *argc) {
                         char c;
 
                         p++;
-                        switch(*p) {
+                        switch (*p) {
                         case 'n': c = '\n'; break;
                         case 'r': c = '\r'; break;
                         case 't': c = '\t'; break;
@@ -954,7 +954,7 @@ sds *sdssplitargs(const char *line, int *argc) {
                         current = sdscatlen(current,p,1);
                     }
                 } else {
-                    switch(*p) {
+                    switch (*p) {
                     case ' ':
                     case '\n':
                     case '\r':

@@ -3,7 +3,7 @@
 
 void stackClean(stack *stack) {
     if (0 != stack->free) {
-        for(int i = 0; i < stack->len; i++) {
+        for (int i = 0; i < stack->len; i++) {
             stack->free(stack->data[i]);
         }
     }

@@ -12,6 +12,7 @@
 
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
 
 #include "g_extern.h"
 
@@ -34,7 +35,7 @@ static list *keyDownProcessors;
 static void uiLoop() {
     etDevice_t *device = g_mainDevice;
 
-    while(1) {
+    while (1) {
         halfdelay(2);
         ui_env->ch = getch();
         if (ERR != ui_env->ch) {

@@ -101,7 +101,7 @@ static void keyDownProcessorCmdMode (int ch) {
 }
 
 static void keyDownProcessor (int ch) {
-    switch(ui_console->mode) {
+    switch (ui_console->mode) {
         case CONSOLE_MODE_CMD:
             keyDownProcessorCmdMode(ch);
             break;

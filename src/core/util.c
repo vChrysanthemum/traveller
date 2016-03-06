@@ -171,28 +171,55 @@ int utf8StrWidth (char *str) {
     return result;
 }
 
-sds file_get_contents(char* path) {
-    FILE* fp;
-    long len;
-    sds ret;
+void escapeQuoteContent(sds result, char **content) {
+    int isExpectingDoubleQuoteClose = 0;
+    int isExpectingQuoteClose = 0;
+    if ('\'' == **content) isExpectingQuoteClose = 1;
+    else if ('"' == **content) isExpectingDoubleQuoteClose = 1;
+    else return;
 
-    fp = fopen(path, "r");
-    if (0 == fp) {
-        return 0;
+    int offset = -1;
+    while (1) {
+        offset++;
+        (*content)++;
+
+        if ('\0' == **content) {
+            break;
+        }
+
+        if ('\\' == **content) {
+            (*content)++;
+            result[offset] = **content;
+            continue;
+        }
+
+        if (1 == isExpectingQuoteClose && '\'' == **content) {
+            (*content)++;
+            break;
+        }
+
+        if (1 == isExpectingDoubleQuoteClose && '"' == **content) {
+            (*content)++;
+            break;
+        }
+
+        result[offset] = **content;
     }
 
-    fseek(fp, 0, SEEK_END);
-    len = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+    result[offset] = '\0';
 
-    if (len < 0) {
-        ret = 0;
-    } else {
-        ret = sdsnewlen(0, len + 1);
-        fread(ret, len, 1, fp);
-    }
+    sdsupdatelen(result);
+}
 
-    fclose(fp);
+doubleString_t *newDoubleString() {
+    doubleString_t *result = (doubleString_t*)zmalloc(sizeof(doubleString_t));
+    memset(result, 0, sizeof(doubleString_t));
+    return result;
+}
 
-    return ret;
+void freeDoubleString(void *_data) {
+    doubleString_t* data = (doubleString_t*)_data;
+    zfree(data->v1);
+    zfree(data->v2);
+    zfree(data);
 }

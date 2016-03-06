@@ -9,6 +9,7 @@
 
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
 
 #include "g_extern.h"
 #include "ui/extern.h"

@@ -6,73 +6,92 @@
 
 #include "event/event.h"
 #include "ui/ui.h"
+#include "ui/document/document.h"
 
 #include "core/extern.h"
 #include "ui/extern.h"
+#include "ui/document/extern.h"
 
-static dict *uiCssPropertyInfoDict;
-static uiCssPropertyInfo_t uiCssPropertyInfoTable[] = {
-    {"background-color", UICSS_PROPERTY_TYPE_BACKGROUND_COLOR},
-    {"color",            UICSS_PROPERTY_TYPE_COLOR},
-    {"padding",          UICSS_PROPERTY_TYPE_PADDING},
-    {"margin",           UICSS_PROPERTY_TYPE_MARGIN},
-    {"display",          UICSS_PROPERTY_TYPE_DISPLAY},
-    {"text-align",       UICSS_PROPERTY_TYPE_TEXT_ALIGN},
-    {"width",            UICSS_PROPERTY_TYPE_WIDTH},
-    {"height",           UICSS_PROPERTY_TYPE_HEIGHT},
+dict *uiCssDeclarationInfoDict;
+static uiCssDeclarationInfo_t uiCssDeclarationInfoTable[] = {
+    {"background-color", UI_CSS_DECLARATION_TYPE_BACKGROUND_COLOR},
+    {"color",            UI_CSS_DECLARATION_TYPE_COLOR},
+    {"padding",          UI_CSS_DECLARATION_TYPE_PADDING},
+    {"padding-top",      UI_CSS_DECLARATION_TYPE_PADDING_TOP},
+    {"padding-bottom",   UI_CSS_DECLARATION_TYPE_PADDING_BOTTOM},
+    {"padding-left",     UI_CSS_DECLARATION_TYPE_PADDING_LEFT},
+    {"padding-right",    UI_CSS_DECLARATION_TYPE_PADDING_RIGHT},
+    {"margin",           UI_CSS_DECLARATION_TYPE_MARGIN},
+    {"margin-top",       UI_CSS_DECLARATION_TYPE_MARGIN_TOP},
+    {"margin-bottom",    UI_CSS_DECLARATION_TYPE_MARGIN_BOTTOM},
+    {"margin-left",      UI_CSS_DECLARATION_TYPE_MARGIN_LEFT},
+    {"margin-right",     UI_CSS_DECLARATION_TYPE_MARGIN_RIGHT},
+    {"display",          UI_CSS_DECLARATION_TYPE_DISPLAY},
+    {"text-align",       UI_CSS_DECLARATION_TYPE_TEXT_ALIGN},
+    {"width",            UI_CSS_DECLARATION_TYPE_WIDTH},
+    {"height",           UI_CSS_DECLARATION_TYPE_HEIGHT},
     {0},
 };
 
 static inline void skipStringNotConcern(char **ptr)  {
-    while(UI_IsWhiteSpace(**ptr) && 0 != **ptr) {
+    while (UI_IsWhiteSpace(**ptr) && 0 != **ptr) {
         (*ptr)++;
     }
 }
 
 void UI_PrepareCss() {
-    uiCssPropertyInfoDict = dictCreate(&stackStringTableDictType, 0);
-    for (uiCssPropertyInfo_t *domInfo = &uiCssPropertyInfoTable[0]; 0 != domInfo->name; domInfo++) {
-        dictAdd(uiCssPropertyInfoDict, domInfo->name, domInfo);
+    uiCssDeclarationInfoDict = dictCreate(&stackStringTableDictType, 0);
+    for (uiCssDeclarationInfo_t *domInfo = &uiCssDeclarationInfoTable[0]; 0 != domInfo->name; domInfo++) {
+        dictAdd(uiCssDeclarationInfoDict, domInfo->name, domInfo);
     }
 }
 
-uiCssProperty_t* UI_NewCssProperty() {
-    uiCssProperty_t *property = (uiCssProperty_t*)zmalloc(sizeof(uiCssProperty_t));
-    memset(property, 0, sizeof(uiCssProperty_t));
-    property->type = UICSS_PROPERTY_TYPE_UNKNOWN;
-    return property;
+uiCssDeclaration_t* UI_NewCssDeclaration() {
+    uiCssDeclaration_t *cssDeclaration = (uiCssDeclaration_t*)zmalloc(sizeof(uiCssDeclaration_t));
+    memset(cssDeclaration, 0, sizeof(uiCssDeclaration_t));
+    cssDeclaration->type = UI_CSS_DECLARATION_TYPE_UNKNOWN;
+    return cssDeclaration;
 }
 
-void UI_FreeCssProperty(void *_property) {
-    uiCssProperty_t *property = (uiCssProperty_t*)_property;
-    zfree(property);
+void UI_FreeCssDeclaration(void *_cssDeclaration) {
+    uiCssDeclaration_t *cssDeclaration = (uiCssDeclaration_t*)_cssDeclaration;
+    zfree(cssDeclaration);
 }
 
-uiCssPropertyList_t* UI_DuplicateCssPropertyList(uiCssPropertyList_t* propertyList) {
-    propertyList->referenceCount++;
-    return propertyList;
+void UI_ParseSdsToCssDeclaration(uiCssDeclaration_t *cssDeclaration, sds cssDeclarationKey, sds cssDeclarationValue) {
+    cssDeclaration->key = cssDeclarationKey;
+    cssDeclaration->value = cssDeclarationValue;
+    uiCssDeclarationInfo_t *cssDeclarationInfo = dictFetchValue(uiCssDeclarationInfoDict, cssDeclaration->key);
+    if (0 != cssDeclarationInfo) {
+        cssDeclaration->type = cssDeclarationInfo->type;
+    }
 }
 
-uiCssPropertyList_t* UI_NewCssPropertyList() {
-    uiCssPropertyList_t *propertyList = (uiCssPropertyList_t*)zmalloc(sizeof(uiCssPropertyList_t));
-    propertyList->referenceCount = 1;
-    propertyList->data = listCreate();
-    propertyList->data->free = UI_FreeCssProperty;
-    return propertyList;
+uiCssDeclarationList_t* UI_DuplicateCssDeclarationList(uiCssDeclarationList_t* cssDeclarationList) {
+    cssDeclarationList->referenceCount++;
+    return cssDeclarationList;
 }
 
-void UI_FreeCssPropertyList(uiCssPropertyList_t *propertyList) {
-    propertyList--;
-    if (propertyList < 0) {
-        listRelease(propertyList->data);
-        zfree(propertyList);
+uiCssDeclarationList_t* UI_NewCssDeclarationList() {
+    uiCssDeclarationList_t *cssDeclarationList = (uiCssDeclarationList_t*)zmalloc(sizeof(uiCssDeclarationList_t));
+    cssDeclarationList->referenceCount = 1;
+    cssDeclarationList->data = listCreate();
+    cssDeclarationList->data->free = UI_FreeCssDeclaration;
+    return cssDeclarationList;
+}
+
+void UI_FreeCssDeclarationList(uiCssDeclarationList_t *cssDeclarationList) {
+    cssDeclarationList--;
+    if (cssDeclarationList < 0) {
+        listRelease(cssDeclarationList->data);
+        zfree(cssDeclarationList);
     }
 }
 
 uiCssSelectorSection_t* UI_NewCssSelectorSection() {
     uiCssSelectorSection_t *section = (uiCssSelectorSection_t*)zmalloc(sizeof(uiCssSelectorSection_t));
     memset(section, 0, sizeof(uiCssSelectorSection_t));
-    section->type = UICSS_SELECTOR_SECTION_TYPE_UNKNOWN;
+    section->type = UI_SELECTOR_SECTION_TYPE_UNKNOWN;
     return section;
 }
 
@@ -103,7 +122,7 @@ uiCssRule_t* UI_NewCssRule() {
 void UI_FreeCssRule(void *_rule) {
     uiCssRule_t *rule = (uiCssRule_t*)_rule;
     UI_FreeCssSelector(rule->selector);
-    UI_FreeCssPropertyList(rule->propertyList);
+    UI_FreeCssDeclarationList(rule->cssDeclarationList);
     zfree(rule);
 }
 
@@ -124,13 +143,13 @@ uiDocumentScanToken_t* UI_ScanCssToken(uiDocumentScanner_t *scanner) {
     uiDocumentScanToken_t *token = (uiDocumentScanToken_t*)zmalloc(sizeof(uiDocumentScanToken_t));
     token->content = 0;
 
-    if (',' == *ptr) token->type = UICSS_TOKEN_COMMA;
-    else if (':' == *ptr) token->type = UICSS_TOKEN_COLON;
-    else if (';' == *ptr) token->type = UICSS_TOKEN_SEMICOLON;
-    else if ('{' == *ptr) token->type = UICSS_TOKEN_BLOCK_START;
-    else if ('}' == *ptr) token->type = UICSS_TOKEN_BLOCK_END;
+    if (',' == *ptr) token->type = UI_TOKEN_COMMA;
+    else if (':' == *ptr) token->type = UI_TOKEN_COLON;
+    else if (';' == *ptr) token->type = UI_TOKEN_SEMICOLON;
+    else if ('{' == *ptr) token->type = UI_TOKEN_BLOCK_START;
+    else if ('}' == *ptr) token->type = UI_TOKEN_BLOCK_END;
     else {
-        token->type = UICSS_TOKEN_TEXT;
+        token->type = UI_TOKEN_TEXT;
         char *startPtr = ptr;
         for (; !UI_IsWhiteSpace(*ptr) &&
                 ',' != *ptr &&
@@ -156,9 +175,9 @@ void UI_CssStyleSheetMergeRule(uiCssStyleSheet_t *cssStyleSheet, uiCssRule_t *ru
 }
 
 static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t *token,
-        uiCssSelector_t **selector, uiCssProperty_t **property) {
-    switch(scanner->state) {
-        case UICSS_PARSE_STATE_SELECTOR:
+        uiCssSelector_t **selector, uiCssDeclaration_t **cssDeclaration) {
+    switch (scanner->state) {
+        case UI_PARSE_STATE_SELECTOR:
             if (0 == *selector) {
                 *selector = UI_NewCssSelector();
             }
@@ -167,14 +186,14 @@ static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t
 
             int isSelectorSectionAttributeFound = 0;
             int selectorSectionAttributeIndex = 1;
-            section->attributeType = UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE;
-            while(1) {
+            section->attributeType = UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE;
+            while (1) {
                 if ('\0' == token->content[selectorSectionAttributeIndex]) {
                     break;
                 }
 
                 if ('.' == token->content[selectorSectionAttributeIndex]) {
-                    section->attributeType = UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS;
+                    section->attributeType = UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS;
                     selectorSectionAttributeIndex++;
                     section->attribute = sdsnewlen(&token->content[selectorSectionAttributeIndex], 
                             sdslen(token->content)-selectorSectionAttributeIndex);
@@ -186,14 +205,14 @@ static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t
             }
 
             int selectorSectionValueIndex = 0;
-            if('#' == *token->content) {
-                section->type = UICSS_SELECTOR_SECTION_TYPE_ID;
+            if ('#' == *token->content) {
+                section->type = UI_SELECTOR_SECTION_TYPE_ID;
                 selectorSectionValueIndex = 1;
             } else if ('.' == *token->content) {
-                section->type = UICSS_SELECTOR_SECTION_TYPE_CLASS;
+                section->type = UI_SELECTOR_SECTION_TYPE_CLASS;
                 selectorSectionValueIndex = 1;
             } else {
-                section->type = UICSS_SELECTOR_SECTION_TYPE_TAG;
+                section->type = UI_SELECTOR_SECTION_TYPE_TAG;
             }
 
             if (1 == isSelectorSectionAttributeFound) {
@@ -207,17 +226,17 @@ static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t
             (*selector)->sections = listAddNodeTail((*selector)->sections, section);
             break;
 
-        case UICSS_PARSE_STATE_PROPERTY_KEY:
-            *property = UI_NewCssProperty();
-            (*property)->key = sdsnewlen(token->content, sdslen(token->content));
-            uiCssPropertyInfo_t *propertyInfo = dictFetchValue(uiCssPropertyInfoDict, token->content);
-            if (0 != propertyInfo) {
-                (*property)->type = propertyInfo->type;
+        case UI_PARSE_STATE_CSS_DECLARATION_KEY:
+            *cssDeclaration = UI_NewCssDeclaration();
+            (*cssDeclaration)->key = sdsnewlen(token->content, sdslen(token->content));
+            uiCssDeclarationInfo_t *cssDeclarationInfo = dictFetchValue(uiCssDeclarationInfoDict, token->content);
+            if (0 != cssDeclarationInfo) {
+                (*cssDeclaration)->type = cssDeclarationInfo->type;
             }
             break;
 
-        case UICSS_PARSE_STATE_PROPERTY_VALUE:
-            (*property)->value = sdsnewlen(token->content, sdslen(token->content));
+        case UI_PARSE_STATE_CSS_DECLARATION_VALUE:
+            (*cssDeclaration)->value = sdsnewlen(token->content, sdslen(token->content));
             break;
     }
     return 0;
@@ -225,23 +244,18 @@ static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t
 
 const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
     uiDocumentScanner_t cssScanner = {
-        UICSS_PARSE_STATE_SELECTOR, cssContent, cssContent, UI_ScanCssToken
+        UI_PARSE_STATE_SELECTOR, cssContent, cssContent, UI_ScanCssToken
     };
 
     uiDocumentScanToken_t *token;
     uiCssSelector_t *selector = 0;
-    uiCssProperty_t *property = 0;
+    uiCssDeclaration_t *cssDeclaration = 0;
     list *selectors = listCreate();
-    uiCssPropertyList_t* propertyList = UI_NewCssPropertyList();
-    //properties->free = UI_FreeCssProperty;
-    while(0 != (token = cssScanner.scan(&cssScanner))) {
+    uiCssDeclarationList_t* cssDeclarationList = UI_NewCssDeclarationList();
+    while (0 != (token = cssScanner.scan(&cssScanner))) {
         switch (token->type) {
-            case UICSS_TOKEN_TEXT:
-                parseCssTokenText(&cssScanner, token, &selector, &property);
-                break;
-
-            case UICSS_TOKEN_COMMA:
-                AssertOrReturnError(UICSS_PARSE_STATE_SELECTOR == cssScanner.state,
+            case UI_TOKEN_COMMA:
+                AssertOrReturnError(UI_PARSE_STATE_SELECTOR == cssScanner.state,
                         UIERROR_CSS_PARSE_STATE_NOT_SELECTOR);
 
                 if (0 != selector) {
@@ -250,41 +264,45 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
                 }
                 break;
 
-            case UICSS_TOKEN_BLOCK_START:
-                AssertOrReturnError(UICSS_PARSE_STATE_SELECTOR == cssScanner.state,
+            case UI_TOKEN_COLON:
+                AssertOrReturnError(UI_PARSE_STATE_CSS_DECLARATION_KEY == cssScanner.state,
+                        UIERROR_CSS_PARSE_STATE_NOT_CSS_DECLARATION_KEY);
+
+                cssScanner.state = UI_PARSE_STATE_CSS_DECLARATION_VALUE;
+                break;
+
+            case UI_TOKEN_SEMICOLON:
+                AssertOrReturnError(UI_PARSE_STATE_CSS_DECLARATION_VALUE == cssScanner.state,
+                        UIERROR_CSS_PARSE_STATE_NOT_CSS_DECLARATION_VALUE);
+
+                if (0 != cssDeclaration) {
+                    cssDeclarationList->data = listAddNodeTail(cssDeclarationList->data, cssDeclaration);
+                    cssDeclaration = 0;
+                }
+                cssScanner.state = UI_PARSE_STATE_CSS_DECLARATION_KEY;
+                break;
+
+            case UI_TOKEN_BLOCK_START:
+                AssertOrReturnError(UI_PARSE_STATE_SELECTOR == cssScanner.state,
                         UIERROR_CSS_PARSE_STATE_NOT_SELECTOR);
 
                 if (0 != selector) {
                     selectors = listAddNodeTail(selectors, selector);
                     selector = 0;
                 }
-                cssScanner.state = UICSS_PARSE_STATE_PROPERTY_KEY;
+                cssScanner.state = UI_PARSE_STATE_CSS_DECLARATION_KEY;
                 break;
 
-            case UICSS_TOKEN_COLON:
-                AssertOrReturnError(UICSS_PARSE_STATE_PROPERTY_KEY == cssScanner.state,
-                        UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_KEY);
-
-                cssScanner.state = UICSS_PARSE_STATE_PROPERTY_VALUE;
-                break;
-
-            case UICSS_TOKEN_SEMICOLON:
-                AssertOrReturnError(UICSS_PARSE_STATE_PROPERTY_VALUE == cssScanner.state,
-                        UIERROR_CSS_PARSE_STATE_NOT_PROPERTY_VALUE);
-
-                if (0 != property) {
-                    propertyList->data = listAddNodeTail(propertyList->data, property);
-                    property = 0;
+            case UI_TOKEN_BLOCK_END:
+                if (0 != cssDeclaration) {
+                    cssDeclarationList->data = listAddNodeTail(cssDeclarationList->data, cssDeclaration);
+                    cssDeclaration = 0;
                 }
-                cssScanner.state = UICSS_PARSE_STATE_PROPERTY_KEY;
+                cssScanner.state = UI_PARSE_STATE_SELECTOR;
                 break;
 
-            case UICSS_TOKEN_BLOCK_END:
-                if (0 != property) {
-                    propertyList->data = listAddNodeTail(propertyList->data, property);
-                    property = 0;
-                }
-                cssScanner.state = UICSS_PARSE_STATE_SELECTOR;
+            case UI_TOKEN_TEXT:
+                parseCssTokenText(&cssScanner, token, &selector, &cssDeclaration);
                 break;
         }
 
@@ -300,13 +318,13 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
     while (0 != (ln = listNext(li))) {
         rule = UI_NewCssRule();
         rule->selector = listNodeValue(ln);
-        rule->propertyList = UI_DuplicateCssPropertyList(propertyList);
+        rule->cssDeclarationList = UI_DuplicateCssDeclarationList(cssDeclarationList);
         UI_CssStyleSheetMergeRule(document->cssStyleSheet, rule);
     }
     listReleaseIterator(li);
 
     listRelease(selectors);
-    UI_FreeCssPropertyList(propertyList);
+    UI_FreeCssDeclarationList(cssDeclarationList);
 
     return 0;
 }
@@ -315,13 +333,13 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
 void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
     uiCssRule_t *rule;
     uiCssSelectorSection_t *selectorSection;
-    uiCssProperty_t *property;
+    uiCssDeclaration_t *cssDeclaration;
 
     listIter *liSelectorSection;
     listNode *lnSelectorSection;
 
-    listIter *liProperty;
-    listNode *lnProperty;
+    listIter *liCssDeclaration;
+    listNode *lnCssDeclaration;
 
     listIter *li;
     listNode *ln;
@@ -336,20 +354,20 @@ void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
 
             printf("%s ", selectorSection->value);
 
-            if (UICSS_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE != selectorSection->attributeType) {
+            if (UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE != selectorSection->attributeType) {
                 printf("%d %s", selectorSection->attributeType, selectorSection->attribute);
             }
         }
         listReleaseIterator(liSelectorSection);
 
         printf(" {");
-        liProperty = listGetIterator(rule->propertyList->data, AL_START_HEAD);
-        while (0 != (lnProperty = listNext(liProperty))) {
-            property = (uiCssProperty_t*)listNodeValue(lnProperty);
+        liCssDeclaration = listGetIterator(rule->cssDeclarationList->data, AL_START_HEAD);
+        while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
+            cssDeclaration = (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration);
 
-            printf("%d %s:%s; ", property->type, property->key, property->value);
+            printf("%d %s:%s; ", cssDeclaration->type, cssDeclaration->key, cssDeclaration->value);
         }
-        listReleaseIterator(liProperty);
+        listReleaseIterator(liCssDeclaration);
         printf("} ");
         printf("\n");
     }
