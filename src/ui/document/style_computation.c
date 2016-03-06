@@ -14,7 +14,7 @@ static inline unsigned int ConvertCssDeclarationValueToUnsignedInt(sds value) {
     return result <= 0 ? 0 : (unsigned int)result;
 }
 
-static inline void ComputeHtmlDomStyleByCssDeclaration(uiHtmlDom_t *dom, uiCssDeclaration_t *cssDeclaration) {
+static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, uiHtmlDom_t *dom, uiCssDeclaration_t *cssDeclaration) {
     uiDocumentRenderObject_t *renderObject = dom->renderObject;
 
     switch (cssDeclaration->type) {
@@ -98,6 +98,10 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiHtmlDom_t *dom, uiCssDe
             renderObject->height = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
     }
+
+    if (0 != dom->info->computeStyle) {
+        dom->info->computeStyle(document, dom);
+    }
 }
 
 static void ComputeHtmlDomTreeStyleByCssRule(uiDocument_t *document, uiCssRule_t *cssRule) {
@@ -120,7 +124,7 @@ static void ComputeHtmlDomTreeStyleByCssRule(uiDocument_t *document, uiCssRule_t
 
         liCssDeclaration = listGetIterator(cssRule->cssDeclarationList->data, AL_START_HEAD);
         while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
-            ComputeHtmlDomStyleByCssDeclaration(
+            ComputeHtmlDomStyleByCssDeclaration(document,
                     (uiHtmlDom_t*)listNodeValue(lnDom),
                     (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration));
         }
@@ -129,8 +133,8 @@ static void ComputeHtmlDomTreeStyleByCssRule(uiDocument_t *document, uiCssRule_t
     listReleaseIterator(liDom);
 }
 
-static void ComputeHtmlDomStyleByDomAttributeStyle(uiHtmlDom_t *dom) {
-    if (1 == IsHtmlDomNotCareCssDeclaration(dom->type)) {
+static void ComputeHtmlDomStyleByDomAttributeStyle(uiDocument_t *document, uiHtmlDom_t *dom) {
+    if (1 == UI_IsHtmlDomNotCareCssDeclaration(dom)) {
         return;
     }
 
@@ -142,21 +146,21 @@ static void ComputeHtmlDomStyleByDomAttributeStyle(uiHtmlDom_t *dom) {
     listNode *lnCssDeclaration;
     liCssDeclaration = listGetIterator(dom->styleCssDeclarations, AL_START_HEAD);
     while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
-        ComputeHtmlDomStyleByCssDeclaration(dom, (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration));
+        ComputeHtmlDomStyleByCssDeclaration(document, dom, (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration));
     }
     listReleaseIterator(liCssDeclaration);
 
     return;
 }
 
-static void ComputeHtmlDomTreeStyleByDomAttributeStyle(uiHtmlDom_t *dom) {
-    ComputeHtmlDomStyleByDomAttributeStyle(dom);
+static void ComputeHtmlDomTreeStyleByDomAttributeStyle(uiDocument_t *document, uiHtmlDom_t *dom) {
+    ComputeHtmlDomStyleByDomAttributeStyle(document, dom);
     
     listIter *liDom;
     listNode *lnDom;
     liDom = listGetIterator(dom->children, AL_START_HEAD);
     while (0 != (lnDom = listNext(liDom))) {
-        ComputeHtmlDomTreeStyleByDomAttributeStyle((uiHtmlDom_t*)listNodeValue(lnDom));
+        ComputeHtmlDomTreeStyleByDomAttributeStyle(document, (uiHtmlDom_t*)listNodeValue(lnDom));
     }
     listReleaseIterator(liDom);
 }
@@ -170,5 +174,5 @@ void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document) {
     }
     listReleaseIterator(liCssRule);
 
-    ComputeHtmlDomTreeStyleByDomAttributeStyle(document->rootDom);
+    ComputeHtmlDomTreeStyleByDomAttributeStyle(document, document->rootDom);
 }

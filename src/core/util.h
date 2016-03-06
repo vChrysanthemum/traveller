@@ -45,7 +45,7 @@ typedef struct Log {
 #define C_UtilLogN(FMT, ...) C_UtilLog(C_LOG_NOTICE, FMT, ##__VA_ARGS__)
 #define C_UtilLogI(FMT, ...) C_UtilLog(C_LOG_INFO, FMT, ##__VA_ARGS__)
 
-#define TrvAssert(condition, FMT, ...) do {\
+#define C_Assert(condition, FMT, ...) do {\
     if (!(condition)) {\
         C_UtilLogI(FMT, ##__VA_ARGS__);\
         exit(-1);\

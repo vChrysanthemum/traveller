@@ -40,7 +40,7 @@ int STDB_Close(lua_State *L) {
     int errno;
     sqlite3 *db;
     db = lua_touserdata(L, 1);
-    TrvAssert((0 != db), "STDB_Close error");
+    C_Assert((0 != db), "STDB_Close error");
 
     sqlite3_close(db);
 
@@ -54,7 +54,7 @@ int STDB_Close(lua_State *L) {
 // @param sql string
 int STDB_Query(lua_State *L) {
     sqlite3 *db = lua_touserdata(L, 1);
-    TrvAssert((0 != db), "STDB_Close error");
+    C_Assert((0 != db), "STDB_Close error");
 
     const char *sql = lua_tostring(L, 2);
     char **dbresult;

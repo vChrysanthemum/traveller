@@ -29,7 +29,7 @@ list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
     while (0 != (ln = listNext(li))) {
         child = (uiHtmlDom_t*)listNodeValue(ln);
 
-        if (1 == IsHtmlDomNotCareCssDeclaration(child->type)) {
+        if (1 == UI_IsHtmlDomNotCareCssDeclaration(child)) {
             continue;
         }
 
@@ -57,7 +57,7 @@ list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
 }
 
 static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selectorSection, uiHtmlDom_t *dom) {
-    if (1 == IsHtmlDomNotCareCssDeclaration(dom->type)) {
+    if (1 == UI_IsHtmlDomNotCareCssDeclaration(dom)) {
         return 0;
     }
 
@@ -141,7 +141,7 @@ static list* SelectorSectionSelectHtmlDoms(uiCssSelectorSection_t *selectorSecti
         doms = listAddNodeTail(doms, dom);
     }
 
-    if (1 == IsHtmlDomNotCareCssDeclaration(dom->type) && 0 == listLength(dom->children)) {
+    if (1 == UI_IsHtmlDomNotCareCssDeclaration(dom) && 0 == listLength(dom->children)) {
         return doms;
     }
 
@@ -168,7 +168,7 @@ static list* SelectorSectionSelectHtmlDoms(uiCssSelectorSection_t *selectorSecti
 
 // return doms
 static list* SelectorSectionsRightFindHtmlDoms(listIter *liSelectorSection, uiHtmlDom_t *dom) {
-    if (0 == dom || 1 == IsHtmlDomNotCareCssDeclaration(dom->type)) {
+    if (0 == dom || 1 == UI_IsHtmlDomNotCareCssDeclaration(dom)) {
         return 0;
     }
 

@@ -113,10 +113,23 @@ void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet);
 
 void UI_PrepareHtml();
 
+typedef struct uiHtmlDom_s uiHtmlDom_t;
+typedef void (*UI_ComputeHtmlDomStyle)(uiDocument_t*, uiHtmlDom_t*);
+void UI_ComputeHtmlDomStyle_Text      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Html      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Head      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Title     (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Body      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Div       (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Table     (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Tr        (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Td        (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_ComputeHtmlDomStyle_Input     (uiDocument_t *document, uiHtmlDom_t *dom);
+
 typedef struct uiHtmlDomInfo_s {
     char *name;
     enum uiHtmlDomType_e {
-        UIHTML_DOM_TYPE_UNKNOWN,
+        UIHTML_DOM_TYPE_UNDEFINED,
         UIHTML_DOM_TYPE_TEXT,
         UIHTML_DOM_TYPE_HTML,
         UIHTML_DOM_TYPE_HEAD,
@@ -130,9 +143,9 @@ typedef struct uiHtmlDomInfo_s {
         UIHTML_DOM_TYPE_STYLE,
         UIHTML_DOM_TYPE_INPUT,
     } type;
+    UI_ComputeHtmlDomStyle computeStyle;
 } uiHtmlDomInfo_t;
 
-typedef struct uiHtmlDom_s uiHtmlDom_t;
 typedef struct uiHtmlDom_s {
     uiHtmlDom_t               *parent;
     sds                       title;
@@ -144,9 +157,9 @@ typedef struct uiHtmlDom_s {
     int                       contentUtf8Width;
     list                      *children;
     uiDocumentRenderObject_t  *renderObject;
-    enum uiHtmlDomType_e type;
+    uiHtmlDomInfo_t           *info;
 } uiHtmlDom_t;
-int IsHtmlDomNotCareCssDeclaration(enum uiHtmlDomType_e type);
+int UI_IsHtmlDomNotCareCssDeclaration(uiHtmlDom_t *dom);
 uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom);
 void UI_FreeHtmlDom(void *_dom);
 int UI_ParseHtml(uiDocument_t *document);

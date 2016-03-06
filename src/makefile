@@ -10,7 +10,11 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./net/resp/service/service.o ./net/resp/service/test.o ./net/resp/service/script.o \
 				   ./ui/ui.o ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
 				   ./ui/document/document.o ./ui/document/error.o ./ui/document/html.o ./ui/document/css.o \
-				   ./ui/document/select.o ./ui/document/render.o ./ui/document/style_computation.o
+				   ./ui/document/select.o ./ui/document/render.o ./ui/document/style_computation.o \
+				   ./ui/document/style_computation_div.o  ./ui/document/style_computation_extra.o\
+				   ./ui/document/style_computation_input.o ./ui/document/style_computation_table.o\
+				   ./ui/document/style_computation_text.o
+				  
 
 travellerobjects := ./traveller.o $(baseobjects)
 

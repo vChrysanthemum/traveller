@@ -15,24 +15,26 @@
 #include "ui/extern.h"
 #include "ui/document/extern.h"
 
+uiHtmlDomInfo_t *ui_htmlDomInfoUndefined;
+
 static dict *UIHtmlSpecialStringTable;
 
 static dict *uiHtmlDomInfoDict;
 static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
-    {"unknown", UIHTML_DOM_TYPE_UNKNOWN},
-    {"text",    UIHTML_DOM_TYPE_TEXT},
-    {"html",    UIHTML_DOM_TYPE_HTML},
-    {"head",    UIHTML_DOM_TYPE_HEAD},
-    {"title",   UIHTML_DOM_TYPE_TITLE},
-    {"body",    UIHTML_DOM_TYPE_BODY},
-    {"script",  UIHTML_DOM_TYPE_SCRIPT},
-    {"div",     UIHTML_DOM_TYPE_DIV},
-    {"table",   UIHTML_DOM_TYPE_TABLE},
-    {"tr",      UIHTML_DOM_TYPE_TR},
-    {"td",      UIHTML_DOM_TYPE_TD},
-    {"style",   UIHTML_DOM_TYPE_STYLE},
-    {"input",   UIHTML_DOM_TYPE_INPUT},
-    {0, 0},
+    {"undefined", UIHTML_DOM_TYPE_UNDEFINED, 0},
+    {"text",      UIHTML_DOM_TYPE_TEXT,      UI_ComputeHtmlDomStyle_Text},
+    {"html",      UIHTML_DOM_TYPE_HTML,      UI_ComputeHtmlDomStyle_Html},
+    {"head",      UIHTML_DOM_TYPE_HEAD,      UI_ComputeHtmlDomStyle_Head},
+    {"title",     UIHTML_DOM_TYPE_TITLE,     UI_ComputeHtmlDomStyle_Title},
+    {"body",      UIHTML_DOM_TYPE_BODY,      UI_ComputeHtmlDomStyle_Body},
+    {"script",    UIHTML_DOM_TYPE_SCRIPT,    0},
+    {"div",       UIHTML_DOM_TYPE_DIV,       UI_ComputeHtmlDomStyle_Div},
+    {"table",     UIHTML_DOM_TYPE_TABLE,     UI_ComputeHtmlDomStyle_Table},
+    {"tr",        UIHTML_DOM_TYPE_TR,        UI_ComputeHtmlDomStyle_Tr},
+    {"td",        UIHTML_DOM_TYPE_TD,        UI_ComputeHtmlDomStyle_Td},
+    {"style",     UIHTML_DOM_TYPE_STYLE,     0},
+    {"input",     UIHTML_DOM_TYPE_INPUT,     UI_ComputeHtmlDomStyle_Input},
+    {0, 0, 0},
 };
 
 static inline void skipStringNotConcern(char **ptr)  {
@@ -41,10 +43,10 @@ static inline void skipStringNotConcern(char **ptr)  {
     }
 }
 
-int IsHtmlDomNotCareCssDeclaration(enum uiHtmlDomType_e type) {
-    if (UIHTML_DOM_TYPE_TEXT == type ||
-            UIHTML_DOM_TYPE_SCRIPT == type ||
-            UIHTML_DOM_TYPE_STYLE == type) {
+int UI_IsHtmlDomNotCareCssDeclaration(uiHtmlDom_t *dom) {
+    if (UIHTML_DOM_TYPE_TEXT == dom->info->type ||
+            UIHTML_DOM_TYPE_SCRIPT == dom->info->type ||
+            UIHTML_DOM_TYPE_STYLE == dom->info->type) {
         return 1;
     } else {
         return 0;
@@ -56,6 +58,7 @@ void UI_PrepareHtml() {
     for (uiHtmlDomInfo_t *domInfo = &uiHtmlDomInfoTable[0]; 0 != domInfo->name; domInfo++) {
         dictAdd(uiHtmlDomInfoDict, domInfo->name, domInfo);
     }
+    ui_htmlDomInfoUndefined = dictFetchValue(uiHtmlDomInfoDict, "undefined");
 
     UIHtmlSpecialStringTable = dictCreate(&stackStringTableDictType, 0);
     dictAdd(UIHtmlSpecialStringTable, "&quot;", "\"");
@@ -187,10 +190,10 @@ uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {
     memset(dom, 0, sizeof(uiHtmlDom_t));
     dom->parent = parentDom;
     dom->title = sdsempty();
-    dom->type = UIHTML_DOM_TYPE_UNKNOWN;
     dom->children = listCreate();
     dom->children->free = UI_FreeHtmlDom;
     dom->renderObject = UI_newDocumentRenderObject(dom);
+    dom->info = ui_htmlDomInfoUndefined;
     return dom;
 }
 
@@ -283,6 +286,7 @@ static inline void parseHtmlDomStyle(uiHtmlDom_t *dom, char *stylePtr) {
 static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     int contentLen = sdslen(token->content);
 
+    uiHtmlDomInfo_t *htmlDomInfo;
     int contentOffset;
     int contentEndOffset;
     enum {EXPECTING_KEY, EXPECTING_VALUE} expectState;
@@ -295,11 +299,9 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
         }
     }
     dom->title = sdscatlen(dom->title, &(token->content[contentOffset]), contentEndOffset-contentOffset);
-    uiHtmlDomInfo_t *domInfo = dictFetchValue(uiHtmlDomInfoDict, dom->title);
-    if (0 == domInfo) {
-        dom->type = UIHTML_DOM_TYPE_UNKNOWN;
-    } else {
-        dom->type = domInfo->type;
+    htmlDomInfo = dictFetchValue(uiHtmlDomInfoDict, dom->title);
+    if (0 != htmlDomInfo) {
+        dom->info = htmlDomInfo;
     }
 
     contentOffset = contentEndOffset + 1;
@@ -475,10 +477,10 @@ static inline uiHtmlDom_t* parseHtmlTokenSelfClosingTag(uiHtmlDom_t *dom, uiDocu
 static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
         uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
 
-    if (UIHTML_DOM_TYPE_SCRIPT == dom->type) {
+    if (UIHTML_DOM_TYPE_SCRIPT == dom->info->type) {
         document->script = sdscatsds(document->script, token->content);
 
-    } else if (UIHTML_DOM_TYPE_STYLE == dom->type) {
+    } else if (UIHTML_DOM_TYPE_STYLE == dom->info->type) {
         document->style = sdscatsds(document->style, token->content);
 
     } else {
@@ -487,7 +489,6 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
         newdom->content = sdsempty();
         dom->children = listAddNodeTail(dom->children, newdom);
 
-        newdom->type = UIHTML_DOM_TYPE_TEXT;
         newdom->content = sdsMakeRoomFor(newdom->content, 
                 sdslen(newdom->content)+sdslen(token->content));
 
@@ -575,7 +576,7 @@ int UI_ParseHtml(uiDocument_t *document) {
 void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
-    if (UIHTML_DOM_TYPE_TEXT != dom->type) {
+    if (UIHTML_DOM_TYPE_TEXT != dom->info->type) {
         printf("<%s>", dom->title);
     }
     if (0 != dom->attributes && listLength(dom->attributes) > 0) {
@@ -590,7 +591,7 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
         listReleaseIterator(liAttribute);
     }
 
-    if (UIHTML_DOM_TYPE_TEXT == dom->type) {
+    if (UIHTML_DOM_TYPE_TEXT == dom->info->type) {
         printf("%s\n", dom->content);
 
     } else {
