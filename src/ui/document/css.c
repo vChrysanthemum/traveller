@@ -67,6 +67,166 @@ void UI_ParseSdsToCssDeclaration(uiCssDeclaration_t *cssDeclaration, sds cssDecl
     }
 }
 
+void UI_CompileCssDeclarations(list **cssDeclarations, char *code) {
+    enum {EXPECTING_KEY, EXPECTING_VALUE} expectState;
+
+    sds data = sdsMakeRoomFor(sdsempty(), strlen(code));
+    uiCssDeclaration_t *cssDeclaration;
+    sds cssDeclarationKey = 0;
+    sds cssDeclarationValue = 0;
+
+    expectState = EXPECTING_KEY;
+    int offset;
+    while (1) {
+        if (UI_IsWhiteSpace(*code)) {
+            code++;
+        }
+        
+        if ('\'' == *code || '"' == *code) {
+            escapeQuoteContent(data, &code);
+
+        } else {
+            offset = -1;
+            code--;
+            while(1) {
+                code++;
+                offset++;
+                if ('\0' == *code) {
+                    break;
+                }
+
+                if (UI_IsWhiteSpace(*code) ||
+                        ';' == *code ||
+                        ':' == *code) {
+                    code++;
+                    break;
+                } 
+
+                data[offset] = *code;
+            }
+            data[offset] = '\0';
+        }
+
+
+        switch (expectState) {
+            case EXPECTING_KEY:
+                expectState = EXPECTING_VALUE;
+                cssDeclarationKey = sdsnewlen(data, strlen(data));
+                break;
+
+            case EXPECTING_VALUE:
+                expectState = EXPECTING_KEY;
+                cssDeclarationValue = sdsnewlen(data, strlen(data));
+
+                if (0 == *cssDeclarations) {
+                    *cssDeclarations = listCreate();
+                    (*cssDeclarations)->free = UI_FreeCssDeclaration;
+                }
+                cssDeclaration = UI_NewCssDeclaration();
+                UI_ParseSdsToCssDeclaration(cssDeclaration, cssDeclarationKey, cssDeclarationValue);
+                *cssDeclarations = listAddNodeTail(*cssDeclarations, cssDeclaration);
+
+                cssDeclarationKey = 0;
+                cssDeclarationValue = 0;
+
+                break;
+        }
+
+        if ('\0' == *code) {
+            break;
+        }
+    }
+
+    if (0 != cssDeclarationKey) sdsfree(cssDeclarationKey);
+    if (0 != cssDeclarationValue) sdsfree(cssDeclarationValue);
+    sdsfree(data);
+}
+
+void UI_CompileCssSelector(uiCssSelector_t **selector, char *code) {
+    if (0 == *selector) {
+        *selector = UI_NewCssSelector();
+    }
+
+    uiCssSelectorSection_t *section;
+
+    int offset = 0;
+    int isSelectorSectionAttributeFound;
+    int selectorSectionAttributeIndex;
+    int selectorSectionAttributeEnd;
+    int selectorSectionValueIndex;
+    int selectorSectionValueEnd;
+    while (1) {
+        if ('\0' == code[offset]) {
+            break;
+        }
+
+        while (UI_IsWhiteSpace(code[offset])) {
+            offset++;
+        }
+
+        selectorSectionAttributeIndex = offset+1;
+        isSelectorSectionAttributeFound = 0;
+        section = UI_NewCssSelectorSection();
+        section->attributeType = UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE;
+        while (1) {
+            if ('\0' == code[selectorSectionAttributeIndex] || UI_IsWhiteSpace(code[selectorSectionAttributeIndex])) {
+                break;
+            }
+
+            if ('.' == code[selectorSectionAttributeIndex]) {
+                section->attributeType = UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS;
+
+                selectorSectionAttributeIndex++;
+                selectorSectionAttributeEnd = selectorSectionAttributeIndex;
+                while(1) {
+                    if (UI_IsWhiteSpace(code[selectorSectionAttributeEnd]) || '\0' == code[selectorSectionAttributeEnd]) {
+                        break;
+                    }
+                    selectorSectionAttributeEnd++;
+                }
+
+                section->attribute = sdsnewlen(&code[selectorSectionAttributeIndex], 
+                        selectorSectionAttributeEnd-selectorSectionAttributeIndex);
+                isSelectorSectionAttributeFound = 1;
+                break;
+            }
+
+            selectorSectionAttributeIndex++;
+        }
+
+        if ('#' == code[offset]) {
+            section->type = UI_SELECTOR_SECTION_TYPE_ID;
+            selectorSectionValueIndex = offset + 1;
+        } else if ('.' == code[offset]) {
+            section->type = UI_SELECTOR_SECTION_TYPE_CLASS;
+            selectorSectionValueIndex = offset + 1;
+        } else {
+            section->type = UI_SELECTOR_SECTION_TYPE_TAG;
+            selectorSectionValueIndex = offset;
+        }
+
+        if (1 == isSelectorSectionAttributeFound) {
+            selectorSectionValueEnd = selectorSectionAttributeIndex - 1;
+            section->value = sdsnewlen(&code[selectorSectionValueIndex],
+                    selectorSectionValueEnd-selectorSectionValueIndex);
+            offset = selectorSectionAttributeEnd;
+        } else {
+            selectorSectionValueEnd = selectorSectionValueIndex;
+            while(1) {
+                if (UI_IsWhiteSpace(code[selectorSectionValueEnd]) || '\0' == code[selectorSectionValueEnd]) {
+                    break;
+                }
+                selectorSectionValueEnd++;
+            }
+            section->value = sdsnewlen(&code[selectorSectionValueIndex],
+                    selectorSectionValueEnd-selectorSectionValueIndex);
+            offset = selectorSectionValueEnd;
+        }
+
+        (*selector)->sections = listAddNodeTail((*selector)->sections, section);
+    }
+}
+
 uiCssDeclarationList_t* UI_DuplicateCssDeclarationList(uiCssDeclarationList_t* cssDeclarationList) {
     cssDeclarationList->referenceCount++;
     return cssDeclarationList;
@@ -178,52 +338,7 @@ static int parseCssTokenText(uiDocumentScanner_t *scanner, uiDocumentScanToken_t
         uiCssSelector_t **selector, uiCssDeclaration_t **cssDeclaration) {
     switch (scanner->state) {
         case UI_PARSE_STATE_SELECTOR:
-            if (0 == *selector) {
-                *selector = UI_NewCssSelector();
-            }
-
-            uiCssSelectorSection_t *section = UI_NewCssSelectorSection();
-
-            int isSelectorSectionAttributeFound = 0;
-            int selectorSectionAttributeIndex = 1;
-            section->attributeType = UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE;
-            while (1) {
-                if ('\0' == token->content[selectorSectionAttributeIndex]) {
-                    break;
-                }
-
-                if ('.' == token->content[selectorSectionAttributeIndex]) {
-                    section->attributeType = UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS;
-                    selectorSectionAttributeIndex++;
-                    section->attribute = sdsnewlen(&token->content[selectorSectionAttributeIndex], 
-                            sdslen(token->content)-selectorSectionAttributeIndex);
-                    isSelectorSectionAttributeFound = 1;
-                    break;
-                }
-
-                selectorSectionAttributeIndex++;
-            }
-
-            int selectorSectionValueIndex = 0;
-            if ('#' == *token->content) {
-                section->type = UI_SELECTOR_SECTION_TYPE_ID;
-                selectorSectionValueIndex = 1;
-            } else if ('.' == *token->content) {
-                section->type = UI_SELECTOR_SECTION_TYPE_CLASS;
-                selectorSectionValueIndex = 1;
-            } else {
-                section->type = UI_SELECTOR_SECTION_TYPE_TAG;
-            }
-
-            if (1 == isSelectorSectionAttributeFound) {
-                section->value = sdsnewlen(&token->content[selectorSectionValueIndex],
-                        selectorSectionAttributeIndex-selectorSectionValueIndex-1);
-            } else {
-                section->value = sdsnewlen(&token->content[selectorSectionValueIndex],
-                        sdslen(token->content)-selectorSectionValueIndex);
-            }
-
-            (*selector)->sections = listAddNodeTail((*selector)->sections, section);
+            UI_CompileCssSelector(selector, token->content);
             break;
 
         case UI_PARSE_STATE_CSS_DECLARATION_KEY:

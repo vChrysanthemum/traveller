@@ -51,7 +51,6 @@ TEST_CASE("fail html parser test")
 {
     listNode *ln;
     uiHtmlDom_t *dom;
-    printf("\n%s %d\n", __FILE__, __LINE__);
     char *html = "\
                   <div id=\"top\" style=\"background:black\" data=\"shit '' \\\" shit\" class=\"top hover\">\
                     <input type=\"text\" name=\"text\" />\
@@ -75,9 +74,7 @@ TEST_CASE("fail html parser test")
     UI_ParseHtml(document);
 
     uiHtmlDom_t *rootDom = document->rootDom;
-    printf("\n%s %d\n", __FILE__, __LINE__);
     UI_PrintHtmlDomTree(rootDom, 0);
-    printf("\n%s %d\n", __FILE__, __LINE__);
 
     ln = rootDom->children->head;
     uiHtmlDom_t *rootDivDom = listNodeValue(ln);

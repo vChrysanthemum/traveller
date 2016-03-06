@@ -23,7 +23,8 @@ uitestobjects := ./uitests/main.o $(baseobjects) ./uitests/ui_test.o
 nouitestobjects = ./nouitests/main.o ./nouitests/case.o $(baseobjects) \
 				  ./nouitests/core_test.o \
 				  ./nouitests/ui_main_test.o \
-				  ./nouitests/ui_html_test.o ./nouitests/ui_css_test.o ./nouitests/ui_css_select_test.o
+				  ./nouitests/ui_html_test.o ./nouitests/ui_css_test.o ./nouitests/ui_css_select_test.o \
+				  ./nouitests/ui_compute_style_test.o
 
 ALL_INCS= -I ./ \
 		  -I ../deps/lua/src/ \

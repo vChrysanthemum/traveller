@@ -35,18 +35,18 @@ TEST_CASE("fail css scan leafHtmlDoms test")
 
     list* leafHtmlDoms = UI_ScanLeafHtmlDoms(document->rootDom);
     uiHtmlDom_t *dom;
-    listIter *li;
-    listNode *ln;
-    li = listGetIterator(leafHtmlDoms, AL_START_HEAD);
-    printf("\nleafHtmlDoms: ");
-    while(0 != (ln = listNext(li))) {
-        dom = (uiHtmlDom_t*)listNodeValue(ln);
-        printf("%s ", dom->title);
-    }
-    printf("\n");
-    listReleaseIterator(li);
 
-    listRelease(leafHtmlDoms);
+    dom = listNodeValue(listIndex(leafHtmlDoms, 0));
+    REQUIRE(0 == stringcmp("input", dom->title), "err");
+
+    dom = listNodeValue(listIndex(leafHtmlDoms, 1));
+    REQUIRE(0 == stringcmp("shit", dom->title), "err");
+
+    dom = listNodeValue(listIndex(leafHtmlDoms, 2));
+    REQUIRE(0 == stringcmp("img", dom->title), "err");
+
+    dom = listNodeValue(listIndex(leafHtmlDoms, 3));
+    REQUIRE(0 == stringcmp("a", dom->title), "err");
 }
 
 TEST_CASE("fail get dom by css selector test")

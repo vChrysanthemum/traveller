@@ -207,81 +207,6 @@ void UI_FreeHtmlDom(void *_dom) {
     listRelease(dom->children);
 }
 
-static inline void parseHtmlDomStyle(uiHtmlDom_t *dom, char *stylePtr) {
-    enum {EXPECTING_KEY, EXPECTING_VALUE} expectState;
-
-    sds data = sdsMakeRoomFor(sdsempty(), strlen(stylePtr));
-    uiCssDeclaration_t *cssDeclaration;
-    sds cssDeclarationKey = 0;
-    sds cssDeclarationValue = 0;
-
-    expectState = EXPECTING_KEY;
-    int offset;
-    while (1) {
-        if (UI_IsWhiteSpace(*stylePtr)) {
-            stylePtr++;
-        }
-        
-        if ('\'' == *stylePtr || '"' == *stylePtr) {
-            escapeQuoteContent(data, &stylePtr);
-
-        } else {
-            offset = -1;
-            stylePtr--;
-            while(1) {
-                stylePtr++;
-                offset++;
-                if ('\0' == *stylePtr) {
-                    break;
-                }
-
-                if (UI_IsWhiteSpace(*stylePtr) ||
-                        ';' == *stylePtr ||
-                        ':' == *stylePtr) {
-                    stylePtr++;
-                    break;
-                } 
-
-                data[offset] = *stylePtr;
-            }
-            data[offset] = '\0';
-        }
-
-
-        switch (expectState) {
-            case EXPECTING_KEY:
-                expectState = EXPECTING_VALUE;
-                cssDeclarationKey = sdsnewlen(data, strlen(data));
-                break;
-
-            case EXPECTING_VALUE:
-                expectState = EXPECTING_KEY;
-                cssDeclarationValue = sdsnewlen(data, strlen(data));
-
-                if (0 == dom->styleCssDeclarations) {
-                    dom->styleCssDeclarations = listCreate();
-                    dom->styleCssDeclarations->free = UI_FreeCssDeclaration;
-                }
-                cssDeclaration = UI_NewCssDeclaration();
-                UI_ParseSdsToCssDeclaration(cssDeclaration, cssDeclarationKey, cssDeclarationValue);
-                dom->styleCssDeclarations = listAddNodeTail(dom->styleCssDeclarations, cssDeclaration);
-
-                cssDeclarationKey = 0;
-                cssDeclarationValue = 0;
-
-                break;
-        }
-
-        if ('\0' == *stylePtr) {
-            break;
-        }
-    }
-
-    if (0 != cssDeclarationKey) sdsfree(cssDeclarationKey);
-    if (0 != cssDeclarationValue) sdsfree(cssDeclarationValue);
-    sdsfree(data);
-}
-
 // 解析单个tag 中的 title和attribute
 static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
     int contentLen = sdslen(token->content);
@@ -428,7 +353,7 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
                     dom->id = sdsnew(attributeValue);
 
                 } else if (0 == stringcmp("style", attributeKey)) {
-                    parseHtmlDomStyle(dom, attributeValue);
+                    UI_CompileCssDeclarations(&dom->styleCssDeclarations, attributeValue);
                 }
 
                 attributeKey = 0;
@@ -487,6 +412,7 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
         // 除了 script 以外的dom内容，均作特殊处理
         uiHtmlDom_t *newdom = UI_NewHtmlDom(dom);
         newdom->content = sdsempty();
+        newdom->info = dictFetchValue(uiHtmlDomInfoDict, "text");
         dom->children = listAddNodeTail(dom->children, newdom);
 
         newdom->content = sdsMakeRoomFor(newdom->content, 
@@ -576,8 +502,8 @@ int UI_ParseHtml(uiDocument_t *document) {
 void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
-    if (UIHTML_DOM_TYPE_TEXT != dom->info->type) {
-        printf("<%s>", dom->title);
+    if (0 == UI_IsHtmlDomNotCareCssDeclaration(dom)) {
+        printf("<%s:%s>", dom->title, dom->info->name);
     }
     if (0 != dom->attributes && listLength(dom->attributes) > 0) {
         listIter *liAttribute;
@@ -591,8 +517,8 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
         listReleaseIterator(liAttribute);
     }
 
-    if (UIHTML_DOM_TYPE_TEXT == dom->info->type) {
-        printf("%s\n", dom->content);
+    if (1 == UI_IsHtmlDomNotCareCssDeclaration(dom)) {
+        printf("(%s) %s\n", dom->info->name, dom->content);
 
     } else {
         printf("\n");

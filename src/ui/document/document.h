@@ -54,7 +54,6 @@ typedef struct uiCssDeclaration_s {
 } uiCssDeclaration_t;
 uiCssDeclaration_t* UI_NewCssDeclaration();
 void UI_FreeCssDeclaration(void *_cssDeclaration);
-void UI_ParseSdsToCssDeclaration(uiCssDeclaration_t *cssDeclaration, sds cssDeclarationKey, sds cssDeclarationValue);
 
 typedef struct uiCssDeclarationList_s {
     int referenceCount;
@@ -102,6 +101,10 @@ uiDocumentScanToken_t* UI_ScanCssToken(uiDocumentScanner_t *scanner);
 void UI_CssStyleSheetMergeRule(uiCssStyleSheet_t *cssStyleSheet, uiCssRule_t *rule);
 const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent);
 void UI_PrintCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet);
+
+void UI_ParseSdsToCssDeclaration(uiCssDeclaration_t *cssDeclaration, sds cssDeclarationKey, sds cssDeclarationValue);
+void UI_CompileCssDeclarations(list **cssDeclarations, char *code);
+void UI_CompileCssSelector(uiCssSelector_t **selector, char *code);
 
 /**
  * html 相关
@@ -196,6 +199,8 @@ typedef struct uiDocumentRenderObject_s {
 } uiDocumentRenderObject_t;
 uiDocumentRenderObject_t *UI_newDocumentRenderObject(uiHtmlDom_t *dom);
 void UI_freeDocumentRenderObject(uiDocumentRenderObject_t *renderObject);
+
+void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document);
 
 /**
  * document 相关

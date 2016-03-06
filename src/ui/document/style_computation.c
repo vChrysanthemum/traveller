@@ -98,10 +98,6 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
             renderObject->height = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
     }
-
-    if (0 != dom->info->computeStyle) {
-        dom->info->computeStyle(document, dom);
-    }
 }
 
 static void ComputeHtmlDomTreeStyleByCssRule(uiDocument_t *document, uiCssRule_t *cssRule) {

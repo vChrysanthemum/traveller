@@ -61,13 +61,15 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
         return 0;
     }
 
+    int result = 0;
+
     switch (selectorSection->type) {
         case UI_SELECTOR_SECTION_TYPE_UNKNOWN:
             break;
 
         case UI_SELECTOR_SECTION_TYPE_TAG:
             if (0 == stringcmp(dom->title, selectorSection->value)) {
-                return true;
+                result = 1;
             }
             break;
 
@@ -81,7 +83,8 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
             liClass = listGetIterator(dom->classes, AL_START_HEAD);
             while (0 != (lnClass = listNext(liClass))) {
                 if (0 == stringcmp((char*)listNodeValue(lnClass), selectorSection->value)) {
-                    return true;
+                    result = 1;
+                    break;
                 }
             }
             listReleaseIterator(liClass);
@@ -93,12 +96,41 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
             }
 
             if (0 == stringcmp(dom->id, selectorSection->value)) {
-                return true;
+                result = 1;
             }
             break;
     }
 
-    return false;
+    if (0 == result) {
+        return 0;
+    }
+
+    result = 0;
+
+    switch (selectorSection->attributeType) {
+        case  UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE:
+            result = 1;
+            break;
+
+        case  UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS:
+            if (0 == dom->classes) {
+                break;
+            }
+
+            listIter *liClass;
+            listNode *lnClass;
+            liClass = listGetIterator(dom->classes, AL_START_HEAD);
+            while (0 != (lnClass = listNext(liClass))) {
+                if (0 == stringcmp((char*)listNodeValue(lnClass), selectorSection->attribute)) {
+                    result = 1;
+                    break;
+                }
+            }
+            listReleaseIterator(liClass);
+            break;
+    }
+
+    return result;
 }
 
 /*
