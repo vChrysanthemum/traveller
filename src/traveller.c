@@ -63,16 +63,13 @@ int main(int argc, char *argv[]) {
 
     g_conf = InitIni();
 
-    snprintf(tmpstr, ALLOW_PATH_SIZE, "%s/../conf/default.conf", g_basedir);
-    IniRead(g_conf, tmpstr);
-
     if (argc > 1) IniRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
     if (0 == g_conf->contents) {
         C_UtilExit(0, "请选择配置文件");
     }
 
-    value = IniGet(g_conf, "traveller", "log_dir");
+    value = IniGet(g_conf, "traveller", "log_path");
     if (0 != value) {
         c_log.dir = stringnewlen(value, sdslen(value));
         c_log.f = fopen(c_log.dir, "a+");

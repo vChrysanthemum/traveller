@@ -133,8 +133,7 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
     return result;
 }
 
-/*
-static int IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHtmlDom_t *dom) {
+int UI_IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHtmlDom_t *dom) {
     listNode *lnSelectorSection = listNext(liSelectorSection);
     if (0 == lnSelectorSection) {
         return 1;
@@ -156,9 +155,8 @@ static int IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHt
         }
     }
 
-    return IsSelectorSectionsLeftMatchHtmlDoms(liSelectorSection, dom);
+    return UI_IsSelectorSectionsLeftMatchHtmlDoms(liSelectorSection, dom);
 }
-*/
 
 // 根据一个 SelectorSection 选择多个 uiHtmlDom_t
 // return doms

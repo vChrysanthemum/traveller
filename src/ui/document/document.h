@@ -44,6 +44,7 @@ typedef struct uiCssDeclarationInfo_s {
         UI_CSS_DECLARATION_TYPE_TEXT_ALIGN,
         UI_CSS_DECLARATION_TYPE_WIDTH,
         UI_CSS_DECLARATION_TYPE_HEIGHT,
+        UI_CSS_DECLARATION_TYPE_POSITION,
     } type;
 } uiCssDeclarationInfo_t;
 
@@ -59,6 +60,8 @@ typedef struct uiCssDeclarationList_s {
     int referenceCount;
     list *data;
 } uiCssDeclarationList_t;
+void UI_UpdateCssDeclaration(uiCssDeclaration_t *src, uiCssDeclaration_t *dst);
+uiCssDeclaration_t* UI_DuplicateCssDeclaration(uiCssDeclaration_t *dst);
 uiCssDeclarationList_t* UI_DuplicateCssDeclarationList(uiCssDeclarationList_t* cssDeclarationList);
 uiCssDeclarationList_t* UI_NewCssDeclarationList();
 void UI_FreeCssDeclarationList(uiCssDeclarationList_t *cssDeclarationList);
@@ -156,6 +159,7 @@ typedef struct uiHtmlDom_s {
     sds                       id;
     list                      *classes;  // list sds
     list                      *styleCssDeclarations;
+    list                      *cssDeclarations;
     sds                       content;
     int                       contentUtf8Width;
     list                      *children;
@@ -172,6 +176,7 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent);
 /**
  * css选择器
  */
+int UI_IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHtmlDom_t *dom);
 list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom);
 list* UI_GetHtmlDomsByCssSelector(uiDocument_t* document, uiCssSelector_t *selector);
 

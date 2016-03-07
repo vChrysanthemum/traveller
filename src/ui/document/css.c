@@ -30,6 +30,7 @@ static uiCssDeclarationInfo_t uiCssDeclarationInfoTable[] = {
     {"text-align",       UI_CSS_DECLARATION_TYPE_TEXT_ALIGN},
     {"width",            UI_CSS_DECLARATION_TYPE_WIDTH},
     {"height",           UI_CSS_DECLARATION_TYPE_HEIGHT},
+    {"position",         UI_CSS_DECLARATION_TYPE_POSITION},
     {0},
 };
 
@@ -225,6 +226,18 @@ void UI_CompileCssSelector(uiCssSelector_t **selector, char *code) {
 
         (*selector)->sections = listAddNodeTail((*selector)->sections, section);
     }
+}
+
+void UI_UpdateCssDeclaration(uiCssDeclaration_t *src, uiCssDeclaration_t *dst) {
+    src->type = dst->type;
+    src->key = sdsupdate(src->key, dst->key);
+    src->value = sdsupdate(src->value, dst->value);
+}
+
+uiCssDeclaration_t* UI_DuplicateCssDeclaration(uiCssDeclaration_t *dst) {
+    uiCssDeclaration_t *result = UI_NewCssDeclaration();
+    UI_UpdateCssDeclaration(result, dst);
+    return result;
 }
 
 uiCssDeclarationList_t* UI_DuplicateCssDeclarationList(uiCssDeclarationList_t* cssDeclarationList) {

@@ -194,6 +194,8 @@ uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {
     dom->children->free = UI_FreeHtmlDom;
     dom->renderObject = UI_newDocumentRenderObject(dom);
     dom->info = ui_htmlDomInfoUndefined;
+    dom->cssDeclarations = listCreate();
+    dom->cssDeclarations->free = UI_FreeCssDeclaration;
     return dom;
 }
 

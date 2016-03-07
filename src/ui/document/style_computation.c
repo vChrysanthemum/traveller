@@ -15,6 +15,25 @@ static inline unsigned int ConvertCssDeclarationValueToUnsignedInt(sds value) {
 }
 
 static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, uiHtmlDom_t *dom, uiCssDeclaration_t *cssDeclaration) {
+    listIter *liCssDeclaration;
+    listNode *lnCssDeclaration;
+    uiCssDeclaration_t *fuckkkk;
+    int isMatchFound = 0;
+    liCssDeclaration = listGetIterator(dom->cssDeclarations, AL_START_HEAD);
+    while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
+        fuckkkk = (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration);
+        if (cssDeclaration->type == fuckkkk->type) {
+            UI_UpdateCssDeclaration(fuckkkk, cssDeclaration);
+            isMatchFound = 1;
+            break;
+        }
+    }
+    listReleaseIterator(liCssDeclaration);
+    if (0 == isMatchFound) {
+        fuckkkk = UI_DuplicateCssDeclaration(cssDeclaration);
+        dom->cssDeclarations = listAddNodeTail(dom->cssDeclarations, fuckkkk);
+    }
+
     uiDocumentRenderObject_t *renderObject = dom->renderObject;
 
     switch (cssDeclaration->type) {
@@ -82,12 +101,7 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
             break;
 
         case UI_CSS_DECLARATION_TYPE_TEXT_ALIGN:
-            if (0 == renderObject->textAlign) {
-                renderObject->textAlign = sdsnewlen(cssDeclaration->value, sdslen(cssDeclaration->value));
-            } else {
-                sdsclear(renderObject->textAlign);
-                renderObject->textAlign = sdscatsds(renderObject->textAlign, cssDeclaration->value);
-            }
+            renderObject->textAlign = sdsupdate(renderObject->textAlign, cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_WIDTH:
@@ -96,6 +110,10 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
 
         case UI_CSS_DECLARATION_TYPE_HEIGHT:
             renderObject->height = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_POSITION:
+            renderObject->textAlign = sdsupdate(renderObject->textAlign, cssDeclaration->value);
             break;
     }
 }

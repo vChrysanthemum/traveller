@@ -103,6 +103,17 @@ char* stringnew(const char *init) {
     return stringnewlen(init, strlen(init));
 }
 
+sds sdsupdate(sds data, sds init) {
+    if (0 == data) {
+        data = sdsnewlen(init, sdslen(init));
+    } else {
+        sdsclear(data);
+        data = sdscatsds(data, init);
+    }
+
+    return data;
+}
+
 /* Create a new sds string starting from a null termined C string. */
 sds sdsnew(const char *init) {
     size_t initlen = (init == NULL) ? 0 : strlen(init);

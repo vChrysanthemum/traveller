@@ -60,6 +60,7 @@ char* stringnewlen(const char *init, size_t initlen);
 char* stringnew(const char *init);
 int sdscmpstr(const sds s1, const char *s2);
 
+sds sdsupdate(sds data, sds init);
 sds sdsnewlen(const void *init, size_t initlen);
 sds sdsnew(const char *init);
 sds sdsempty(void);
