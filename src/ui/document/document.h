@@ -120,17 +120,17 @@ void UI_CompileCssSelector(uiCssSelector_t **selector, char *code);
 void UI_PrepareHtml();
 
 typedef struct uiHtmlDom_s uiHtmlDom_t;
-typedef void (*UI_ComputeHtmlDomStyle)(uiDocument_t*, uiHtmlDom_t*);
-void UI_ComputeHtmlDomStyle_Text      (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Html      (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Head      (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Title     (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Body      (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Div       (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Table     (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Tr        (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Td        (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_ComputeHtmlDomStyle_Input     (uiDocument_t *document, uiHtmlDom_t *dom);
+typedef void (*UI_RenderHtmlDom)(uiDocument_t*, uiHtmlDom_t*);
+void UI_RenderHtmlDomText      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomHtml      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomHead      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomTitle     (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomBody      (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomDiv       (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomTable     (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomTr        (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomTd        (uiDocument_t *document, uiHtmlDom_t *dom);
+void UI_RenderHtmlDomInput     (uiDocument_t *document, uiHtmlDom_t *dom);
 
 typedef struct uiHtmlDomInfo_s {
     char *name;
@@ -149,8 +149,27 @@ typedef struct uiHtmlDomInfo_s {
         UIHTML_DOM_TYPE_STYLE,
         UIHTML_DOM_TYPE_INPUT,
     } type;
-    UI_ComputeHtmlDomStyle computeStyle;
+    UI_RenderHtmlDom render;
 } uiHtmlDomInfo_t;
+
+typedef struct uiHtmlDomStyle_s {
+    unsigned int paddingTop;
+    unsigned int paddingBottom;
+    unsigned int paddingLeft;
+    unsigned int paddingRight;
+    unsigned int marginTop;
+    unsigned int marginBottom;
+    unsigned int marginLeft;
+    unsigned int marginRight;
+    unsigned int backgroundColor;
+    unsigned int color;
+    int          width;
+    int          height;
+    int          positionStartX;
+    int          positionStartY;
+    unsigned int isHide;
+    sds          textAlign;
+} uiHtmlDomStyle_t;
 
 typedef struct uiHtmlDom_s {
     uiHtmlDom_t               *parent;
@@ -163,6 +182,7 @@ typedef struct uiHtmlDom_s {
     sds                       content;
     int                       contentUtf8Width;
     list                      *children;
+    uiHtmlDomStyle_t          style;
     uiDocumentRenderObject_t  *renderObject;
     uiHtmlDomInfo_t           *info;
 } uiHtmlDom_t;
@@ -183,29 +203,18 @@ list* UI_GetHtmlDomsByCssSelector(uiDocument_t* document, uiCssSelector_t *selec
 /**
  * render 相关
  */
+void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document);
+
 typedef struct uiDocumentRenderObject_s {
-    unsigned int paddingTop;
-    unsigned int paddingBottom;
-    unsigned int paddingLeft;
-    unsigned int paddingRight;
-    unsigned int marginTop;
-    unsigned int marginBottom;
-    unsigned int marginLeft;
-    unsigned int marginRight;
-    unsigned int backgroundColor;
-    unsigned int color;
-    int          width;
-    int          height;
-    int          positionStartX;
-    int          positionStartY;
-    unsigned int isHide;
-    sds          textAlign;
     uiHtmlDom_t  *dom;
 } uiDocumentRenderObject_t;
 uiDocumentRenderObject_t *UI_newDocumentRenderObject(uiHtmlDom_t *dom);
 void UI_freeDocumentRenderObject(uiDocumentRenderObject_t *renderObject);
 
-void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document);
+typedef struct uiDocumentRenderEnvironment_s {
+} uiDocumentRenderEnvironment_t;
+
+void UI_RenderDocument(uiDocument_t *document);
 
 /**
  * document 相关

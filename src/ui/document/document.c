@@ -44,5 +44,6 @@ uiDocument_t* UI_ParseDocument(char *documentContent) {
     UI_ParseHtml(document);
     UI_ParseCssStyleSheet(document, document->style);
     UI_ComputeHtmlDomTreeStyle(document);
+    UI_RenderDocument(document);
     return document;
 }

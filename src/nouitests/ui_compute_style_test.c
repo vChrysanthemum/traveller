@@ -63,8 +63,8 @@ TEST_CASE("fail compute style test")
     liDom = listGetIterator(doms, AL_START_HEAD);
     while (0 != (lnDom = listNext(liDom))) {
         dom = (uiHtmlDom_t*)listNodeValue(lnDom);
-        REQUIRE(10 == dom->renderObject->paddingTop, "err");
-        REQUIRE(10 == dom->renderObject->paddingLeft, "err");
+        REQUIRE(10 == dom->style.paddingTop, "err");
+        REQUIRE(10 == dom->style.paddingLeft, "err");
     }
     listReleaseIterator(liDom);
 

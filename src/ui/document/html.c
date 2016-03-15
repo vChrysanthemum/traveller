@@ -22,18 +22,18 @@ static dict *UIHtmlSpecialStringTable;
 static dict *uiHtmlDomInfoDict;
 static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
     {"undefined", UIHTML_DOM_TYPE_UNDEFINED, 0},
-    {"text",      UIHTML_DOM_TYPE_TEXT,      UI_ComputeHtmlDomStyle_Text},
-    {"html",      UIHTML_DOM_TYPE_HTML,      UI_ComputeHtmlDomStyle_Html},
-    {"head",      UIHTML_DOM_TYPE_HEAD,      UI_ComputeHtmlDomStyle_Head},
-    {"title",     UIHTML_DOM_TYPE_TITLE,     UI_ComputeHtmlDomStyle_Title},
-    {"body",      UIHTML_DOM_TYPE_BODY,      UI_ComputeHtmlDomStyle_Body},
+    {"text",      UIHTML_DOM_TYPE_TEXT,      UI_RenderHtmlDomText},
+    {"html",      UIHTML_DOM_TYPE_HTML,      UI_RenderHtmlDomHtml},
+    {"head",      UIHTML_DOM_TYPE_HEAD,      UI_RenderHtmlDomHead},
+    {"title",     UIHTML_DOM_TYPE_TITLE,     UI_RenderHtmlDomTitle},
+    {"body",      UIHTML_DOM_TYPE_BODY,      UI_RenderHtmlDomBody},
     {"script",    UIHTML_DOM_TYPE_SCRIPT,    0},
-    {"div",       UIHTML_DOM_TYPE_DIV,       UI_ComputeHtmlDomStyle_Div},
-    {"table",     UIHTML_DOM_TYPE_TABLE,     UI_ComputeHtmlDomStyle_Table},
-    {"tr",        UIHTML_DOM_TYPE_TR,        UI_ComputeHtmlDomStyle_Tr},
-    {"td",        UIHTML_DOM_TYPE_TD,        UI_ComputeHtmlDomStyle_Td},
+    {"div",       UIHTML_DOM_TYPE_DIV,       UI_RenderHtmlDomDiv},
+    {"table",     UIHTML_DOM_TYPE_TABLE,     UI_RenderHtmlDomTable},
+    {"tr",        UIHTML_DOM_TYPE_TR,        UI_RenderHtmlDomTr},
+    {"td",        UIHTML_DOM_TYPE_TD,        UI_RenderHtmlDomTd},
     {"style",     UIHTML_DOM_TYPE_STYLE,     0},
-    {"input",     UIHTML_DOM_TYPE_INPUT,     UI_ComputeHtmlDomStyle_Input},
+    {"input",     UIHTML_DOM_TYPE_INPUT,     UI_RenderHtmlDomInput},
     {0, 0, 0},
 };
 
@@ -196,6 +196,8 @@ uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {
     dom->info = ui_htmlDomInfoUndefined;
     dom->cssDeclarations = listCreate();
     dom->cssDeclarations->free = UI_FreeCssDeclaration;
+
+    memset(&(dom->style), 0, sizeof(uiHtmlDomStyle_t));
     return dom;
 }
 
@@ -206,6 +208,8 @@ void UI_FreeHtmlDom(void *_dom) {
     if (0 != dom->id) sdsfree(dom->id);
     if (0 != dom->classes) listRelease(dom->classes);
     if (0 != dom->content) sdsfree(dom->content);
+
+    if (0 != dom->style.textAlign) zfree(dom->style.textAlign);
     listRelease(dom->children);
 }
 

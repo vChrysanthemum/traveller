@@ -17,103 +17,101 @@ static inline unsigned int ConvertCssDeclarationValueToUnsignedInt(sds value) {
 static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, uiHtmlDom_t *dom, uiCssDeclaration_t *cssDeclaration) {
     listIter *liCssDeclaration;
     listNode *lnCssDeclaration;
-    uiCssDeclaration_t *fuckkkk;
+    uiCssDeclaration_t *_cssDeclaration;
     int isMatchFound = 0;
     liCssDeclaration = listGetIterator(dom->cssDeclarations, AL_START_HEAD);
     while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
-        fuckkkk = (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration);
-        if (cssDeclaration->type == fuckkkk->type) {
-            UI_UpdateCssDeclaration(fuckkkk, cssDeclaration);
+        _cssDeclaration = (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration);
+        if (cssDeclaration->type == _cssDeclaration->type) {
+            UI_UpdateCssDeclaration(_cssDeclaration, cssDeclaration);
             isMatchFound = 1;
             break;
         }
     }
     listReleaseIterator(liCssDeclaration);
     if (0 == isMatchFound) {
-        fuckkkk = UI_DuplicateCssDeclaration(cssDeclaration);
-        dom->cssDeclarations = listAddNodeTail(dom->cssDeclarations, fuckkkk);
+        _cssDeclaration = UI_DuplicateCssDeclaration(cssDeclaration);
+        dom->cssDeclarations = listAddNodeTail(dom->cssDeclarations, _cssDeclaration);
     }
-
-    uiDocumentRenderObject_t *renderObject = dom->renderObject;
 
     switch (cssDeclaration->type) {
         case UI_CSS_DECLARATION_TYPE_UNKNOWN:
             break;
 
         case UI_CSS_DECLARATION_TYPE_BACKGROUND_COLOR:
-            renderObject->backgroundColor = UI_GetColorIntByColorString(cssDeclaration->value);
+            dom->style.backgroundColor = UI_GetColorIntByColorString(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_COLOR:
-            renderObject->color = UI_GetColorIntByColorString(cssDeclaration->value);
+            dom->style.color = UI_GetColorIntByColorString(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING:
-            renderObject->paddingTop        =
-                renderObject->paddingBottom =
-                renderObject->paddingLeft   =
-                renderObject->paddingRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.paddingTop        =
+                dom->style.paddingBottom =
+                dom->style.paddingLeft   =
+                dom->style.paddingRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_TOP:
-            renderObject->paddingTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.paddingTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_BOTTOM:
-            renderObject->paddingBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.paddingBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_LEFT:
-            renderObject->paddingLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.paddingLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_RIGHT:
-            renderObject->paddingRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.paddingRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN:
-            renderObject->marginTop        =
-                renderObject->marginBottom =
-                renderObject->marginLeft   =
-                renderObject->marginRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.marginTop        =
+                dom->style.marginBottom =
+                dom->style.marginLeft   =
+                dom->style.marginRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_TOP:
-            renderObject->marginTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.marginTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_BOTTOM:
-            renderObject->marginBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.marginBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_LEFT:
-            renderObject->marginLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.marginLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_RIGHT:
-            renderObject->marginRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.marginRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_DISPLAY:
             if (0 == stringcmp("none", cssDeclaration->value)) {
-                renderObject->isHide = 1;
+                dom->style.isHide = 1;
             }
             break;
 
         case UI_CSS_DECLARATION_TYPE_TEXT_ALIGN:
-            renderObject->textAlign = sdsupdate(renderObject->textAlign, cssDeclaration->value);
+            dom->style.textAlign = sdsupdate(dom->style.textAlign, cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_WIDTH:
-            renderObject->width = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.width = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_HEIGHT:
-            renderObject->height = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->style.height = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_POSITION:
-            renderObject->textAlign = sdsupdate(renderObject->textAlign, cssDeclaration->value);
+            dom->style.textAlign = sdsupdate(dom->style.textAlign, cssDeclaration->value);
             break;
     }
 }
@@ -169,7 +167,7 @@ static void ComputeHtmlDomStyleByDomAttributeStyle(uiDocument_t *document, uiHtm
 
 static void ComputeHtmlDomTreeStyleByDomAttributeStyle(uiDocument_t *document, uiHtmlDom_t *dom) {
     ComputeHtmlDomStyleByDomAttributeStyle(document, dom);
-    
+
     listIter *liDom;
     listNode *lnDom;
     liDom = listGetIterator(dom->children, AL_START_HEAD);

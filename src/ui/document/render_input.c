@@ -1,4 +1,4 @@
-#include <stdlib.h>
+#include <string.h>
 
 #include "core/adlist.h"
 #include "core/dict.h"
@@ -9,5 +9,5 @@
 #include "ui/ui.h"
 #include "ui/document/document.h"
 
-void UI_ComputeHtmlDomStyle_Div(uiDocument_t *document, uiHtmlDom_t *dom) {
+void UI_RenderHtmlDomInput(uiDocument_t *document, uiHtmlDom_t *dom) {
 }
