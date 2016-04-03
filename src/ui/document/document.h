@@ -168,7 +168,17 @@ typedef struct uiHtmlDomStyle_s {
     int          positionStartX;
     int          positionStartY;
     unsigned int isHide;
-    sds          textAlign;
+    int          textAlign;
+    enum uiHtmlCssStyleDisplay_e {
+        HTML_CSS_STYLE_DISPLAY_BLOCK,
+        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+    } display;
+    enum uiHtmlCssStylePosition_e {
+        HTML_CSS_STYLE_POSITION_RELATIVE,
+        HTML_CSS_STYLE_POSITION_ABSOLUTE,
+        HTML_CSS_STYLE_POSITION_FIXED,
+        HTML_CSS_STYLE_POSITION_STATIC,
+    } position;
 } uiHtmlDomStyle_t;
 
 typedef struct uiHtmlDom_s {

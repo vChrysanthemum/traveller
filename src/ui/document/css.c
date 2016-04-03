@@ -383,7 +383,7 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
     while (0 != (token = cssScanner.scan(&cssScanner))) {
         switch (token->type) {
             case UI_TOKEN_COMMA:
-                AssertOrReturnError(UI_PARSE_STATE_SELECTOR == cssScanner.state,
+                AssertOrReturnError((UI_PARSE_STATE_SELECTOR == cssScanner.state),
                         UIERROR_CSS_PARSE_STATE_NOT_SELECTOR);
 
                 if (0 != selector) {
@@ -393,14 +393,14 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
                 break;
 
             case UI_TOKEN_COLON:
-                AssertOrReturnError(UI_PARSE_STATE_CSS_DECLARATION_KEY == cssScanner.state,
+                AssertOrReturnError((UI_PARSE_STATE_CSS_DECLARATION_KEY == cssScanner.state),
                         UIERROR_CSS_PARSE_STATE_NOT_CSS_DECLARATION_KEY);
 
                 cssScanner.state = UI_PARSE_STATE_CSS_DECLARATION_VALUE;
                 break;
 
             case UI_TOKEN_SEMICOLON:
-                AssertOrReturnError(UI_PARSE_STATE_CSS_DECLARATION_VALUE == cssScanner.state,
+                AssertOrReturnError((UI_PARSE_STATE_CSS_DECLARATION_VALUE == cssScanner.state),
                         UIERROR_CSS_PARSE_STATE_NOT_CSS_DECLARATION_VALUE);
 
                 if (0 != cssDeclaration) {
@@ -411,7 +411,7 @@ const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent) {
                 break;
 
             case UI_TOKEN_BLOCK_START:
-                AssertOrReturnError(UI_PARSE_STATE_SELECTOR == cssScanner.state,
+                AssertOrReturnError((UI_PARSE_STATE_SELECTOR == cssScanner.state),
                         UIERROR_CSS_PARSE_STATE_NOT_SELECTOR);
 
                 if (0 != selector) {

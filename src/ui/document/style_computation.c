@@ -4,6 +4,7 @@
 #include "core/dict.h"
 #include "core/sds.h"
 #include "core/zmalloc.h"
+#include "core/util.h"
 
 #include "event/event.h"
 #include "ui/ui.h"
@@ -99,7 +100,13 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
             break;
 
         case UI_CSS_DECLARATION_TYPE_TEXT_ALIGN:
-            dom->style.textAlign = sdsupdate(dom->style.textAlign, cssDeclaration->value);
+            if (0 == stringcmp("left", cssDeclaration->value)) {
+                dom->style.textAlign = LEFT;
+            } else if (0 == stringcmp("center", cssDeclaration->value)) {
+                dom->style.textAlign = CENTER;
+            } else if (0 == stringcmp("right", cssDeclaration->value)) {
+                dom->style.textAlign = RIGHT;
+            }
             break;
 
         case UI_CSS_DECLARATION_TYPE_WIDTH:
@@ -111,7 +118,15 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
             break;
 
         case UI_CSS_DECLARATION_TYPE_POSITION:
-            dom->style.textAlign = sdsupdate(dom->style.textAlign, cssDeclaration->value);
+            if (0 == stringcmp("relative", cssDeclaration->value)) {
+                dom->style.textAlign = HTML_CSS_STYLE_POSITION_RELATIVE;
+            } else if (0 == stringcmp("absolute", cssDeclaration->value)) {
+                dom->style.textAlign = HTML_CSS_STYLE_POSITION_ABSOLUTE;
+            } else if (0 == stringcmp("fixed", cssDeclaration->value)) {
+                dom->style.textAlign = HTML_CSS_STYLE_POSITION_FIXED;
+            } else if (0 == stringcmp("static", cssDeclaration->value)) {
+                dom->style.textAlign = HTML_CSS_STYLE_POSITION_STATIC;
+            }
             break;
     }
 }

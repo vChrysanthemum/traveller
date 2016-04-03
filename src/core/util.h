@@ -11,6 +11,10 @@
 
 #include "core/frozen.h"
 
+#define LEFT    0
+#define CENTER  1
+#define RIGHT   2
+
 typedef struct Log {
     char *dir;
     FILE *f;

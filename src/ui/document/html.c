@@ -197,6 +197,9 @@ uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {
     dom->cssDeclarations = listCreate();
     dom->cssDeclarations->free = UI_FreeCssDeclaration;
 
+    dom->style.textAlign = LEFT;
+    dom->style.display = HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK;
+
     memset(&(dom->style), 0, sizeof(uiHtmlDomStyle_t));
     return dom;
 }
@@ -208,8 +211,6 @@ void UI_FreeHtmlDom(void *_dom) {
     if (0 != dom->id) sdsfree(dom->id);
     if (0 != dom->classes) listRelease(dom->classes);
     if (0 != dom->content) sdsfree(dom->content);
-
-    if (0 != dom->style.textAlign) zfree(dom->style.textAlign);
     listRelease(dom->children);
 }
 
