@@ -118,7 +118,7 @@ stScript_t* ST_NewScript(IniSection *iniSection) {
     if (0 == value) {
         C_UtilExit(0, "%s 缺失脚本路径", script->iniSection->key);
     }
-    dir = sdscatprintf(dir, "%s/../galaxies/%s", g_basedir, value);
+    dir = sdscatprintf(dir, "%s/%s", g_scriptBaseDir, value);
     script->basedir = sdsnew(dir);
 
     ST_InitScriptLua(script);

@@ -38,7 +38,8 @@ etDevice_t *g_mainDevice;
 etDevice_t *g_fooDevice;
 etDevice_t *g_netDevice;
 
-char g_basedir[ALLOW_PATH_SIZE] = {""}; /* 绝对路径为 $(traveller)/src */
+char g_basedir[ALLOW_PATH_SIZE] = {""};
+char *g_scriptBaseDir;
 Ini  *g_conf;
 
 list *g_scripts;
@@ -67,6 +68,11 @@ int main(int argc, char *argv[]) {
 
     if (0 == g_conf->contents) {
         C_UtilExit(0, "请选择配置文件");
+    }
+
+    value = IniGet(g_conf, "traveller", "script_basedir");
+    if (0 != value) {
+        g_scriptBaseDir = stringnewlen(value, sdslen(value));
     }
 
     value = IniGet(g_conf, "traveller", "log_path");
