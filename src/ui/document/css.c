@@ -307,6 +307,11 @@ uiCssStyleSheet_t* UI_NewCssStyleSheet() {
     return cssStyleSheet;
 }
 
+void UI_FreeCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet) {
+    listRelease(cssStyleSheet->rules);
+    zfree(cssStyleSheet);
+}
+
 uiDocumentScanToken_t* UI_ScanCssToken(uiDocumentScanner_t *scanner) {
     char *ptr = scanner->current;
     skipStringNotConcern(&ptr);

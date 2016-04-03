@@ -99,6 +99,7 @@ typedef struct uiCssStyleSheet_s {
     list * rules;
 } uiCssStyleSheet_t;
 uiCssStyleSheet_t* UI_NewCssStyleSheet();
+void UI_FreeCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet);
 uiDocumentScanToken_t* UI_ScanCssToken(uiDocumentScanner_t *scanner);
 void UI_CssStyleSheetMergeRule(uiCssStyleSheet_t *cssStyleSheet, uiCssRule_t *rule);
 const char* UI_ParseCssStyleSheet(uiDocument_t *document, char *cssContent);
@@ -238,10 +239,12 @@ typedef struct uiDocument_s {
     char              *content;
     uiHtmlDom_t       *rootDom;
     uiCssStyleSheet_t *cssStyleSheet;
+    sds               title;
     sds               script;
     sds               style;
 } uiDocument_t;
 uiDocument_t* UI_NewDocument();
+void UI_FreeDocument(uiDocument_t* document);
 uiDocument_t* UI_ParseDocument(char *documentContent);
 
 #endif

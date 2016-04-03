@@ -4,6 +4,7 @@
 #include <curses.h>
 #include <panel.h>
 
+#include "ui/document/document.h"
 #include "ui/map.h"
 
 //ColorPair
@@ -45,9 +46,10 @@ uiWindow_t* UI_createWindow(int height, int width, int starty, int startx);
 void UI_FreeWindow(uiWindow_t* win);
 
 typedef struct uiPage_s {
-    sds      title;
-    sds      content;
-    uiWindow_t *uiwin;
+    sds          title;
+    sds          content;
+    uiWindow_t   *uiwin;
+    uiDocument_t *document;
 } uiPage_t;
 uiPage_t *UI_NewPage();
 void UI_FreePage(uiPage_t *page);

@@ -263,6 +263,8 @@ void UI_FreeHtmlDom(void *_dom) {
     if (0 != dom->attributes) listRelease(dom->attributes);
     if (0 != dom->id) sdsfree(dom->id);
     if (0 != dom->classes) listRelease(dom->classes);
+    if (0 != dom->styleCssDeclarations) listRelease(dom->styleCssDeclarations);
+     listRelease(dom->cssDeclarations);
     if (0 != dom->content) sdsfree(dom->content);
     listRelease(dom->children);
 }

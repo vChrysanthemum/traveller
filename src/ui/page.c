@@ -9,7 +9,6 @@
 
 #include "event/event.h"
 #include "ui/ui.h"
-#include "ui/document/document.h"
 
 #include "g_extern.h"
 #include "ui/extern.h"
@@ -39,7 +38,10 @@ void* UI_LoadPageActor(etActor_t *actor, int args, void **argv) {
 
     uiHtmlDom_t *dom = listNodeValue(document->rootDom->children->head);
     C_UtilLogI("%s", dom->title);
+
     page->uiwin = UI_createWindow(20, ui_width, 0, 0);
+    page->document = UI_ParseDocument(page->content);
+
     wprintw(page->uiwin->win, page->content);
     wrefresh(page->uiwin->win);
 

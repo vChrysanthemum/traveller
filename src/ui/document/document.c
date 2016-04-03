@@ -38,6 +38,14 @@ uiDocument_t* UI_NewDocument() {
     return document;
 }
 
+void UI_FreeDocument(uiDocument_t* document) {
+    if (0 != document->rootDom) UI_FreeHtmlDom(document->rootDom);
+    UI_FreeCssStyleSheet(document->cssStyleSheet);
+    if (0 != document->title) sdsfree(document->title);
+    if (0 != document->script) sdsfree(document->script);
+    if (0 != document->style) sdsfree(document->style);
+}
+
 uiDocument_t* UI_ParseDocument(char *documentContent) {
     uiDocument_t *document = UI_NewDocument();
     document->content = documentContent;
