@@ -4,7 +4,6 @@
 typedef struct uiDocumentScanToken_s uiDocumentScanToken_t;
 typedef struct uiDocumentScanner_s uiDocumentScanner_t;
 typedef struct uiDocument_s uiDocument_t;
-typedef struct uiDocumentRenderObject_s uiDocumentRenderObject_t;
 
 uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner);
 
@@ -122,8 +121,6 @@ void UI_PrepareHtml();
 typedef struct uiHtmlDom_s uiHtmlDom_t;
 typedef void (*UI_RenderHtmlDom)(uiDocument_t*, uiHtmlDom_t*);
 void UI_RenderHtmlDomText      (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_RenderHtmlDomHtml      (uiDocument_t *document, uiHtmlDom_t *dom);
-void UI_RenderHtmlDomHead      (uiDocument_t *document, uiHtmlDom_t *dom);
 void UI_RenderHtmlDomTitle     (uiDocument_t *document, uiHtmlDom_t *dom);
 void UI_RenderHtmlDomBody      (uiDocument_t *document, uiHtmlDom_t *dom);
 void UI_RenderHtmlDomDiv       (uiDocument_t *document, uiHtmlDom_t *dom);
@@ -131,26 +128,6 @@ void UI_RenderHtmlDomTable     (uiDocument_t *document, uiHtmlDom_t *dom);
 void UI_RenderHtmlDomTr        (uiDocument_t *document, uiHtmlDom_t *dom);
 void UI_RenderHtmlDomTd        (uiDocument_t *document, uiHtmlDom_t *dom);
 void UI_RenderHtmlDomInput     (uiDocument_t *document, uiHtmlDom_t *dom);
-
-typedef struct uiHtmlDomInfo_s {
-    char *name;
-    enum uiHtmlDomType_e {
-        UIHTML_DOM_TYPE_UNDEFINED,
-        UIHTML_DOM_TYPE_TEXT,
-        UIHTML_DOM_TYPE_HTML,
-        UIHTML_DOM_TYPE_HEAD,
-        UIHTML_DOM_TYPE_TITLE,
-        UIHTML_DOM_TYPE_BODY,
-        UIHTML_DOM_TYPE_SCRIPT,
-        UIHTML_DOM_TYPE_DIV,
-        UIHTML_DOM_TYPE_TABLE,
-        UIHTML_DOM_TYPE_TR,
-        UIHTML_DOM_TYPE_TD,
-        UIHTML_DOM_TYPE_STYLE,
-        UIHTML_DOM_TYPE_INPUT,
-    } type;
-    UI_RenderHtmlDom render;
-} uiHtmlDomInfo_t;
 
 typedef struct uiHtmlDomStyle_s {
     unsigned int paddingTop;
@@ -170,6 +147,7 @@ typedef struct uiHtmlDomStyle_s {
     unsigned int isHide;
     int          textAlign;
     enum uiHtmlCssStyleDisplay_e {
+        HTML_CSS_STYLE_DISPLAY_NONE,
         HTML_CSS_STYLE_DISPLAY_BLOCK,
         HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
     } display;
@@ -180,6 +158,28 @@ typedef struct uiHtmlDomStyle_s {
         HTML_CSS_STYLE_POSITION_STATIC,
     } position;
 } uiHtmlDomStyle_t;
+
+typedef struct uiHtmlDomInfo_s {
+    char *name;
+    enum uiHtmlDomType_e {
+        UIHTML_DOM_TYPE_UNDEFINED,
+        UIHTML_DOM_TYPE_TEXT,
+        UIHTML_DOM_TYPE_HTML,
+        UIHTML_DOM_TYPE_HEAD,
+        UIHTML_DOM_TYPE_TITLE,
+        UIHTML_DOM_TYPE_BODY,
+        UIHTML_DOM_TYPE_SCRIPT,
+        UIHTML_DOM_TYPE_DIV,
+        UIHTML_DOM_TYPE_TABLE,
+        UIHTML_DOM_TYPE_TR,
+        UIHTML_DOM_TYPE_TD,
+        UIHTML_DOM_TYPE_STYLE,
+        UIHTML_DOM_TYPE_INPUT,
+    } type;
+    enum uiHtmlCssStyleDisplay_e InitialStyleDisplay;
+    enum uiHtmlCssStylePosition_e InitialStylePosition;
+    UI_RenderHtmlDom render;
+} uiHtmlDomInfo_t;
 
 typedef struct uiHtmlDom_s {
     uiHtmlDom_t               *parent;
@@ -193,7 +193,6 @@ typedef struct uiHtmlDom_s {
     int                       contentUtf8Width;
     list                      *children;
     uiHtmlDomStyle_t          style;
-    uiDocumentRenderObject_t  *renderObject;
     uiHtmlDomInfo_t           *info;
 } uiHtmlDom_t;
 int UI_IsHtmlDomNotCareCssDeclaration(uiHtmlDom_t *dom);
@@ -214,16 +213,6 @@ list* UI_GetHtmlDomsByCssSelector(uiDocument_t* document, uiCssSelector_t *selec
  * render 相关
  */
 void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document);
-
-typedef struct uiDocumentRenderObject_s {
-    uiHtmlDom_t  *dom;
-} uiDocumentRenderObject_t;
-uiDocumentRenderObject_t *UI_newDocumentRenderObject(uiHtmlDom_t *dom);
-void UI_freeDocumentRenderObject(uiDocumentRenderObject_t *renderObject);
-
-typedef struct uiDocumentRenderEnvironment_s {
-} uiDocumentRenderEnvironment_t;
-
 void UI_RenderDocument(uiDocument_t *document);
 
 /**

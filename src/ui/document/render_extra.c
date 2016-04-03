@@ -9,12 +9,6 @@
 #include "ui/ui.h"
 #include "ui/document/document.h"
 
-void UI_RenderHtmlDomHtml(uiDocument_t *document, uiHtmlDom_t *dom) {
-}
-
-void UI_RenderHtmlDomHead(uiDocument_t *document, uiHtmlDom_t *dom) {
-}
-
 void UI_RenderHtmlDomBody(uiDocument_t *document, uiHtmlDom_t *dom) {
 }
 

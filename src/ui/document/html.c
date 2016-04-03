@@ -21,20 +21,69 @@ static dict *UIHtmlSpecialStringTable;
 
 static dict *uiHtmlDomInfoDict;
 static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
-    {"undefined", UIHTML_DOM_TYPE_UNDEFINED, 0},
-    {"text",      UIHTML_DOM_TYPE_TEXT,      UI_RenderHtmlDomText},
-    {"html",      UIHTML_DOM_TYPE_HTML,      UI_RenderHtmlDomHtml},
-    {"head",      UIHTML_DOM_TYPE_HEAD,      UI_RenderHtmlDomHead},
-    {"title",     UIHTML_DOM_TYPE_TITLE,     UI_RenderHtmlDomTitle},
-    {"body",      UIHTML_DOM_TYPE_BODY,      UI_RenderHtmlDomBody},
-    {"script",    UIHTML_DOM_TYPE_SCRIPT,    0},
-    {"div",       UIHTML_DOM_TYPE_DIV,       UI_RenderHtmlDomDiv},
-    {"table",     UIHTML_DOM_TYPE_TABLE,     UI_RenderHtmlDomTable},
-    {"tr",        UIHTML_DOM_TYPE_TR,        UI_RenderHtmlDomTr},
-    {"td",        UIHTML_DOM_TYPE_TD,        UI_RenderHtmlDomTd},
-    {"style",     UIHTML_DOM_TYPE_STYLE,     0},
-    {"input",     UIHTML_DOM_TYPE_INPUT,     UI_RenderHtmlDomInput},
-    {0, 0, 0},
+    {"undefined",UIHTML_DOM_TYPE_UNDEFINED,0,0,0},
+    {"html",UIHTML_DOM_TYPE_HTML,0,0,0},
+    {"head",UIHTML_DOM_TYPE_HEAD,0,0,0},
+    {"title",UIHTML_DOM_TYPE_TITLE,0,0,UI_RenderHtmlDomTitle},
+    {"script",UIHTML_DOM_TYPE_SCRIPT,0,0,0},
+    {"style",UIHTML_DOM_TYPE_STYLE,0,0,0},
+
+    {
+        "text",
+        UIHTML_DOM_TYPE_TEXT,
+        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_POSITION_STATIC,
+        UI_RenderHtmlDomText
+    },
+
+    {
+        "body",
+        UIHTML_DOM_TYPE_BODY,
+        HTML_CSS_STYLE_DISPLAY_NONE,
+        HTML_CSS_STYLE_POSITION_STATIC,
+        UI_RenderHtmlDomBody
+    },
+
+    {
+        "div",
+        UIHTML_DOM_TYPE_DIV,
+        HTML_CSS_STYLE_DISPLAY_BLOCK,
+        HTML_CSS_STYLE_POSITION_RELATIVE,
+        UI_RenderHtmlDomDiv
+    },
+
+    {
+        "table",
+        UIHTML_DOM_TYPE_TABLE,
+        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_POSITION_RELATIVE,
+        UI_RenderHtmlDomTable
+    },
+
+    {
+        "tr",
+        UIHTML_DOM_TYPE_TR,
+        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_POSITION_STATIC,
+        UI_RenderHtmlDomTr
+    },
+
+    {
+        "td",
+        UIHTML_DOM_TYPE_TD,
+        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_POSITION_STATIC,
+        UI_RenderHtmlDomTd
+    },
+
+    {
+        "input",
+        UIHTML_DOM_TYPE_INPUT,
+        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_POSITION_RELATIVE,
+        UI_RenderHtmlDomInput
+    },
+    {0,0,0,0,0},
 };
 
 static inline void skipStringNotConcern(char **ptr)  {
@@ -82,7 +131,7 @@ uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
 
     char *s = *ptr;
     int len;
-    
+
     uiDocumentScanToken_t *token = UI_NewDocumentScanToken();
     token->type = UIHTML_TOKEN_TEXT;
 
@@ -130,7 +179,7 @@ uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
                 }
         }
 
-        if (3 == tokenStackLen && 
+        if (3 == tokenStackLen &&
                 '<' == tokenStack[0]  &&   // <
                 UIHTML_TOKEN_TEXT == tokenStack[1] &&   // tag
                 '>' == tokenStack[2]) {    // >
@@ -153,7 +202,7 @@ uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
                 goto GET_TOKEN_SUCCESS;
             }
 
-        } else if (2 == tokenStackLen && 
+        } else if (2 == tokenStackLen &&
                 UIHTML_TOKEN_TEXT == tokenStack[0] &&    // text
                 '<' == tokenStack[1]) {     // <
             token->type = UIHTML_TOKEN_TEXT;
@@ -185,6 +234,11 @@ GET_TOKEN_SUCCESS:
     return token;
 }
 
+static void InitialHtmlDomStyleByHtmlDomInfo(uiHtmlDom_t *dom) {
+    dom->style.display = dom->info->InitialStyleDisplay;
+    dom->style.position = dom->info->InitialStylePosition;
+}
+
 uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {
     uiHtmlDom_t *dom = (uiHtmlDom_t*)zmalloc(sizeof(uiHtmlDom_t));
     memset(dom, 0, sizeof(uiHtmlDom_t));
@@ -192,7 +246,6 @@ uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {
     dom->title = sdsempty();
     dom->children = listCreate();
     dom->children->free = UI_FreeHtmlDom;
-    dom->renderObject = UI_newDocumentRenderObject(dom);
     dom->info = ui_htmlDomInfoUndefined;
     dom->cssDeclarations = listCreate();
     dom->cssDeclarations->free = UI_FreeCssDeclaration;
@@ -234,6 +287,7 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
     htmlDomInfo = dictFetchValue(uiHtmlDomInfoDict, dom->title);
     if (0 != htmlDomInfo) {
         dom->info = htmlDomInfo;
+        InitialHtmlDomStyleByHtmlDomInfo(dom);
     }
 
     contentOffset = contentEndOffset + 1;
@@ -420,9 +474,10 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
         uiHtmlDom_t *newdom = UI_NewHtmlDom(dom);
         newdom->content = sdsempty();
         newdom->info = dictFetchValue(uiHtmlDomInfoDict, "text");
+        InitialHtmlDomStyleByHtmlDomInfo(newdom);
         dom->children = listAddNodeTail(dom->children, newdom);
 
-        newdom->content = sdsMakeRoomFor(newdom->content, 
+        newdom->content = sdsMakeRoomFor(newdom->content,
                 sdslen(newdom->content)+sdslen(token->content));
 
         int domPoi = sdslen(newdom->content);

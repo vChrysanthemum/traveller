@@ -9,17 +9,6 @@
 #include "ui/ui.h"
 #include "ui/document/document.h"
 
-uiDocumentRenderObject_t *UI_newDocumentRenderObject(uiHtmlDom_t *dom) {
-    uiDocumentRenderObject_t *renderObject = (uiDocumentRenderObject_t*)zmalloc(sizeof(uiDocumentRenderObject_t));
-    memset(renderObject, 0, sizeof(uiDocumentRenderObject_t));
-    renderObject->dom = dom;
-    return renderObject;
-}
-
-void UI_freeDocumentRenderObject(uiDocumentRenderObject_t *renderObject) {
-    zfree(renderObject);
-}
-
 static void RenderHtmlDom(uiDocument_t *document, uiHtmlDom_t *dom) {
     if (0 != dom->info->render) {
         dom->info->render(document, dom);
