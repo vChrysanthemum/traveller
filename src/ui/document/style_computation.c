@@ -5,6 +5,7 @@
 #include "core/sds.h"
 #include "core/zmalloc.h"
 #include "core/util.h"
+#include "core/extern.h"
 
 #include "event/event.h"
 #include "ui/ui.h"
@@ -20,10 +21,10 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
     listNode *lnCssDeclaration;
     uiCssDeclaration_t *_cssDeclaration;
     int isMatchFound = 0;
-    liCssDeclaration = listGetIterator(dom->cssDeclarations, AL_START_HEAD);
+    liCssDeclaration = listGetIterator(dom->CssDeclarations, AL_START_HEAD);
     while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
         _cssDeclaration = (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration);
-        if (cssDeclaration->type == _cssDeclaration->type) {
+        if (cssDeclaration->Type == _cssDeclaration->Type) {
             UI_UpdateCssDeclaration(_cssDeclaration, cssDeclaration);
             isMatchFound = 1;
             break;
@@ -32,113 +33,129 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
     listReleaseIterator(liCssDeclaration);
     if (0 == isMatchFound) {
         _cssDeclaration = UI_DuplicateCssDeclaration(cssDeclaration);
-        dom->cssDeclarations = listAddNodeTail(dom->cssDeclarations, _cssDeclaration);
+        dom->CssDeclarations = listAddNodeTail(dom->CssDeclarations, _cssDeclaration);
     }
 
-    switch (cssDeclaration->type) {
+    switch (cssDeclaration->Type) {
         case UI_CSS_DECLARATION_TYPE_UNKNOWN:
             break;
 
         case UI_CSS_DECLARATION_TYPE_BACKGROUND_COLOR:
-            dom->style.backgroundColor = UI_GetColorIntByColorString(cssDeclaration->value);
+            dom->Style.BackgroundColor = UI_GetColorIntByColorString(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_COLOR:
-            dom->style.color = UI_GetColorIntByColorString(cssDeclaration->value);
+            dom->Style.Color = UI_GetColorIntByColorString(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING:
-            dom->style.paddingTop        =
-                dom->style.paddingBottom =
-                dom->style.paddingLeft   =
-                dom->style.paddingRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.PaddingTop        =
+                dom->Style.PaddingBottom =
+                dom->Style.PaddingLeft   =
+                dom->Style.PaddingRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_TOP:
-            dom->style.paddingTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.PaddingTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_BOTTOM:
-            dom->style.paddingBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.PaddingBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_LEFT:
-            dom->style.paddingLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.PaddingLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_PADDING_RIGHT:
-            dom->style.paddingRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.PaddingRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN:
-            dom->style.marginTop        =
-                dom->style.marginBottom =
-                dom->style.marginLeft   =
-                dom->style.marginRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.MarginTop        =
+                dom->Style.MarginBottom =
+                dom->Style.MarginLeft   =
+                dom->Style.MarginRight  = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_TOP:
-            dom->style.marginTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.MarginTop = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_BOTTOM:
-            dom->style.marginBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.MarginBottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_LEFT:
-            dom->style.marginLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.MarginLeft = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_MARGIN_RIGHT:
-            dom->style.marginRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.MarginRight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_DISPLAY:
-            if (0 == stringcmp("none", cssDeclaration->value)) {
-                dom->style.isHide = 1;
+            if (0 == stringcmp("none", cssDeclaration->Value)) {
+                dom->Style.IsHide = 1;
             }
             break;
 
         case UI_CSS_DECLARATION_TYPE_TEXT_ALIGN:
-            if (0 == stringcmp("left", cssDeclaration->value)) {
-                dom->style.textAlign = LEFT;
-            } else if (0 == stringcmp("center", cssDeclaration->value)) {
-                dom->style.textAlign = CENTER;
-            } else if (0 == stringcmp("right", cssDeclaration->value)) {
-                dom->style.textAlign = RIGHT;
+            if (0 == stringcmp("left", cssDeclaration->Value)) {
+                dom->Style.TextAlign = LEFT;
+            } else if (0 == stringcmp("center", cssDeclaration->Value)) {
+                dom->Style.TextAlign = CENTER;
+            } else if (0 == stringcmp("right", cssDeclaration->Value)) {
+                dom->Style.TextAlign = RIGHT;
             }
             break;
 
+        case UI_CSS_DECLARATION_TYPE_MIN_WIDTH:
+            dom->Style.MinWidth = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_MAX_WIDTH:
+            dom->Style.MaxWidth = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            break;
+
         case UI_CSS_DECLARATION_TYPE_WIDTH:
-            dom->style.width = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.Width = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_MIN_HEIGHT:
+            dom->Style.MinHeight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_MAX_HEIGHT:
+            dom->Style.MaxHeight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_HEIGHT:
-            dom->style.height = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->value);
+            dom->Style.Height = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
 
         case UI_CSS_DECLARATION_TYPE_POSITION:
-            if (0 == stringcmp("relative", cssDeclaration->value)) {
-                dom->style.textAlign = HTML_CSS_STYLE_POSITION_RELATIVE;
-            } else if (0 == stringcmp("absolute", cssDeclaration->value)) {
-                dom->style.textAlign = HTML_CSS_STYLE_POSITION_ABSOLUTE;
-            } else if (0 == stringcmp("fixed", cssDeclaration->value)) {
-                dom->style.textAlign = HTML_CSS_STYLE_POSITION_FIXED;
-            } else if (0 == stringcmp("static", cssDeclaration->value)) {
-                dom->style.textAlign = HTML_CSS_STYLE_POSITION_STATIC;
+            if (0 == stringcmp("relative", cssDeclaration->Value)) {
+                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_RELATIVE;
+            } else if (0 == stringcmp("absolute", cssDeclaration->Value)) {
+                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_ABSOLUTE;
+            } else if (0 == stringcmp("fixed", cssDeclaration->Value)) {
+                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_FIXED;
+            } else if (0 == stringcmp("static", cssDeclaration->Value)) {
+                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_STATIC;
             }
             break;
     }
 }
 
 static void ComputeHtmlDomTreeStyleByCssRule(uiDocument_t *document, uiCssRule_t *cssRule) {
-    list *doms = UI_GetHtmlDomsByCssSelector(document, cssRule->selector);
+    list *doms = UI_GetHtmlDomsByCssSelector(document, cssRule->Selector);
 
     if (0 == doms) {
         return;
     }
 
-    if (0 == cssRule->cssDeclarationList) {
+    if (0 == cssRule->CssDeclarationList) {
         return;
     }
 
@@ -149,7 +166,7 @@ static void ComputeHtmlDomTreeStyleByCssRule(uiDocument_t *document, uiCssRule_t
     liDom = listGetIterator(doms, AL_START_HEAD);
     while (0 != (lnDom = listNext(liDom))) {
 
-        liCssDeclaration = listGetIterator(cssRule->cssDeclarationList->data, AL_START_HEAD);
+        liCssDeclaration = listGetIterator(cssRule->CssDeclarationList->Data, AL_START_HEAD);
         while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
             ComputeHtmlDomStyleByCssDeclaration(document,
                     (uiHtmlDom_t*)listNodeValue(lnDom),
@@ -165,13 +182,13 @@ static void ComputeHtmlDomStyleByDomAttributeStyle(uiDocument_t *document, uiHtm
         return;
     }
 
-    if (0 == dom->styleCssDeclarations || 0 == listLength(dom->styleCssDeclarations)) {
+    if (0 == dom->StyleCssDeclarations || 0 == listLength(dom->StyleCssDeclarations)) {
         return;
     }
 
     listIter *liCssDeclaration;
     listNode *lnCssDeclaration;
-    liCssDeclaration = listGetIterator(dom->styleCssDeclarations, AL_START_HEAD);
+    liCssDeclaration = listGetIterator(dom->StyleCssDeclarations, AL_START_HEAD);
     while (0 != (lnCssDeclaration = listNext(liCssDeclaration))) {
         ComputeHtmlDomStyleByCssDeclaration(document, dom, (uiCssDeclaration_t*)listNodeValue(lnCssDeclaration));
     }
@@ -185,7 +202,7 @@ static void ComputeHtmlDomTreeStyleByDomAttributeStyle(uiDocument_t *document, u
 
     listIter *liDom;
     listNode *lnDom;
-    liDom = listGetIterator(dom->children, AL_START_HEAD);
+    liDom = listGetIterator(dom->Children, AL_START_HEAD);
     while (0 != (lnDom = listNext(liDom))) {
         ComputeHtmlDomTreeStyleByDomAttributeStyle(document, (uiHtmlDom_t*)listNodeValue(lnDom));
     }
@@ -195,11 +212,11 @@ static void ComputeHtmlDomTreeStyleByDomAttributeStyle(uiDocument_t *document, u
 void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document) {
     listIter *liCssRule;
     listNode *lnCssRule;
-    liCssRule = listGetIterator(document->cssStyleSheet->rules, AL_START_HEAD);
+    liCssRule = listGetIterator(document->CssStyleSheet->Rules, AL_START_HEAD);
     while (0 != (lnCssRule = listNext(liCssRule))) {
         ComputeHtmlDomTreeStyleByCssRule(document, (uiCssRule_t*)listNodeValue(lnCssRule));
     }
     listReleaseIterator(liCssRule);
 
-    ComputeHtmlDomTreeStyleByDomAttributeStyle(document, document->rootDom);
+    ComputeHtmlDomTreeStyleByDomAttributeStyle(document, document->RootDom);
 }

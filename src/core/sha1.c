@@ -152,7 +152,7 @@ void SHA1Update(SHA1_CTX* context, const unsigned char* data, u_int32_t len)
 }
 
 
-/* Add padding and return the message digest. */
+/* Add Padding and return the message digest. */
 
 void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
 {

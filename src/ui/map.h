@@ -27,39 +27,39 @@
 #define MAP_ADDR(x, y, width) (y * width + x)
 
 #define UIMoveuiCursor_tLeft(count) do {\
-    ui_env->cursorX -= count;\
-    if (ui_env->cursorX < 0) {\
-        UIMoveCurMapX(ui_env->cursorX);\
-        ui_env->cursorX = 0;\
+    ui_env->CursorX -= count;\
+    if (ui_env->CursorX < 0) {\
+        UIMoveCurMapX(ui_env->CursorX);\
+        ui_env->CursorX = 0;\
     }\
-    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->Win, ui_env->CursorY, ui_env->CursorX);\
 } while (0);
 
 #define UIMoveuiCursor_tRight(count) do {\
-    ui_env->cursorX += count;\
-    if (ui_env->cursorX > ui_rootuiWindow->width) {\
-        UIMoveCurMapX(ui_env->cursorX - ui_rootuiWindow->width);\
-        ui_env->cursorX = ui_rootuiWindow->width;\
+    ui_env->CursorX += count;\
+    if (ui_env->CursorX > ui_rootuiWindow->Width) {\
+        UIMoveCurMapX(ui_env->CursorX - ui_rootuiWindow->Width);\
+        ui_env->CursorX = ui_rootuiWindow->Width;\
     }\
-    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->Win, ui_env->CursorY, ui_env->CursorX);\
 } while (0);
 
 #define UI_MoveuiCursorUp(count) do {\
-    ui_env->cursorY -= count;\
-    if (ui_env->cursorY < 0) {\
-        UIMoveCurMapY(ui_env->cursorY);\
-        ui_env->cursorY = 0;\
+    ui_env->CursorY -= count;\
+    if (ui_env->CursorY < 0) {\
+        UIMoveCurMapY(ui_env->CursorY);\
+        ui_env->CursorY = 0;\
     }\
-    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->Win, ui_env->CursorY, ui_env->CursorX);\
 } while (0);
 
 #define UIMoveuiCursor_tDown(count) do {\
-    ui_env->cursorY += count;\
-    if (ui_env->cursorY > ui_rootuiWindow->height) {\
-        UIMoveCurMapY(ui_env->cursorY - ui_rootuiWindow->height);\
-        ui_env->cursorY = ui_rootuiWindow->height;\
+    ui_env->CursorY += count;\
+    if (ui_env->CursorY > ui_rootuiWindow->Height) {\
+        UIMoveCurMapY(ui_env->CursorY - ui_rootuiWindow->Height);\
+        ui_env->CursorY = ui_rootuiWindow->Height;\
     }\
-    wmove(ui_rootuiWindow->win, ui_env->cursorY, ui_env->cursorX);\
+    wmove(ui_rootuiWindow->Win, ui_env->CursorY, ui_env->CursorX);\
 } while (0);
 
 /* 地图上的物体 */
@@ -101,8 +101,8 @@ typedef struct {
     int nodes_len;
     struct json_token *root_json_tok;
     char *root_json_content;
-    int width;
-    int height;
+    int Width;
+    int Height;
 
     /* 地图在窗口上显示左上角位置，一次生成，不再修改 */
     int win_lt_x;

@@ -6,19 +6,19 @@
 #define HAVE_BACKTRACE 1
 
 typedef struct IniOption {
-    sds key;
-    sds value;
+    sds Key;
+    sds Value;
 } IniOption;
 
 typedef struct IniSection {
-    sds  key;
-    dict *options;
+    sds  Key;
+    dict *Options;
 } IniSection;
 
 typedef struct Ini {
-    sds *contents;
-    int contentsCount;
-    dict *sections;
+    sds *Contents;
+    int ContentsCount;
+    dict *Sections;
 } Ini;
 
 Ini *InitIni();
@@ -27,13 +27,13 @@ sds IniGet(Ini *conf, char *sectionKey, char *optionKey);
 void FreeIni(Ini *conf);
 
 #define confOptToStr(confOpt, result) do {\
-    memcpy(result, confOpt->value, confOpt->valueLen);\
-    result[confOpt->valueLen] = 0;\
+    memcpy(result, confOpt->Value, confOpt->ValueLen);\
+    result[confOpt->ValueLen] = 0;\
 } while(0);
 
 #define confOptToInt(confOpt, tmpstr, result) do {\
-    memcpy(tmpstr, confOpt->value, confOpt->valueLen);\
-    tmpstr[confOpt->valueLen] = 0;\
+    memcpy(tmpstr, confOpt->Value, confOpt->ValueLen);\
+    tmpstr[confOpt->ValueLen] = 0;\
     result = atoi(tmpstr);\
 } while(0);
 

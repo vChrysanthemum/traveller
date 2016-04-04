@@ -11,9 +11,9 @@
 } while(0);
 
 typedef struct stScript_s {
-    int        isSubscribeNet;
-    sds        basedir;
-    IniSection *iniSection;
+    int        IsSubscribeNet;
+    sds        BaseDir;
+    IniSection *IniSection;
     lua_State  *L;
 } stScript_t;
 

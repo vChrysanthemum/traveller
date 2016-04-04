@@ -32,8 +32,8 @@
  */
 static int NTRespSV_scriptService(stScript_t *script, ntRespSnode_t *sn) {
     int errno;
-    char **argv = &(sn->argv[1]);
-    int argc = sn->argc - 1; // 减去 argv[0] = "script"
+    char **argv = &(sn->Argv[1]);
+    int argc = sn->Argc - 1; // 减去 argv[0] = "script"
     lua_State *L = script->L;
 
     lua_getglobal(L, "ServiceRouter");
@@ -74,13 +74,13 @@ static int NTRespSV_scriptService(stScript_t *script, ntRespSnode_t *sn) {
  */
 static int NTRespSV_scriptServiceCallback(ntRespSnode_t *sn) {
     int errno;
-    char **argv = &(sn->argv[1]);
+    char **argv = &(sn->Argv[1]);
 
     int requestId = atoi(argv[0]);
 
     listIter *li;
     listNode *ln;
-    li = listGetIterator(sn->scriptServiceRequestCtxList, AL_START_HEAD);
+    li = listGetIterator(sn->ScriptServiceRequestCtxList, AL_START_HEAD);
     ntScriptServiceRequestCtx_t *ctx, *ctxTarget = 0;
     while (0 != (ln = listNext(li))) {
         ctx = (ntScriptServiceRequestCtx_t*)listNodeValue(ln);
@@ -109,15 +109,15 @@ static int NTRespSV_scriptServiceCallback(ntRespSnode_t *sn) {
 
     lua_newtable(L);
 
-    for (int i = 2; i < sn->argvSize; i += 2) {
-        lua_pushstring(L, sn->argv[i]);
-        lua_pushstring(L, sn->argv[i+1]);
+    for (int i = 2; i < sn->ArgvSize; i += 2) {
+        lua_pushstring(L, sn->Argv[i]);
+        lua_pushstring(L, sn->Argv[i+1]);
         lua_settable(L, -3);
     }
 
     errno = lua_pcall(L, 4, 0, 0);
 
-    listDelNode(sn->scriptServiceRequestCtxList, ln);
+    listDelNode(sn->ScriptServiceRequestCtxList, ln);
 
     if (0 != errno) {
         C_UtilLogW("%s", lua_tostring(L, -1));

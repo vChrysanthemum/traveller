@@ -38,30 +38,30 @@ static void acceptTcpHandler(aeLooper_t *el, int fd, void *privdata, int mask);
 static int listenToPort(int port, int *fds, int *count);
 
 static ntRespSnode_t* snodeArgvMakeRoomFor(ntRespSnode_t *sn, int count) {
-    if (sn->argvSize >= count) return sn;
+    if (sn->ArgvSize >= count) return sn;
 
     int loopJ;
 
-    if (0 == sn->argv) {
-        sn->argv = zmalloc(sizeof(sds*) * count);
+    if (0 == sn->Argv) {
+        sn->Argv = zmalloc(sizeof(sds*) * count);
     } else {
-        sn->argv = zrealloc(sn->argv, sizeof(sds*) * count);
+        sn->Argv = zrealloc(sn->Argv, sizeof(sds*) * count);
     }
 
-    for (loopJ = sn->argvSize; loopJ < count; loopJ++) {
-        sn->argv[loopJ] = sdsempty();
+    for (loopJ = sn->ArgvSize; loopJ < count; loopJ++) {
+        sn->Argv[loopJ] = sdsempty();
     }
-    sn->argvSize = count;
+    sn->ArgvSize = count;
 
     return sn;
 }
 
 static ntRespSnode_t* snodeArgvClear(ntRespSnode_t *sn) {
-    if (0 == sn->argvSize) return sn;
+    if (0 == sn->ArgvSize) return sn;
 
     int loopJ;
-    for (loopJ = 0; loopJ < sn->argvSize; loopJ++) {
-        sdsclear(sn->argv[loopJ]);
+    for (loopJ = 0; loopJ < sn->ArgvSize; loopJ++) {
+        sdsclear(sn->Argv[loopJ]);
     }
 
     return sn;
@@ -90,8 +90,8 @@ static void sendReplyToSnode(aeLooper_t *el, int fd, void *privdata, int mask) {
                 if (0 != sn->hupProc) {
                     sn->hupProc(sn);
                 }
-                if (0 != sn->proc) {
-                    sn->proc(sn);
+                if (0 != sn->Proc) {
+                    sn->Proc(sn);
                 }
                 NTResp_FreeSnode(sn);
                 return;
@@ -131,12 +131,12 @@ static void rePreparentRespSnodeToReadQuery(ntRespSnode_t *sn) {
         sdsclear(sn->tmpQuerybuf);
     }
 
-    sn->argc = 0;
+    sn->Argc = 0;
     sn = snodeArgvClear(sn);
 
     sn->argcRemaining = 0;
     sn->argvRemaining = 0;
-    sn->proc = 0;
+    sn->Proc = 0;
 }
 
 /* 移动 querybuf 到 target_addr 一直到遇到 \r\n，或者最后一个\n，
@@ -201,17 +201,17 @@ static void parseInputBufferStatus(ntRespSnode_t *sn) {
 
     if (SNODE_RECV_STAT_PARSING_START == sn->recvParsingStat) {
         sn->recvParsingStat = SNODE_RECV_STAT_PARSING_ARGV_VALUE;
-        sn->argc = 1;
+        sn->Argc = 1;
         sn = snodeArgvMakeRoomFor(sn, 1);
         sn = snodeArgvClear(sn);
-        readlen = parseInputBufferGetSegment(sn, &(sn->argv[0]));
+        readlen = parseInputBufferGetSegment(sn, &(sn->Argv[0]));
 
     } else if (SNODE_RECV_STAT_PARSING_ARGV_VALUE == sn->recvParsingStat) {
-        readlen = parseInputBufferGetSegment(sn, &(sn->argv[0]));
+        readlen = parseInputBufferGetSegment(sn, &(sn->Argv[0]));
     }
 
     if (EOF == readlen) {
-        sdsrange(sn->argv[0], 0, -3);
+        sdsrange(sn->Argv[0], 0, -3);
         sn->recvParsingStat = SNODE_RECV_STAT_PARSING_FINISHED;
         sn->recvStat = SNODE_RECV_STAT_PARSED;
     }
@@ -227,7 +227,7 @@ static void parseInputBufferString(ntRespSnode_t *sn) {
         sdsclear(sn->tmpQuerybuf);
 
         sn->recvParsingStat = SNODE_RECV_STAT_PARSING_ARGV_NUM;
-        sn->argc = 1;
+        sn->Argc = 1;
         sn = snodeArgvMakeRoomFor(sn, 1);
         sn = snodeArgvClear(sn);
 
@@ -256,14 +256,14 @@ static void parseInputBufferString(ntRespSnode_t *sn) {
 
             /* querybuf少于需要读取的，读取所有querybuf，并返回 */
             if (sn->argvRemaining > len) {
-                sn->argv[0] = sdscatlen(sn->argv[0], sn->querybuf, len);
+                sn->Argv[0] = sdscatlen(sn->Argv[0], sn->querybuf, len);
                 sdsclear(sn->querybuf);
                 sn->argvRemaining -= len;
                 return;
             }
 
             /* querybuf中有足够数据，则读取，并设置为读取完成 */
-            sn->argv[0] = sdscatlen(sn->argv[0], sn->querybuf, sn->argvRemaining);
+            sn->Argv[0] = sdscatlen(sn->Argv[0], sn->querybuf, sn->argvRemaining);
 
             if (len == sn->argvRemaining) {
                 sdsclear(sn->querybuf);
@@ -288,24 +288,24 @@ static void parseInputBufferArray(ntRespSnode_t *sn) {
         sdsclear(sn->tmpQuerybuf);
 
         sn->recvParsingStat = SNODE_RECV_STAT_PARSING_ARGC;
-        sn->argc = 0;
+        sn->Argc = 0;
         sn = snodeArgvClear(sn);
 
     }
 
     if (SNODE_RECV_STAT_PARSING_ARGC == sn->recvParsingStat) {
-        readlen = parseInputBufferGetNum(sn, &(sn->tmpQuerybuf), &(sn->argc));
+        readlen = parseInputBufferGetNum(sn, &(sn->tmpQuerybuf), &(sn->Argc));
         
         if (EOF != readlen) return;
 
-        if (sn->argc <= 0) {
+        if (sn->Argc <= 0) {
             setProtocolError(sn, 0);
             return;
         }
 
-        sn = snodeArgvMakeRoomFor(sn, sn->argc);
+        sn = snodeArgvMakeRoomFor(sn, sn->Argc);
         sn = snodeArgvClear(sn);
-        sn->argcRemaining = sn->argc;
+        sn->argcRemaining = sn->Argc;
 
         sdsclear(sn->tmpQuerybuf);
         sn->recvParsingStat = SNODE_RECV_STAT_PARSING_ARGV_NUM;
@@ -342,20 +342,20 @@ PARSING_ARGV_START:
 
 //PARSING_ARGV_VALUE:
     if (SNODE_RECV_STAT_PARSING_ARGV_VALUE == sn->recvParsingStat) {
-        argJ = sn->argc - sn->argcRemaining;
+        argJ = sn->Argc - sn->argcRemaining;
 
         len = sdslen(sn->querybuf);
 
         /* querybuf少于需要读取的，读取所有querybuf，并返回 */
         if (sn->argvRemaining > len) {
-            sn->argv[argJ] = sdscatlen(sn->argv[argJ], sn->querybuf, len);
+            sn->Argv[argJ] = sdscatlen(sn->Argv[argJ], sn->querybuf, len);
             sdsclear(sn->querybuf);
             sn->argvRemaining -= len;
             return;
         }
 
         /* querybuf中有足够数据，则读取，并设置为读取完成 */
-        sn->argv[argJ] = sdscatlen(sn->argv[argJ], sn->querybuf, sn->argvRemaining);
+        sn->Argv[argJ] = sdscatlen(sn->Argv[argJ], sn->querybuf, sn->argvRemaining);
 
         if (len == sn->argvRemaining) {
             sdsclear(sn->querybuf);
@@ -368,7 +368,7 @@ PARSING_ARGV_START:
 
         sn->argcRemaining--;
 
-        sdsrange(sn->argv[argJ], 0, -3);//去掉 \r\n
+        sdsrange(sn->Argv[argJ], 0, -3);//去掉 \r\n
 
         goto PARSING_ARGV_START;
     }
@@ -417,12 +417,12 @@ static void parseInputBuffer(ntRespSnode_t *sn) {
     } else if (SNODE_RECV_TYPE_ARRAY == sn->recvType) {
         parseInputBufferArray(sn);
 
-        if (0 == sn->proc && sn->argc - sn->argcRemaining > 0) {
+        if (0 == sn->Proc && sn->Argc - sn->argcRemaining > 0) {
             dictEntry *de;
 
-            de = dictFind(nt_RespServer.services, sn->argv[0]);
+            de = dictFind(nt_RespServer.services, sn->Argv[0]);
             if (0 != de) {
-                sn->proc = dictGetVal(de);
+                sn->Proc = dictGetVal(de);
             }
         }
 
@@ -442,13 +442,13 @@ static void parseInputBuffer(ntRespSnode_t *sn) {
     }
 
     // 如果没有等待数据的回调函数，则认为是一个新的命令
-    if (0 == sn->proc) {
+    if (0 == sn->Proc) {
         if (SNODE_RECV_STAT_PARSED == sn->recvStat) {
             NTResp_AddReplyError(sn, "command not found");
             rePreparentRespSnodeToReadQuery(sn);
         }
     } else {
-        sn->proc(sn);
+        sn->Proc(sn);
 
         if (SNODE_RECV_STAT_EXCUTED == sn->recvStat) {
             rePreparentRespSnodeToReadQuery(sn);
@@ -501,9 +501,9 @@ static ntRespSnode_t* createSnode(int fd) {
     
     sn->responseProc = 0;
 
-    sn->scriptServiceRequestCtxList = listCreate();
-    sn->scriptServiceRequestCtxList->free = NTResp_RecycleScriptServiceRequestCtx;
-    sn->scriptServiceRequestCtxListMaxId = 0;
+    sn->ScriptServiceRequestCtxList = listCreate();
+    sn->ScriptServiceRequestCtxList->free = NTResp_RecycleScriptServiceRequestCtx;
+    sn->ScriptServiceRequestCtxListMaxId = 0;
 
     nt_RespServer.statNumConnections++;
     dictAdd(nt_RespServer.snodes, sn->fdstr, sn);
@@ -596,11 +596,11 @@ void NTResp_resetSnodeArgs(ntRespSnode_t *sn) {
     sdsclear(sn->writebuf);
 
     sn = snodeArgvClear(sn);
-    sn->argc = 0;
+    sn->Argc = 0;
 
     sn->argcRemaining = 0;
     sn->argvRemaining = 0;
-    sn->proc = 0;
+    sn->Proc = 0;
 }
 
 void NTResp_readQueryFromSnode(aeLooper_t *el, int fd, void *privdata, int mask) {
@@ -644,20 +644,20 @@ void NTResp_readQueryFromSnode(aeLooper_t *el, int fd, void *privdata, int mask)
 }
 
 ntRespSnode_t* NTResp_snodeArgvFree(ntRespSnode_t *sn) {
-    if (0 == sn->argv) return sn;
+    if (0 == sn->Argv) return sn;
 
     int loopJ;
-    for (loopJ = 0; loopJ < sn->argvSize; loopJ++) {
-        sdsfree(sn->argv[loopJ]);
+    for (loopJ = 0; loopJ < sn->ArgvSize; loopJ++) {
+        sdsfree(sn->Argv[loopJ]);
     }
-    zfree(sn->argv);
-    sn->argv = 0;
+    zfree(sn->Argv);
+    sn->Argv = 0;
     return sn;
 }
 
 ntRespSnode_t* NTResp_snodeArgvEmpty(ntRespSnode_t *sn) {
-    sn->argv = 0;
-    sn->argvSize = 0;
+    sn->Argv = 0;
+    sn->ArgvSize = 0;
     return sn;
 }
 
@@ -745,7 +745,7 @@ ntScriptServiceRequestCtx_t* NTResp_NewScriptServiceRequestCtx() {
     }
 
     listNode *ln = listFirst(nt_RespServer.scriptServiceRequestCtxPool);
-    ctx = (ntScriptServiceRequestCtx_t*)ln->value;
+    ctx = (ntScriptServiceRequestCtx_t*)ln->Value;
     listDelNode(nt_RespServer.scriptServiceRequestCtxPool, ln);
 
     resetScriptServiceRequestCtx(ctx);
@@ -785,7 +785,7 @@ void NTResp_FreeSnode(ntRespSnode_t *sn) {
 
     dictDelete(nt_RespServer.snodes, sn->fdstr);
 
-    listRelease(sn->scriptServiceRequestCtxList);
+    listRelease(sn->ScriptServiceRequestCtxList);
 
     zfree(sn);
 

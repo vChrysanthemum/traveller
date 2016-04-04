@@ -64,7 +64,7 @@ void listRelease(list *list)
     len = list->len;
     while(len--) {
         next = current->next;
-        if (list->free) list->free(current->value);
+        if (list->free) list->free(current->Value);
         zfree(current);
         current = next;
     }
@@ -83,7 +83,7 @@ list *listAddNodeHead(list *list, void *value)
 
     if ((node = zmalloc(sizeof(*node))) == NULL)
         return NULL;
-    node->value = value;
+    node->Value = value;
     if (list->len == 0) {
         list->head = list->tail = node;
         node->prev = node->next = NULL;
@@ -109,7 +109,7 @@ list *listAddNodeTail(list *list, void *value)
 
     if ((node = zmalloc(sizeof(*node))) == NULL)
         return NULL;
-    node->value = value;
+    node->Value = value;
     if (list->len == 0) {
         list->head = list->tail = node;
         node->prev = node->next = NULL;
@@ -128,7 +128,7 @@ list *listInsertNode(list *list, listNode *old_node, void *value, int after) {
 
     if ((node = zmalloc(sizeof(*node))) == NULL)
         return NULL;
-    node->value = value;
+    node->Value = value;
     if (after) {
         node->prev = old_node;
         node->next = old_node->next;
@@ -166,7 +166,7 @@ void listDelNode(list *list, listNode *node)
         node->next->prev = node->prev;
     else
         list->tail = node->prev;
-    if (list->free) list->free(node->value);
+    if (list->free) list->free(node->Value);
     zfree(node);
     list->len--;
 }
@@ -255,14 +255,14 @@ list *listDup(list *orig)
         void *value;
 
         if (copy->dup) {
-            value = copy->dup(node->value);
+            value = copy->dup(node->Value);
             if (value == NULL) {
                 listRelease(copy);
                 listReleaseIterator(iter);
                 return NULL;
             }
         } else
-            value = node->value;
+            value = node->Value;
         if (listAddNodeTail(copy, value) == NULL) {
             listRelease(copy);
             listReleaseIterator(iter);
@@ -290,12 +290,12 @@ listNode *listSearchKey(list *list, void *key)
     iter = listGetIterator(list, AL_START_HEAD);
     while((node = listNext(iter)) != NULL) {
         if (list->match) {
-            if (list->match(node->value, key)) {
+            if (list->match(node->Value, key)) {
                 listReleaseIterator(iter);
                 return node;
             }
         } else {
-            if (key == node->value) {
+            if (key == node->Value) {
                 listReleaseIterator(iter);
                 return node;
             }

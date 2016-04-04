@@ -12,7 +12,7 @@
 // css选择器
 
 list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
-    if (0 == listLength(dom->children)) {
+    if (0 == listLength(dom->Children)) {
         return 0;
     }
 
@@ -25,7 +25,7 @@ list* UI_ScanLeafHtmlDoms(uiHtmlDom_t *dom) {
     listIter *subLi;
     listNode *subLn;
 
-    li = listGetIterator(dom->children, AL_START_HEAD);
+    li = listGetIterator(dom->Children, AL_START_HEAD);
     while (0 != (ln = listNext(li))) {
         child = (uiHtmlDom_t*)listNodeValue(ln);
 
@@ -63,26 +63,26 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
 
     int result = 0;
 
-    switch (selectorSection->type) {
+    switch (selectorSection->Type) {
         case UI_SELECTOR_SECTION_TYPE_UNKNOWN:
             break;
 
         case UI_SELECTOR_SECTION_TYPE_TAG:
-            if (0 == stringcmp(dom->title, selectorSection->value)) {
+            if (0 == stringcmp(dom->Title, selectorSection->Value)) {
                 result = 1;
             }
             break;
 
         case UI_SELECTOR_SECTION_TYPE_CLASS:
-            if (0 == dom->classes) {
+            if (0 == dom->Classes) {
                 break;
             }
 
             listIter *liClass;
             listNode *lnClass;
-            liClass = listGetIterator(dom->classes, AL_START_HEAD);
+            liClass = listGetIterator(dom->Classes, AL_START_HEAD);
             while (0 != (lnClass = listNext(liClass))) {
-                if (0 == stringcmp((char*)listNodeValue(lnClass), selectorSection->value)) {
+                if (0 == stringcmp((char*)listNodeValue(lnClass), selectorSection->Value)) {
                     result = 1;
                     break;
                 }
@@ -91,11 +91,11 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
             break;
 
         case UI_SELECTOR_SECTION_TYPE_ID:
-            if (0 == dom->id) {
+            if (0 == dom->Id) {
                 break;
             }
 
-            if (0 == stringcmp(dom->id, selectorSection->value)) {
+            if (0 == stringcmp(dom->Id, selectorSection->Value)) {
                 result = 1;
             }
             break;
@@ -107,21 +107,21 @@ static inline int IsSelectorSectionMatchHtmlDom(uiCssSelectorSection_t *selector
 
     result = 0;
 
-    switch (selectorSection->attributeType) {
+    switch (selectorSection->AttributeType) {
         case  UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE:
             result = 1;
             break;
 
         case  UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS:
-            if (0 == dom->classes) {
+            if (0 == dom->Classes) {
                 break;
             }
 
             listIter *liClass;
             listNode *lnClass;
-            liClass = listGetIterator(dom->classes, AL_START_HEAD);
+            liClass = listGetIterator(dom->Classes, AL_START_HEAD);
             while (0 != (lnClass = listNext(liClass))) {
-                if (0 == stringcmp((char*)listNodeValue(lnClass), selectorSection->attribute)) {
+                if (0 == stringcmp((char*)listNodeValue(lnClass), selectorSection->Attribute)) {
                     result = 1;
                     break;
                 }
@@ -147,10 +147,10 @@ int UI_IsSelectorSectionsLeftMatchHtmlDoms(listIter *liSelectorSection, uiHtmlDo
         }
 
         // 如果不匹配，则继续尝试下一个dom
-        dom = dom->parent;
+        dom = dom->Parent;
 
         // dom 为 rootDom，则匹配失败
-        if (0 == dom->parent) {
+        if (0 == dom->Parent) {
             return 0;
         }
     }
@@ -171,7 +171,7 @@ static list* SelectorSectionSelectHtmlDoms(uiCssSelectorSection_t *selectorSecti
         doms = listAddNodeTail(doms, dom);
     }
 
-    if (1 == UI_IsHtmlDomNotCareCssDeclaration(dom) && 0 == listLength(dom->children)) {
+    if (1 == UI_IsHtmlDomNotCareCssDeclaration(dom) && 0 == listLength(dom->Children)) {
         return doms;
     }
 
@@ -182,7 +182,7 @@ static list* SelectorSectionSelectHtmlDoms(uiCssSelectorSection_t *selectorSecti
     listIter *liSubDom;
     listNode *lnSubDom;
 
-    lidom = listGetIterator(dom->children, AL_START_HEAD);
+    lidom = listGetIterator(dom->Children, AL_START_HEAD);
     while (0 != (lndom = listNext(lidom))) {
         subDoms = SelectorSectionSelectHtmlDoms(selectorSection, (uiHtmlDom_t*)listNodeValue(lndom));
         liSubDom = listGetIterator(subDoms, AL_START_HEAD);
@@ -222,7 +222,7 @@ static list* SelectorSectionsRightFindHtmlDoms(listIter *liSelectorSection, uiHt
     list *grandDoms;
     listIter *liGrandDom;
     listNode *lnGrandDom;
-    liSubDom = listGetIterator(dom->children, AL_START_HEAD);
+    liSubDom = listGetIterator(dom->Children, AL_START_HEAD);
     while (0 != (lnSubDom = listNext(liSubDom))) {
         grandDoms = SelectorSectionsRightFindHtmlDoms(liSelectorSection,
                 (uiHtmlDom_t*)listNodeValue(lnSubDom));
@@ -244,8 +244,8 @@ static list* SelectorSectionsRightFindHtmlDoms(listIter *liSelectorSection, uiHt
 
 // return doms
 list* UI_GetHtmlDomsByCssSelector(uiDocument_t* document, uiCssSelector_t *selector) {
-    listIter *liSelectorSection = listGetIterator(selector->sections, AL_START_HEAD);
-    list *doms = SelectorSectionsRightFindHtmlDoms(liSelectorSection, document->rootDom);
+    listIter *liSelectorSection = listGetIterator(selector->Sections, AL_START_HEAD);
+    list *doms = SelectorSectionsRightFindHtmlDoms(liSelectorSection, document->RootDom);
     listReleaseIterator(liSelectorSection);
     return doms;
 }

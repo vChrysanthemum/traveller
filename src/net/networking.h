@@ -65,21 +65,21 @@ typedef void aeBeforeSleepProc(struct aeLooper_s *eventLoop);
 
 /* File event structure */
 typedef struct aeFileEvent_s {
-    int mask; /* one of AE_(READABLE|WRITABLE) */
-    aeFileProc *rfileProc;
-    aeFileProc *wfileProc;
-    void *clientData;
+    int        mask; /* one of AE_(READABLE|WRITABLE) */
+    aeFileProc *RfileProc;
+    aeFileProc *WfileProc;
+    void       *ClientData;
 } aeFileEvent_t;
 
 /* Time event structure */
 typedef struct aeTimeEvent_s {
-    long long id; /* time event identifier. */
-    long whenSec; /* seconds */
-    long whenMs; /* milliseconds */
-    aeTimeProc *timeProc;
+    long long            id; /* time event identifier. */
+    long                 whenSec; /* seconds */
+    long                 whenMs; /* milliseconds */
+    aeTimeProc           *timeProc;
     aeEventFinalizerProc *finalizerProc;
-    void *clientData;
     struct aeTimeEvent_s *next;
+    void                 *ClientData;
 } aeTimeEvent_t;
 
 /* A fired event */
@@ -90,15 +90,15 @@ typedef struct aeFiredEvent_s {
 
 /* State of an event based program */
 typedef struct aeLooper_s {
-    int maxfd;   /* highest file descriptor currently registered */
-    int setsize; /* max number of file descriptors tracked */
-    long long timeEventNextId;
-    time_t lastTime;     /* Used to detect system clock skew */
-    aeFileEvent_t *events; /* Registered events */
-    aeFiredEvent_t *fired; /* Fired events */
-    aeTimeEvent_t *timeEventHead;
-    int stop;
-    void *apidata; /* This is used for polling API specific data */
+    int               maxfd;   /* highest file descriptor currently registered */
+    int               setsize; /* max number of file descriptors tracked */
+    long long         timeEventNextId;
+    time_t            lastTime;     /* Used to detect system clock skew */
+    aeFileEvent_t     *events; /* Registered events */
+    aeFiredEvent_t    *fired; /* Fired events */
+    aeTimeEvent_t     *timeEventHead;
+    int               stop;
+    void              *apidata; /* This is used for polling API specific data */
     aeBeforeSleepProc *beforesleep;
 } aeLooper_t;
 
@@ -175,10 +175,10 @@ typedef struct ntRespSnode_s {
     sds querybuf;           // 读取到的数据 
     sds writebuf;           // 等待发送的数据 
     int recvParsingStat;
-    int argc;
+    int Argc;
 
-    sds *argv;
-    int argvSize;
+    sds *Argv;
+    int ArgvSize;
 
     int argcRemaining;     // 还剩多少个argc没有解析完成 
     int argvRemaining;     // 正在解析中的参数还有多少字符未获取 -1 为还没开始解析
@@ -186,10 +186,10 @@ typedef struct ntRespSnode_s {
 
     void (*responseProc) (ntRespSnode_t *sn); //在等待远程机器发来结果的回调函数
 
-    int scriptServiceRequestCtxListMaxId;
-    list *scriptServiceRequestCtxList;
+    int ScriptServiceRequestCtxListMaxId;
+    list *ScriptServiceRequestCtxList;
 
-    void (*proc) (ntRespSnode_t *sn);
+    void (*Proc) (ntRespSnode_t *sn);
     void (*hupProc) (ntRespSnode_t *sn); //如果远程机器挂掉了，需要调用的函数
 
     int isWriteMod;       // 是否已处于写数据模式，避免重复进入写数据模式 

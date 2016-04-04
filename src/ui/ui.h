@@ -26,29 +26,29 @@ typedef struct uiCursor_s {
 } uiCursor_t;
 
 typedef struct uiEnv_s {
-    int  ch;
-    int  cursorY;
-    int  cursorX;
-    int  number;      //已输入的数字
-    char snumber[8];  //已输入的数字
-    int  snumberLen;
+    int  Ch;
+    int  CursorY;
+    int  CursorX;
+    int  Number;      //已输入的数字
+    char SNumber[8];  //已输入的数字
+    int  SNumberLen;
 } uiEnv_t;
 
 typedef struct uiWindow_s {
-    int    height; //行数 
-    int    width;  //列数 
-    int    startx;
-    int    starty;
-    WINDOW *win;
-    PANEL  *panel;
+    int    Height; //行数 
+    int    Width;  //列数 
+    int    Startx;
+    int    Starty;
+    WINDOW *Win;
+    PANEL  *Panel;
 } uiWindow_t;
 uiWindow_t* UI_createWindow(int height, int width, int starty, int startx);
 void UI_FreeWindow(uiWindow_t* win);
 
 typedef struct uiPage_s {
-    sds          title;
-    sds          content;
-    uiWindow_t   *uiwin;
+    sds          Title;
+    sds          Content;
+    uiWindow_t   *UIWin;
     uiDocument_t *document;
 } uiPage_t;
 uiPage_t *UI_NewPage();
@@ -61,11 +61,11 @@ typedef struct uiConsoleCommand_s {
 } uiConsoleCommand_t;
 
 typedef struct uiConsole_s{
-    uiWindow_t         *tabuiwin;
-    uiWindow_t         *uiwin;
-    int              mode;
+    int                mode;
     uiCursor_t         cursor;
     uiConsoleCommand_t cmd;
+    uiWindow_t         *TabUIWin;
+    uiWindow_t         *UIWin;
 } uiConsole_t;
 
 #define COLOR_UNKNOWN -1

@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
 
     if (argc > 1) IniRead(g_conf, argv[1]); /* argv[1] 是配置文件路径 */
 
-    if (0 == g_conf->contents) {
+    if (0 == g_conf->Contents) {
         C_UtilExit(0, "请选择配置文件");
     }
 

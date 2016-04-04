@@ -93,9 +93,9 @@ static inline void skipStringNotConcern(char **ptr)  {
 }
 
 int UI_IsHtmlDomNotCareCssDeclaration(uiHtmlDom_t *dom) {
-    if (UIHTML_DOM_TYPE_TEXT == dom->info->type ||
-            UIHTML_DOM_TYPE_SCRIPT == dom->info->type ||
-            UIHTML_DOM_TYPE_STYLE == dom->info->type) {
+    if (UIHTML_DOM_TYPE_TEXT == dom->Info->Type ||
+            UIHTML_DOM_TYPE_SCRIPT == dom->Info->Type ||
+            UIHTML_DOM_TYPE_STYLE == dom->Info->Type) {
         return 1;
     } else {
         return 0;
@@ -104,8 +104,8 @@ int UI_IsHtmlDomNotCareCssDeclaration(uiHtmlDom_t *dom) {
 
 void UI_PrepareHtml() {
     uiHtmlDomInfoDict = dictCreate(&stackStringTableDictType, 0);
-    for (uiHtmlDomInfo_t *domInfo = &uiHtmlDomInfoTable[0]; 0 != domInfo->name; domInfo++) {
-        dictAdd(uiHtmlDomInfoDict, domInfo->name, domInfo);
+    for (uiHtmlDomInfo_t *domInfo = &uiHtmlDomInfoTable[0]; 0 != domInfo->Name; domInfo++) {
+        dictAdd(uiHtmlDomInfoDict, domInfo->Name, domInfo);
     }
     ui_htmlDomInfoUndefined = dictFetchValue(uiHtmlDomInfoDict, "undefined");
 
@@ -118,7 +118,7 @@ void UI_PrepareHtml() {
 }
 
 uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
-    char **ptr = &scanner->current;
+    char **ptr = &scanner->Current;
 
     skipStringNotConcern(ptr);
 
@@ -133,7 +133,7 @@ uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
     int len;
 
     uiDocumentScanToken_t *token = UI_NewDocumentScanToken();
-    token->type = UIHTML_TOKEN_TEXT;
+    token->Type = UIHTML_TOKEN_TEXT;
 
     while ('\0' != *s && tokenStackLen < 6) {
         // 解析覆盖一下情况
@@ -183,7 +183,7 @@ uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
                 '<' == tokenStack[0]  &&   // <
                 UIHTML_TOKEN_TEXT == tokenStack[1] &&   // tag
                 '>' == tokenStack[2]) {    // >
-            token->type = UIHTML_TOKEN_START_TAG;
+            token->Type = UIHTML_TOKEN_START_TAG;
             goto GET_TOKEN_SUCCESS;
 
         } else if (4 == tokenStackLen) {
@@ -191,21 +191,21 @@ uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner) {
                     '/' == tokenStack[1]  && // /
                     UIHTML_TOKEN_TEXT == tokenStack[2] && // tag
                     '>' == tokenStack[3]) {    // >
-                token->type = UIHTML_TOKEN_END_TAG;
+                token->Type = UIHTML_TOKEN_END_TAG;
                 goto GET_TOKEN_SUCCESS;
 
             } else if ('<' == tokenStack[0] && // <
                     UIHTML_TOKEN_TEXT == tokenStack[1]   && // tag
                     '/' == tokenStack[2]    && // /
                     '>' == tokenStack[3]) {    // >
-                token->type = UIHTML_TOKEN_SELF_CLOSING_TAG;
+                token->Type = UIHTML_TOKEN_SELF_CLOSING_TAG;
                 goto GET_TOKEN_SUCCESS;
             }
 
         } else if (2 == tokenStackLen &&
                 UIHTML_TOKEN_TEXT == tokenStack[0] &&    // text
                 '<' == tokenStack[1]) {     // <
-            token->type = UIHTML_TOKEN_TEXT;
+            token->Type = UIHTML_TOKEN_TEXT;
             tokenStackLen--;
             s--;
             goto GET_TOKEN_SUCCESS;
@@ -219,7 +219,7 @@ GET_TOKEN_SUCCESS:
     len = (int)(s-*ptr+1);
 
     //去掉尾部空格
-    if (UIHTML_TOKEN_TEXT == token->type) {
+    if (UIHTML_TOKEN_TEXT == token->Type) {
         s = &((*ptr)[len-1]);
         for (int i = len-1; i >= 0; i--,s--) {
             if (UI_IsWhiteSpace(*s)) {
@@ -229,55 +229,55 @@ GET_TOKEN_SUCCESS:
         }
     }
 
-    token->content = sdscatlen(token->content, *ptr, (int)(s-*ptr+1));
+    token->Content = sdscatlen(token->Content, *ptr, (int)(s-*ptr+1));
     (*ptr) = (*ptr) + len;
     return token;
 }
 
 static void InitialHtmlDomStyleByHtmlDomInfo(uiHtmlDom_t *dom) {
-    dom->style.display = dom->info->InitialStyleDisplay;
-    dom->style.position = dom->info->InitialStylePosition;
+    dom->Style.Display = dom->Info->InitialStyleDisplay;
+    dom->Style.Position = dom->Info->InitialStylePosition;
 
-    if (0 != dom->parent) {
-        dom->style.textAlign = dom->parent.style.textAlign;
+    if (0 != dom->Parent) {
+        dom->Style.TextAlign = dom->Parent->Style.TextAlign;
     } else {
-        dom->style.textAlign = LEFT;
+        dom->Style.TextAlign = LEFT;
     }
 }
 
 uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {
     uiHtmlDom_t *dom = (uiHtmlDom_t*)zmalloc(sizeof(uiHtmlDom_t));
     memset(dom, 0, sizeof(uiHtmlDom_t));
-    dom->parent = parentDom;
-    dom->title = sdsempty();
-    dom->children = listCreate();
-    dom->children->free = UI_FreeHtmlDom;
-    dom->info = ui_htmlDomInfoUndefined;
-    dom->cssDeclarations = listCreate();
-    dom->cssDeclarations->free = UI_FreeCssDeclaration;
+    dom->Parent = parentDom;
+    dom->Title = sdsempty();
+    dom->Children = listCreate();
+    dom->Children->free = UI_FreeHtmlDom;
+    dom->Info = ui_htmlDomInfoUndefined;
+    dom->CssDeclarations = listCreate();
+    dom->CssDeclarations->free = UI_FreeCssDeclaration;
 
-    dom->style.textAlign = LEFT;
-    dom->style.display = HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK;
+    dom->Style.TextAlign = LEFT;
+    dom->Style.Display = HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK;
 
-    memset(&(dom->style), 0, sizeof(uiHtmlDomStyle_t));
+    memset(&(dom->Style), 0, sizeof(uiHtmlDomStyle_t));
     return dom;
 }
 
 void UI_FreeHtmlDom(void *_dom) {
     uiHtmlDom_t *dom = (uiHtmlDom_t*)_dom;
-    sdsfree(dom->title);
-    if (0 != dom->attributes) listRelease(dom->attributes);
-    if (0 != dom->id) sdsfree(dom->id);
-    if (0 != dom->classes) listRelease(dom->classes);
-    if (0 != dom->styleCssDeclarations) listRelease(dom->styleCssDeclarations);
-     listRelease(dom->cssDeclarations);
-    if (0 != dom->content) sdsfree(dom->content);
-    listRelease(dom->children);
+    sdsfree(dom->Title);
+    if (0 != dom->Attributes) listRelease(dom->Attributes);
+    if (0 != dom->Id) sdsfree(dom->Id);
+    if (0 != dom->Classes) listRelease(dom->Classes);
+    if (0 != dom->StyleCssDeclarations) listRelease(dom->StyleCssDeclarations);
+     listRelease(dom->CssDeclarations);
+    if (0 != dom->Content) sdsfree(dom->Content);
+    listRelease(dom->Children);
 }
 
 // 解析单个tag 中的 title和attribute
 static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
-    int contentLen = sdslen(token->content);
+    int contentLen = sdslen(token->Content);
 
     uiHtmlDomInfo_t *htmlDomInfo;
     int contentOffset;
@@ -287,28 +287,28 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
     // 提取 title
     contentOffset = 0;
     for (contentEndOffset = 1; contentEndOffset < contentLen; contentEndOffset++) {
-        if (UI_IsWhiteSpace(token->content[contentEndOffset])) {
+        if (UI_IsWhiteSpace(token->Content[contentEndOffset])) {
             break;
         }
     }
-    dom->title = sdscatlen(dom->title, &(token->content[contentOffset]), contentEndOffset-contentOffset);
-    htmlDomInfo = dictFetchValue(uiHtmlDomInfoDict, dom->title);
+    dom->Title = sdscatlen(dom->Title, &(token->Content[contentOffset]), contentEndOffset-contentOffset);
+    htmlDomInfo = dictFetchValue(uiHtmlDomInfoDict, dom->Title);
     if (0 != htmlDomInfo) {
-        dom->info = htmlDomInfo;
+        dom->Info = htmlDomInfo;
         InitialHtmlDomStyleByHtmlDomInfo(dom);
     }
 
     contentOffset = contentEndOffset + 1;
 
-    int len = strlen(&token->content[contentOffset]);
+    int len = strlen(&token->Content[contentOffset]);
     if (0 == len) {
         return;
     }
 
     doubleString_t *domAttribute;
-    sds attributeData = sdsnewlen(&token->content[contentOffset], len);
+    sds attributeData = sdsnewlen(&token->Content[contentOffset], len);
     int attributeDataOffset;
-    char *attributeDataPtr = &token->content[contentOffset];
+    char *attributeDataPtr = &token->Content[contentOffset];
     char *attributeKey = 0;
     char *attributeValue = 0;
     char *sptr, *sptr2;
@@ -367,20 +367,20 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
                 attributeValue = stringnewlen(attributeData, strlen(attributeData));
                 expectState = EXPECTING_KEY;
 
-                if (0 == dom->attributes) {
-                    dom->attributes = listCreate();
-                    dom->attributes->free = freeDoubleString;
+                if (0 == dom->Attributes) {
+                    dom->Attributes = listCreate();
+                    dom->Attributes->free = freeDoubleString;
                 }
 
                 domAttribute = newDoubleString();
                 domAttribute->v1 = attributeKey;
                 domAttribute->v2 = attributeValue;
-                dom->attributes = listAddNodeTail(dom->attributes, domAttribute);
+                dom->Attributes = listAddNodeTail(dom->Attributes, domAttribute);
 
                 if (0 == stringcmp("class", attributeKey)) {
-                    if (0 == dom->classes) {
-                        dom->classes = listCreate();
-                        dom->classes->free = listFreeSds;
+                    if (0 == dom->Classes) {
+                        dom->Classes = listCreate();
+                        dom->Classes->free = listFreeSds;
                     }
 
                     sptr = attributeValue;
@@ -394,7 +394,7 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
                         }
 
                         if (UI_IsWhiteSpace(*sptr2)) {
-                            listAddNodeTail(dom->classes, sdsnewlen(sptr, sptr2-sptr));
+                            listAddNodeTail(dom->Classes, sdsnewlen(sptr, sptr2-sptr));
 
                             while (UI_IsWhiteSpace(*sptr2)) {
                                 sptr2++;
@@ -411,18 +411,18 @@ static inline void parseHtmlDomTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *toke
                     }
 
                     if (sptr2 > sptr) {
-                        listAddNodeTail(dom->classes, sdsnewlen(sptr, sptr2-sptr));
+                        listAddNodeTail(dom->Classes, sdsnewlen(sptr, sptr2-sptr));
                     }
 
                 } else if (0 == stringcmp("id", attributeKey)) {
-                    if (0 != dom->id) {
-                        sdsfree(dom->id);
+                    if (0 != dom->Id) {
+                        sdsfree(dom->Id);
                     }
 
-                    dom->id = sdsnew(attributeValue);
+                    dom->Id = sdsnew(attributeValue);
 
                 } else if (0 == stringcmp("style", attributeKey)) {
-                    UI_CompileCssDeclarations(&dom->styleCssDeclarations, attributeValue);
+                    UI_CompileCssDeclarations(&dom->StyleCssDeclarations, attributeValue);
                 }
 
                 attributeKey = 0;
@@ -445,25 +445,25 @@ PARSE_HTML_DOM_TAG_END:
 
 // <tag>
 static inline uiHtmlDom_t* parseHtmlTokenStartTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
-    sdsrange(token->content, 1, -2);
+    sdsrange(token->Content, 1, -2);
     uiHtmlDom_t *newdom = UI_NewHtmlDom(dom);
     parseHtmlDomTag(newdom, token);
-    dom->children = listAddNodeTail(dom->children, newdom);
+    dom->Children = listAddNodeTail(dom->Children, newdom);
     return newdom;
 }
 
 // </tag>
 static inline uiHtmlDom_t* parseHtmlTokenEndTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
-    sdsrange(token->content, 2, -2);
-    return dom->parent;
+    sdsrange(token->Content, 2, -2);
+    return dom->Parent;
 }
 
 // <tag/>
 static inline uiHtmlDom_t* parseHtmlTokenSelfClosingTag(uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
-    sdsrange(token->content, 1, -3);
+    sdsrange(token->Content, 1, -3);
     uiHtmlDom_t *newdom = UI_NewHtmlDom(dom);
     parseHtmlDomTag(newdom, token);
-    dom->children = listAddNodeTail(dom->children, newdom);
+    dom->Children = listAddNodeTail(dom->Children, newdom);
     return dom;
 }
 
@@ -471,27 +471,27 @@ static inline uiHtmlDom_t* parseHtmlTokenSelfClosingTag(uiHtmlDom_t *dom, uiDocu
 static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
         uiHtmlDom_t *dom, uiDocumentScanToken_t *token) {
 
-    if (UIHTML_DOM_TYPE_SCRIPT == dom->info->type) {
-        document->script = sdscatsds(document->script, token->content);
+    if (UIHTML_DOM_TYPE_SCRIPT == dom->Info->Type) {
+        document->Script = sdscatsds(document->Script, token->Content);
 
-    } else if (UIHTML_DOM_TYPE_STYLE == dom->info->type) {
-        document->style = sdscatsds(document->style, token->content);
+    } else if (UIHTML_DOM_TYPE_STYLE == dom->Info->Type) {
+        document->Style = sdscatsds(document->Style, token->Content);
 
     } else {
         // 除了 script 以外的dom内容，均作特殊处理
         uiHtmlDom_t *newdom = UI_NewHtmlDom(dom);
-        newdom->content = sdsempty();
-        newdom->info = dictFetchValue(uiHtmlDomInfoDict, "text");
+        newdom->Content = sdsempty();
+        newdom->Info = dictFetchValue(uiHtmlDomInfoDict, "text");
         InitialHtmlDomStyleByHtmlDomInfo(newdom);
-        dom->children = listAddNodeTail(dom->children, newdom);
+        dom->Children = listAddNodeTail(dom->Children, newdom);
 
-        newdom->content = sdsMakeRoomFor(newdom->content,
-                sdslen(newdom->content)+sdslen(token->content));
+        newdom->Content = sdsMakeRoomFor(newdom->Content,
+                sdslen(newdom->Content)+sdslen(token->Content));
 
-        int domPoi = sdslen(newdom->content);
+        int domPoi = sdslen(newdom->Content);
         int isWhiteSpaceFound = 0;
-        int len = sdslen(token->content);
-        char *ptr = token->content;
+        int len = sdslen(token->Content);
+        char *ptr = token->Content;
         char *ptr2;
         sds tmpString = sdsMakeRoomFor(sdsempty(), 12);
         for (int i = 0; i < len; i++,ptr++) {
@@ -499,7 +499,7 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
             if (UI_IsWhiteSpace(*ptr)) {
                 if (0 == isWhiteSpaceFound) {
                     isWhiteSpaceFound = 1;
-                    newdom->content[domPoi] = ' ';
+                    newdom->Content[domPoi] = ' ';
                     domPoi++;
                 }
                 continue;
@@ -521,34 +521,34 @@ static inline uiHtmlDom_t* parseHtmlTokenText(uiDocument_t *document,
                 ptr = ptr2;
                 ptr2 = dictFetchValue(UIHtmlSpecialStringTable, tmpString);
                 if (0 != ptr2) {
-                    newdom->content[domPoi] = *ptr2;
+                    newdom->Content[domPoi] = *ptr2;
                     domPoi++;
                 }
                 continue;
             }
 
-            newdom->content[domPoi] = *ptr;
+            newdom->Content[domPoi] = *ptr;
             domPoi++;
         }
         sdsfree(tmpString);
-        newdom->content[domPoi] = '\0';
-        newdom->contentUtf8Width = utf8StrWidth(newdom->content);
-        sdsupdatelen(newdom->content);
+        newdom->Content[domPoi] = '\0';
+        newdom->ContentUtf8Width = utf8StrWidth(newdom->Content);
+        sdsupdatelen(newdom->Content);
     }
 
     return dom;
 }
 
 int UI_ParseHtml(uiDocument_t *document) {
-    document->rootDom = UI_NewHtmlDom(0);
-    uiHtmlDom_t *dom = document->rootDom;
+    document->RootDom = UI_NewHtmlDom(0);
+    uiHtmlDom_t *dom = document->RootDom;
     uiDocumentScanner_t htmlScanner = {
-        0, document->content, document->content, UI_ScanHtmlToken
+        0, document->Content, document->Content, UI_ScanHtmlToken
     };
 
     uiDocumentScanToken_t *token;
-    while (0 != (token = htmlScanner.scan(&htmlScanner))) {
-        switch (token->type) {
+    while (0 != (token = htmlScanner.Scan(&htmlScanner))) {
+        switch (token->Type) {
             case UIHTML_TOKEN_START_TAG:
                 dom = parseHtmlTokenStartTag(dom, token);
                 break;
@@ -573,13 +573,13 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     int i;
     for (i = 0; i < indent; i++) { printf("  "); }
     if (0 == UI_IsHtmlDomNotCareCssDeclaration(dom)) {
-        printf("<%s:%s>", dom->title, dom->info->name);
+        printf("<%s:%s>", dom->Title, dom->Info->Name);
     }
-    if (0 != dom->attributes && listLength(dom->attributes) > 0) {
+    if (0 != dom->Attributes && listLength(dom->Attributes) > 0) {
         listIter *liAttribute;
         listNode *lnAttribute;
         doubleString_t *attribute;
-        liAttribute = listGetIterator(dom->attributes, AL_START_HEAD);
+        liAttribute = listGetIterator(dom->Attributes, AL_START_HEAD);
         while (0 != (lnAttribute = listNext(liAttribute))) {
             attribute = (doubleString_t*)listNodeValue(lnAttribute);
             printf(" |%s=%s| ", attribute->v1, attribute->v2);
@@ -588,7 +588,7 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
     }
 
     if (1 == UI_IsHtmlDomNotCareCssDeclaration(dom)) {
-        printf("(%s) %s\n", dom->info->name, dom->content);
+        printf("(%s) %s\n", dom->Info->Name, dom->Content);
 
     } else {
         printf("\n");
@@ -596,7 +596,7 @@ void UI_PrintHtmlDomTree(uiHtmlDom_t *dom, int indent) {
 
     listIter *li;
     listNode *ln;
-    li = listGetIterator(dom->children, AL_START_HEAD);
+    li = listGetIterator(dom->Children, AL_START_HEAD);
     indent++;
     while (0 != (ln = listNext(li))) {
         UI_PrintHtmlDomTree((uiHtmlDom_t*)listNodeValue(ln), indent);

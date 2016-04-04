@@ -22,6 +22,6 @@ TEST_CASE("fail css parser test")
                   #head div div div a input { width:20; }\
                   </style>\
                   ";
-    uiDocument_t *document = UI_ParseDocument(html);
-    UI_PrintCssStyleSheet(document->cssStyleSheet);
+    uiDocument_t *document = UI_ParseDocumentWithoutRender(html);
+    UI_PrintCssStyleSheet(document->CssStyleSheet);
 }

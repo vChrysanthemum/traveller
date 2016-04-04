@@ -37,14 +37,14 @@ static void uiLoop() {
 
     while (1) {
         halfdelay(2);
-        ui_env->ch = getch();
-        if (ERR != ui_env->ch) {
+        ui_env->Ch = getch();
+        if (ERR != ui_env->Ch) {
             UIKeyDownProcessor proc;
             listNode *node;
             listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
             while (0 != (node = listNext(iter))) {
-                proc = (UIKeyDownProcessor)node->value;
-                proc(ui_env->ch);
+                proc = (UIKeyDownProcessor)node->Value;
+                proc(ui_env->Ch);
             }
             listReleaseIterator(iter);
         }
@@ -64,7 +64,7 @@ int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
     listNode *node;
     listIter *iter = listGetIterator(keyDownProcessors, AL_START_HEAD);
     while (0 != (node = listNext(iter))) {
-        if (subscriber == node->value) {
+        if (subscriber == node->Value) {
             listDelNode(keyDownProcessors, node);
             break;
         }
@@ -74,13 +74,13 @@ int UI_UnSubscribeKeyDownEvent(UIKeyDownProcessor subscriber) {
 }
 
 static void UI_PrepareLoadPageActor() {
-    etFactoryActor_t *factoryActor = ui_device->factoryActor;
+    etFactoryActor_t *FactoryActor = ui_device->FactoryActor;
     etChannelActor_t *channelActor = ET_NewChannelActor();
-    channelActor->key = stringnew("/loadpage");
-    ET_FactoryActorAppendChannel(factoryActor, channelActor);
+    channelActor->Key = stringnew("/loadpage");
+    ET_FactoryActorAppendChannel(FactoryActor, channelActor);
 
-    etActor_t *actor = ET_FactoryActorNewActor(factoryActor);
-    actor->proc = UI_LoadPageActor;
+    etActor_t *actor = ET_FactoryActorNewActor(FactoryActor);
+    actor->Proc = UI_LoadPageActor;
     ET_SubscribeChannel(actor, channelActor);
 }
 
@@ -116,7 +116,7 @@ int UI_Init() {
     UI_initConsole();
     //UI_InitMap();
 
-    top_panel(ui_console->uiwin->panel);
+    top_panel(ui_console->UIWin->Panel);
     update_panels();
     doupdate();
 

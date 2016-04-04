@@ -11,8 +11,8 @@
 
 static IniOption* NewOption() {
     IniOption *option = (IniOption*)zmalloc(sizeof(IniOption));
-    option->key = sdsempty();
-    option->value = sdsempty();
+    option->Key = sdsempty();
+    option->Value = sdsempty();
     return option;
 }
 
@@ -20,8 +20,8 @@ static void dictFreeOption(void *privdata, void *_option) {
     DICT_NOTUSED(privdata);
     IniOption *option = (IniOption*)_option;
 
-    sdsfree(option->key);
-    sdsfree(option->value);
+    sdsfree(option->Key);
+    sdsfree(option->Value);
     zfree(option);
 }
 
@@ -38,8 +38,8 @@ static void dictFreeSection(void *privdata, void* _section) {
     DICT_NOTUSED(privdata);
     IniSection *section = (IniSection*)_section;
 
-    sdsfree(section->key);
-    dictRelease(section->options);
+    sdsfree(section->Key);
+    dictRelease(section->Options);
     zfree(section);
 }
 
@@ -54,8 +54,8 @@ dictType sectionDictType = {
 
 static IniSection* NewSection() {
     IniSection *section = (IniSection*)zmalloc(sizeof(IniSection));
-    section->key = sdsempty();
-    section->options = dictCreate(&sectionOptionDictType, NULL);
+    section->Key = sdsempty();
+    section->Options = dictCreate(&sectionOptionDictType, NULL);
     return section;
 }
 
@@ -150,12 +150,12 @@ static int parseOptionValueAndSkip(char **ptr) {
 }
 
 static inline IniSection* MustGetSection(Ini *conf, char *key) {
-    IniSection *section = (IniSection*)dictFetchValue(conf->sections, key);
+    IniSection *section = (IniSection*)dictFetchValue(conf->Sections, key);
 
     if (0 == section) {
         section = NewSection();
-        section->key = sdscat(section->key, key);
-        dictAdd(conf->sections, stringnew(key), section);
+        section->Key = sdscat(section->Key, key);
+        dictAdd(conf->Sections, stringnew(key), section);
     }
 
     return section;
@@ -166,7 +166,7 @@ Ini *InitIni() {
     Ini *conf;
     conf = (Ini*)zmalloc(sizeof(Ini));
     memset(conf, 0, sizeof(Ini));
-    conf->sections = dictCreate(&sectionDictType, 0);
+    conf->Sections = dictCreate(&sectionDictType, 0);
     return conf;
 }
 
@@ -185,9 +185,9 @@ void IniRead(Ini *conf, char *path) {
         return;
     }
 
-    conf->contentsCount += 1;
-    conf->contents = (char **)realloc(conf->contents, sizeof(char **) * conf->contentsCount);
-    conf->contents[conf->contentsCount-1] = content;
+    conf->ContentsCount += 1;
+    conf->Contents = (char **)realloc(conf->Contents, sizeof(char **) * conf->ContentsCount);
+    conf->Contents[conf->ContentsCount-1] = content;
 
     ptr = content;
 
@@ -221,9 +221,9 @@ void IniRead(Ini *conf, char *path) {
 
         if (0 != section) {
             option = NewOption();
-            option->key = sdscpylen(option->key, optionKey, optionKeyLen);
-            option->value = sdscpylen(option->value, optionValue, optionValueLen);
-            dictReplace(section->options, stringnewlen(optionKey, optionKeyLen), option);
+            option->Key = sdscpylen(option->Key, optionKey, optionKeyLen);
+            option->Value = sdscpylen(option->Value, optionValue, optionValueLen);
+            dictReplace(section->Options, stringnewlen(optionKey, optionKeyLen), option);
         }
     }
 
@@ -231,24 +231,24 @@ void IniRead(Ini *conf, char *path) {
 }
 
 sds IniGet(Ini *conf, char *sectionKey, char *optionKey) {
-    IniSection *section = (IniSection*)dictFetchValue(conf->sections, sectionKey);
+    IniSection *section = (IniSection*)dictFetchValue(conf->Sections, sectionKey);
     if (0 == section) {
         return 0;
     }
 
-    IniOption *option = (IniOption*)dictFetchValue(section->options, optionKey);
+    IniOption *option = (IniOption*)dictFetchValue(section->Options, optionKey);
     if (0 == option) {
         return 0;
     }
 
-    return option->value;
+    return option->Value;
 }
 
 void FreeIni(Ini *conf) {
     int j;
-    for (j = 0; j < conf->contentsCount; j++) {
-        free(conf->contents[j]);
+    for (j = 0; j < conf->ContentsCount; j++) {
+        free(conf->Contents[j]);
     }
-    dictRelease(conf->sections);
+    dictRelease(conf->Sections);
     free(conf);
 }

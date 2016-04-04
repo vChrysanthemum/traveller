@@ -32,17 +32,17 @@ int STNTResp_ScriptServiceRequest(lua_State *L) {
     ST_AddReplyHeader(L);
 
     ntScriptServiceRequestCtx_t *ctx = NTResp_NewScriptServiceRequestCtx();
-    if (sn->scriptServiceRequestCtxListMaxId > 9999999) {
-        sn->scriptServiceRequestCtxListMaxId = 0;
+    if (sn->ScriptServiceRequestCtxListMaxId > 9999999) {
+        sn->ScriptServiceRequestCtxListMaxId = 0;
     }
-    ctx->requestId = sn->scriptServiceRequestCtxListMaxId;
+    ctx->requestId = sn->ScriptServiceRequestCtxListMaxId;
     const char *tmpstr;
     tmpstr = lua_tostring(L, 2); if (0 != tmpstr) ctx->ScriptServiceCallbackUrl = sdscpy(ctx->ScriptServiceCallbackUrl, tmpstr);
     tmpstr = lua_tostring(L, 3); if (0 != tmpstr) ctx->ScriptServiceCallbackArg = sdscpy(ctx->ScriptServiceCallbackArg, tmpstr);
     ctx->ScriptServiceLua = L;
 
-    sn->scriptServiceRequestCtxListMaxId++;
-    sn->scriptServiceRequestCtxList = listAddNodeTail(sn->scriptServiceRequestCtxList, ctx);
+    sn->ScriptServiceRequestCtxListMaxId++;
+    sn->ScriptServiceRequestCtxList = listAddNodeTail(sn->ScriptServiceRequestCtxList, ctx);
 
     char **replyArr = (char**)zmalloc(sizeof(char**) * (argc-3+2));
 

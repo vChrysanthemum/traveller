@@ -10,8 +10,8 @@
 #include "ui/document/document.h"
 
 static void RenderHtmlDom(uiDocument_t *document, uiHtmlDom_t *dom) {
-    if (0 != dom->info->render) {
-        dom->info->render(document, dom);
+    if (0 != dom->Info->Render) {
+        dom->Info->Render(document, dom);
     }
 }
 
@@ -20,7 +20,7 @@ static void RenderHtmlDomTree(uiDocument_t *document, uiHtmlDom_t *dom) {
 
     listIter *li;
     listNode *ln;
-    li = listGetIterator(dom->children, AL_START_HEAD);
+    li = listGetIterator(dom->Children, AL_START_HEAD);
     while (0 != (ln = listNext(li))) {
         RenderHtmlDomTree(document, (uiHtmlDom_t*)listNodeValue(ln));
     }
@@ -28,5 +28,5 @@ static void RenderHtmlDomTree(uiDocument_t *document, uiHtmlDom_t *dom) {
 }
 
 void UI_RenderDocument(uiDocument_t *document) {
-    RenderHtmlDomTree(document, document->rootDom);
+    RenderHtmlDomTree(document, document->RootDom);
 }

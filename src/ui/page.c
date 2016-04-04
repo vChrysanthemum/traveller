@@ -16,15 +16,15 @@
 uiPage_t *UI_NewPage() {
     uiPage_t *page = (uiPage_t*)zmalloc(sizeof(uiPage_t));
     memset(page, 0, sizeof(uiPage_t));
-    page->title = sdsempty();
-    page->content = sdsempty();
+    page->Title = sdsempty();
+    page->Content = sdsempty();
     return page;
 }
 
 void UI_FreePage(uiPage_t *page) {
-    sdsfree(page->title);
-    sdsfree(page->content);
-    UI_FreeWindow(page->uiwin);
+    sdsfree(page->Title);
+    sdsfree(page->Content);
+    UI_FreeWindow(page->UIWin);
     zfree(page);
     return;
 }
@@ -32,18 +32,11 @@ void UI_FreePage(uiPage_t *page) {
 void* UI_LoadPageActor(etActor_t *actor, int args, void **argv) {
     uiPage_t *page = (uiPage_t*)argv[0];
 
-    uiDocument_t *document = UI_NewDocument();
-    document->content = page->content;
-    UI_ParseHtml(document);
+    page->UIWin = UI_createWindow(20, ui_width, 0, 0);
+    page->document = UI_ParseDocument(page->Content);
 
-    uiHtmlDom_t *dom = listNodeValue(document->rootDom->children->head);
-    C_UtilLogI("%s", dom->title);
-
-    page->uiwin = UI_createWindow(20, ui_width, 0, 0);
-    page->document = UI_ParseDocument(page->content);
-
-    wprintw(page->uiwin->win, page->content);
-    wrefresh(page->uiwin->win);
+    wprintw(page->UIWin->Win, page->Content);
+    wrefresh(page->UIWin->Win);
 
     return 0;
 }

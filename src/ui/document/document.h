@@ -24,7 +24,7 @@ uiDocumentScanToken_t* UI_ScanHtmlToken(uiDocumentScanner_t *scanner);
 void UI_PrepareCss();
 
 typedef struct uiCssDeclarationInfo_s {
-    char *name;
+    char *Name;
     enum uiCssDeclarationType_e {
         UI_CSS_DECLARATION_TYPE_UNKNOWN,
         UI_CSS_DECLARATION_TYPE_BACKGROUND_COLOR,
@@ -41,23 +41,27 @@ typedef struct uiCssDeclarationInfo_s {
         UI_CSS_DECLARATION_TYPE_MARGIN_RIGHT,
         UI_CSS_DECLARATION_TYPE_DISPLAY,
         UI_CSS_DECLARATION_TYPE_TEXT_ALIGN,
+        UI_CSS_DECLARATION_TYPE_MIN_WIDTH,
+        UI_CSS_DECLARATION_TYPE_MAX_WIDTH,
         UI_CSS_DECLARATION_TYPE_WIDTH,
+        UI_CSS_DECLARATION_TYPE_MIN_HEIGHT,
+        UI_CSS_DECLARATION_TYPE_MAX_HEIGHT,
         UI_CSS_DECLARATION_TYPE_HEIGHT,
         UI_CSS_DECLARATION_TYPE_POSITION,
-    } type;
+    } Type;
 } uiCssDeclarationInfo_t;
 
 typedef struct uiCssDeclaration_s {
-    enum uiCssDeclarationType_e type;
-    sds key;
-    sds value;
+    enum uiCssDeclarationType_e Type;
+    sds Key;
+    sds Value;
 } uiCssDeclaration_t;
 uiCssDeclaration_t* UI_NewCssDeclaration();
 void UI_FreeCssDeclaration(void *_cssDeclaration);
 
 typedef struct uiCssDeclarationList_s {
     int referenceCount;
-    list *data;
+    list *Data;
 } uiCssDeclarationList_t;
 void UI_UpdateCssDeclaration(uiCssDeclaration_t *src, uiCssDeclaration_t *dst);
 uiCssDeclaration_t* UI_DuplicateCssDeclaration(uiCssDeclaration_t *dst);
@@ -71,32 +75,32 @@ typedef struct uiCssSelectorSection_s {
         UI_SELECTOR_SECTION_TYPE_TAG,
         UI_SELECTOR_SECTION_TYPE_CLASS,
         UI_SELECTOR_SECTION_TYPE_ID,
-    } type;
-    sds value;
+    } Type;
+    sds Value;
     enum cssSelectorSectionAttributeType {
         UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_NONE,
         UI_SELECTOR_SECTION_ATTRIBUTE_TYPE_CLASS,
-    } attributeType;
-    sds attribute;
+    } AttributeType;
+    sds Attribute;
 } uiCssSelectorSection_t;
 uiCssSelectorSection_t* UI_NewCssSelectorSection();
 void UI_FreeCssSelectorSection(void *_section);
 
 typedef struct uiCssSelector_s {
-    list *sections;
+    list *Sections;
 } uiCssSelector_t;
 uiCssSelector_t* UI_NewCssSelector();
 void UI_FreeCssSelector(uiCssSelector_t *selector);
 
 typedef struct uiCssRule_s {
-    uiCssSelector_t *selector;
-    uiCssDeclarationList_t *cssDeclarationList;
+    uiCssSelector_t         *Selector;
+    uiCssDeclarationList_t  *CssDeclarationList;
 } uiCssRule_t;
 uiCssRule_t* UI_NewCssRule();
 void UI_FreeCssRule(void *_rule);
 
 typedef struct uiCssStyleSheet_s {
-    list * rules;
+    list * Rules;
 } uiCssStyleSheet_t;
 uiCssStyleSheet_t* UI_NewCssStyleSheet();
 void UI_FreeCssStyleSheet(uiCssStyleSheet_t *cssStyleSheet);
@@ -131,37 +135,41 @@ void UI_RenderHtmlDomTd        (uiDocument_t *document, uiHtmlDom_t *dom);
 void UI_RenderHtmlDomInput     (uiDocument_t *document, uiHtmlDom_t *dom);
 
 typedef struct uiHtmlDomStyle_s {
-    unsigned int paddingTop;
-    unsigned int paddingBottom;
-    unsigned int paddingLeft;
-    unsigned int paddingRight;
-    unsigned int marginTop;
-    unsigned int marginBottom;
-    unsigned int marginLeft;
-    unsigned int marginRight;
-    unsigned int backgroundColor;
-    unsigned int color;
-    int          width;
-    int          height;
-    int          positionStartX;
-    int          positionStartY;
-    unsigned int isHide;
-    int          textAlign;
+    unsigned int PaddingTop;
+    unsigned int PaddingBottom;
+    unsigned int PaddingLeft;
+    unsigned int PaddingRight;
+    unsigned int MarginTop;
+    unsigned int MarginBottom;
+    unsigned int MarginLeft;
+    unsigned int MarginRight;
+    unsigned int BackgroundColor;
+    unsigned int Color;
+    int          MinWidth;
+    int          MaxWidth;
+    int          Width;
+    int          MinHeight;
+    int          MaxHeight;
+    int          Height;
+    int          PositionStartX;
+    int          PositionStartY;
+    unsigned int IsHide;
+    int          TextAlign;
     enum uiHtmlCssStyleDisplay_e {
         HTML_CSS_STYLE_DISPLAY_NONE,
         HTML_CSS_STYLE_DISPLAY_BLOCK,
         HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
-    } display;
+    } Display;
     enum uiHtmlCssStylePosition_e {
         HTML_CSS_STYLE_POSITION_RELATIVE,
         HTML_CSS_STYLE_POSITION_ABSOLUTE,
         HTML_CSS_STYLE_POSITION_FIXED,
         HTML_CSS_STYLE_POSITION_STATIC,
-    } position;
+    } Position;
 } uiHtmlDomStyle_t;
 
 typedef struct uiHtmlDomInfo_s {
-    char *name;
+    char *Name;
     enum uiHtmlDomType_e {
         UIHTML_DOM_TYPE_UNDEFINED,
         UIHTML_DOM_TYPE_TEXT,
@@ -176,25 +184,25 @@ typedef struct uiHtmlDomInfo_s {
         UIHTML_DOM_TYPE_TD,
         UIHTML_DOM_TYPE_STYLE,
         UIHTML_DOM_TYPE_INPUT,
-    } type;
+    } Type;
     enum uiHtmlCssStyleDisplay_e  InitialStyleDisplay;
     enum uiHtmlCssStylePosition_e InitialStylePosition;
-    UI_RenderHtmlDom render;
+    UI_RenderHtmlDom Render;
 } uiHtmlDomInfo_t;
 
 typedef struct uiHtmlDom_s {
-    uiHtmlDom_t               *parent;
-    sds                       title;
-    list                      *attributes;// list doubleString_t
-    sds                       id;
-    list                      *classes;  // list sds
-    list                      *styleCssDeclarations;
-    list                      *cssDeclarations;
-    sds                       content;
-    int                       contentUtf8Width;
-    list                      *children;
-    uiHtmlDomStyle_t          style;
-    uiHtmlDomInfo_t           *info;
+    uiHtmlDom_t               *Parent;
+    sds                       Title;
+    list                      *Attributes;// list doubleString_t
+    sds                       Id;
+    list                      *Classes;  // list sds
+    list                      *StyleCssDeclarations;
+    list                      *CssDeclarations;
+    sds                       Content;
+    int                       ContentUtf8Width;
+    list                      *Children;
+    uiHtmlDomStyle_t          Style;
+    uiHtmlDomInfo_t           *Info;
 } uiHtmlDom_t;
 int UI_IsHtmlDomNotCareCssDeclaration(uiHtmlDom_t *dom);
 uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom);
@@ -213,38 +221,45 @@ list* UI_GetHtmlDomsByCssSelector(uiDocument_t* document, uiCssSelector_t *selec
 /**
  * render 相关
  */
+typedef struct uiLayoutDocumentEnvironment_s {
+    int StartX;
+    int StartY;
+} uiLayoutDocumentEnvironment_t;
 void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document);
+void UI_LayoutDocument(uiDocument_t *document);
 void UI_RenderDocument(uiDocument_t *document);
 
 /**
  * document 相关
  */
 typedef struct uiDocumentScanToken_s {
-    int  type;
-    sds  content;
+    int  Type;
+    sds  Content;
 } uiDocumentScanToken_t;
 uiDocumentScanToken_t* UI_NewDocumentScanToken();
 void UI_FreeDocumentScanToken(uiDocumentScanToken_t *token);
 
 typedef struct uiDocumentScanner_s uiDocumentScanner_t;
 typedef struct uiDocumentScanner_s {
-    int  state;
-    char *content;
-    char *current;
-    uiDocumentScanToken_t* (*scan) (uiDocumentScanner_t *scanner);
+    int  State;
+    char *Content;
+    char *Current;
+    uiDocumentScanToken_t* (*Scan) (uiDocumentScanner_t *scanner);
 } uiDocumentScanner_t;
 
 void UI_PrepareDocument();
 typedef struct uiDocument_s {
-    char              *content;
-    uiHtmlDom_t       *rootDom;
-    uiCssStyleSheet_t *cssStyleSheet;
-    sds               title;
-    sds               script;
-    sds               style;
+    char                            *Content;
+    uiHtmlDom_t                     *RootDom;
+    uiCssStyleSheet_t               *CssStyleSheet;
+    sds                             Title;
+    sds                             Script;
+    sds                             Style;
+    uiLayoutDocumentEnvironment_t   layoutEnvironment;
 } uiDocument_t;
 uiDocument_t* UI_NewDocument();
 void UI_FreeDocument(uiDocument_t* document);
+uiDocument_t* UI_ParseDocumentWithoutRender(char *documentContent);
 uiDocument_t* UI_ParseDocument(char *documentContent);
 
 #endif

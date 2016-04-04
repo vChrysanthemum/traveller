@@ -15,5 +15,4 @@ void UI_RenderHtmlDomBody(uiDocument_t *document, uiHtmlDom_t *dom) {
 }
 
 void UI_RenderHtmlDomTitle(uiDocument_t *document, uiHtmlDom_t *dom) {
-    C_UtilLogI("%s %s", dom->title, dom->content);
 }

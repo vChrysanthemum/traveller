@@ -19,26 +19,26 @@ etDevice_t* ET_NewDevice(etDevice_tLooper looper, void *arg) {
     etDevice_t *device = (etDevice_t*)zmalloc(sizeof(etDevice_t));
     memset(device, 0, sizeof(etDevice_t));
     
-    device->jobs = listCreate();
-    device->jobs->free = ET_FreeDeviceJob;
+    device->Jobs = listCreate();
+    device->Jobs->free = ET_FreeDeviceJob;
 
-    device->factoryActor = ET_NewFactoryActor();
+    device->FactoryActor = ET_NewFactoryActor();
     pthread_mutex_init(&device->jobMutex, 0);
     pthread_mutex_init(&device->actorMutex, 0);
     pthread_mutex_init(&device->eventMutex, 0);
     pthread_mutex_init(&device->eventWaitMutex, 0);
     pthread_cond_init(&device->eventWaitCond, 0);
 
-    device->waitingEventList = listCreate();
+    device->WaitingEventList = listCreate();
 
-    device->looper = looper;
-    device->looperArg = arg;
+    device->Looper = looper;
+    device->LooperArg = arg;
 
     return device;
 }
 
 void ET_FreeDevice(etDevice_t *device) {
-    ET_FreeFactoryActor(device->factoryActor);
+    ET_FreeFactoryActor(device->FactoryActor);
     pthread_mutex_destroy(&device->jobMutex);
     pthread_mutex_destroy(&device->actorMutex);
     pthread_mutex_destroy(&device->eventMutex);
@@ -48,21 +48,21 @@ void ET_FreeDevice(etDevice_t *device) {
 }
 
 void ET_StartDevice(etDevice_t *device) {
-    if (0 != device->looper) {
-        pthread_create(&device->looperNtid, 0, device->looper, device->looperArg);
+    if (0 != device->Looper) {
+        pthread_create(&device->LooperNtid, 0, device->Looper, device->LooperArg);
     }
 }
 
 static void* deviceStartJob(void *_param) {
     etDeviceStartJobParam_t *param = (etDeviceStartJobParam_t*)_param;
-    etDevice_t *device = param->device;
-    etDeviceJob_t *job = param->job;
+    etDevice_t *device = param->Device;
+    etDeviceJob_t *job = param->Job;
 
-    pthread_create(&job->ntid, job->pthreadAttr, job->startRoutine, job->arg);
+    pthread_create(&job->ntid, job->pthreadAttr, job->StartRoutine, job->Arg);
 
-    pthread_join(job->ntid, &job->exitStatus);
+    pthread_join(job->ntid, &job->ExitStatus);
 
-    listDelNode(device->jobs, listIndex(device->jobs, job->index));
+    listDelNode(device->Jobs, listIndex(device->Jobs, job->Index));
 
     return 0;
 }
@@ -74,12 +74,12 @@ pthread_t ET_DeviceStartJob(etDevice_t *device, const pthread_attr_t *attr,
     memset(job, 0, sizeof(etDeviceJob_t));
 
     job->pthreadAttr = attr;
-    job->arg = arg;
-    job->startRoutine = startRoutine;
+    job->Arg = arg;
+    job->StartRoutine = startRoutine;
 
     pthread_mutex_lock(&device->jobMutex);
-    device->jobs = listAddNodeTail(device->jobs, job);
-    job->index = listLength(device->jobs) - 1;
+    device->Jobs = listAddNodeTail(device->Jobs, job);
+    job->Index = listLength(device->Jobs) - 1;
     pthread_mutex_unlock(&device->jobMutex);
 
     etDeviceStartJobParam_t param = {device, job};
@@ -93,7 +93,7 @@ void ET_DeviceAppendEvent(etDevice_t *device, etActorEvent_t *event) {
     pthread_mutex_lock(&device->eventWaitMutex);
 
     pthread_mutex_lock(&device->eventMutex);
-    device->waitingEventList = listAddNodeTail(device->waitingEventList, event);
+    device->WaitingEventList = listAddNodeTail(device->WaitingEventList, event);
 
     pthread_mutex_unlock(&device->eventMutex);
 
@@ -104,13 +104,13 @@ void ET_DeviceAppendEvent(etDevice_t *device, etActorEvent_t *event) {
 list* ET_DevicePopEventList(etDevice_t *device) {
     list* _l;
 
-    if (0 == listLength(device->waitingEventList)) {
+    if (0 == listLength(device->WaitingEventList)) {
         return 0;
     }
 
     pthread_mutex_lock(&device->eventMutex);
-    _l = device->waitingEventList;
-    device->waitingEventList = listCreate();
+    _l = device->WaitingEventList;
+    device->WaitingEventList = listCreate();
     pthread_mutex_unlock(&device->eventMutex);
 
     return _l;
@@ -118,13 +118,13 @@ list* ET_DevicePopEventList(etDevice_t *device) {
 
 void ET_DeviceWaitEventList(etDevice_t *device) {
     pthread_mutex_lock(&device->eventWaitMutex);
-    if (0 == listLength(device->waitingEventList)) {
+    if (0 == listLength(device->WaitingEventList)) {
         pthread_cond_wait(&device->eventWaitCond, &device->eventWaitMutex);
     }
     pthread_mutex_unlock(&device->eventWaitMutex);
 
-    if (listLength(device->waitingEventList) < 20) {
+    if (listLength(device->WaitingEventList) < 20) {
         usleep(300);
     }
-    C_UtilLogI("%lu", listLength(device->waitingEventList));
+    C_UtilLogI("%lu", listLength(device->WaitingEventList));
 }

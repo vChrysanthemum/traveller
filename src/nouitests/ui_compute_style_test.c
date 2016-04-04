@@ -38,22 +38,22 @@ TEST_CASE("fail compute style test")
                   .hello table td.active { background:black;padding-left:10; }\
                   </style>\
                   ";
-    uiDocument_t *document = UI_ParseDocument(html);
+    uiDocument_t *document = UI_ParseDocumentWithoutRender(html);
     uiCssSelector_t *selector = 0;
     UI_CompileCssSelector(&selector, "div.hello table td.active");
 
     uiCssSelectorSection_t *selectorSection;
 
-    selectorSection = listNodeValue(listIndex(selector->sections, 0));
-    REQUIRE(0 == stringcmp(selectorSection->value, "div"), "err");
-    REQUIRE(0 == stringcmp(selectorSection->attribute, "hello"), "err");
+    selectorSection = listNodeValue(listIndex(selector->Sections, 0));
+    REQUIRE(0 == stringcmp(selectorSection->Value, "div"), "err");
+    REQUIRE(0 == stringcmp(selectorSection->Attribute, "hello"), "err");
 
-    selectorSection = listNodeValue(listIndex(selector->sections, 1));
-    REQUIRE(0 == stringcmp(selectorSection->value, "table"), "err");
+    selectorSection = listNodeValue(listIndex(selector->Sections, 1));
+    REQUIRE(0 == stringcmp(selectorSection->Value, "table"), "err");
 
-    selectorSection = listNodeValue(listIndex(selector->sections, 2));
-    REQUIRE(0 == stringcmp(selectorSection->value, "td"), "err");
-    REQUIRE(0 == stringcmp(selectorSection->attribute, "active"), "err");
+    selectorSection = listNodeValue(listIndex(selector->Sections, 2));
+    REQUIRE(0 == stringcmp(selectorSection->Value, "td"), "err");
+    REQUIRE(0 == stringcmp(selectorSection->Attribute, "active"), "err");
 
     list *doms = UI_GetHtmlDomsByCssSelector(document, selector);
 
@@ -63,8 +63,8 @@ TEST_CASE("fail compute style test")
     liDom = listGetIterator(doms, AL_START_HEAD);
     while (0 != (lnDom = listNext(liDom))) {
         dom = (uiHtmlDom_t*)listNodeValue(lnDom);
-        REQUIRE(10 == dom->style.paddingTop, "err");
-        REQUIRE(10 == dom->style.paddingLeft, "err");
+        REQUIRE(10 == dom->Style.PaddingTop, "err");
+        REQUIRE(10 == dom->Style.PaddingLeft, "err");
     }
     listReleaseIterator(liDom);
 

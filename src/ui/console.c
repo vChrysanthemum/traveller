@@ -13,9 +13,9 @@
 #include "g_extern.h"
 #include "ui/extern.h"
 
-static uiWindow_t *uiwin;
+static uiWindow_t *UIWin;
 static WINDOW   *win;
-static uiWindow_t *tabuiwin;
+static uiWindow_t *TabUIWin;
 static WINDOW   *tabwin;
 static uiCursor_t *cursor;
 static uiConsoleCommand_t *cmd;
@@ -33,7 +33,7 @@ static void renderTabs() {
     uiPage_t *page;
     listIter *li = listGetIterator(ui_pages, AL_START_HEAD);
     while (0 != (ln = listNext(li))) {
-        page = (uiPage_t*)ln->value;
+        page = (uiPage_t*)ln->Value;
 
         if (page == ui_activePage) {
             wattron(tabwin, COLOR_PAIR(CP_CONSOLE_TAB_ACTIVE));
@@ -42,7 +42,7 @@ static void renderTabs() {
         }
 
         wprintw(tabwin, " ");
-        wprintw(tabwin, page->title);
+        wprintw(tabwin, page->Title);
         wprintw(tabwin, " ");
 
         if (page == ui_activePage) {
@@ -119,8 +119,8 @@ static void prepareCmdMode() {
 void UI_initConsole() {
     ui_console = (uiConsole_t*)zmalloc(sizeof(uiConsole_t));
 
-    ui_console->tabuiwin = UI_createWindow(1, ui_width, ui_height-6, 0);
-    ui_console->uiwin = UI_createWindow(5, ui_width, ui_height-5, 0);
+    ui_console->TabUIWin = UI_createWindow(1, ui_width, ui_height-6, 0);
+    ui_console->UIWin = UI_createWindow(5, ui_width, ui_height-5, 0);
     ui_console->cursor.y = 0;
     ui_console->cursor.x = 0;
     ui_console->cmd.line = sdsempty();
@@ -129,10 +129,10 @@ void UI_initConsole() {
     memset(ui_console->cursor.utf8char, 0, 4*sizeof(char));
     ui_console->cursor.utf8charPoi = -1;
 
-    uiwin = ui_console->uiwin;
-    win = uiwin->win;
-    tabuiwin = ui_console->tabuiwin;
-    tabwin = tabuiwin->win;
+    UIWin = ui_console->UIWin;
+    win = UIWin->Win;
+    TabUIWin = ui_console->TabUIWin;
+    tabwin = TabUIWin->Win;
     cursor = &ui_console->cursor;
     cmd = &ui_console->cmd;
 

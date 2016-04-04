@@ -20,38 +20,46 @@ void UI_PrepareDocument() {
 
 uiDocumentScanToken_t* UI_NewDocumentScanToken() {
     uiDocumentScanToken_t *token = (uiDocumentScanToken_t*)zmalloc(sizeof(uiDocumentScanToken_t));
-    token->content = sdsempty();
+    token->Content = sdsempty();
     return token;
 }
 
 void UI_FreeDocumentScanToken(uiDocumentScanToken_t *token) {
-    if (0 != token->content) sdsfree(token->content);
+    if (0 != token->Content) sdsfree(token->Content);
     zfree(token);
 }
 
 uiDocument_t* UI_NewDocument() {
     uiDocument_t *document = (uiDocument_t*)zmalloc(sizeof(uiDocument_t));
     memset(document, 0, sizeof(uiDocument_t));
-    document->cssStyleSheet = UI_NewCssStyleSheet();
-    document->script = sdsempty();
-    document->style = sdsempty();
+    document->CssStyleSheet = UI_NewCssStyleSheet();
+    document->Script = sdsempty();
+    document->Style = sdsempty();
+    document->layoutEnvironment.StartX = 0;
+    document->layoutEnvironment.StartY = 0;
     return document;
 }
 
 void UI_FreeDocument(uiDocument_t* document) {
-    if (0 != document->rootDom) UI_FreeHtmlDom(document->rootDom);
-    UI_FreeCssStyleSheet(document->cssStyleSheet);
-    if (0 != document->title) sdsfree(document->title);
-    if (0 != document->script) sdsfree(document->script);
-    if (0 != document->style) sdsfree(document->style);
+    if (0 != document->RootDom) UI_FreeHtmlDom(document->RootDom);
+    UI_FreeCssStyleSheet(document->CssStyleSheet);
+    if (0 != document->Title) sdsfree(document->Title);
+    if (0 != document->Script) sdsfree(document->Script);
+    if (0 != document->Style) sdsfree(document->Style);
+}
+
+uiDocument_t* UI_ParseDocumentWithoutRender(char *documentContent) {
+    uiDocument_t *document = UI_NewDocument();
+    document->Content = documentContent;
+    UI_ParseHtml(document);
+    UI_ParseCssStyleSheet(document, document->Style);
+    UI_ComputeHtmlDomTreeStyle(document);
+    return document;
 }
 
 uiDocument_t* UI_ParseDocument(char *documentContent) {
-    uiDocument_t *document = UI_NewDocument();
-    document->content = documentContent;
-    UI_ParseHtml(document);
-    UI_ParseCssStyleSheet(document, document->style);
-    UI_ComputeHtmlDomTreeStyle(document);
+    uiDocument_t *document = UI_ParseDocumentWithoutRender(documentContent);
+    UI_LayoutDocument(document);
     UI_RenderDocument(document);
     return document;
 }

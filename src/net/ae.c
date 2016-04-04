@@ -145,7 +145,7 @@ void aeStop(aeLooper_t *eventLoop) {
 }
 
 int aeCreateFileEvent(aeLooper_t *eventLoop, int fd, int mask,
-        aeFileProc *proc, void *clientData)
+        aeFileProc *proc, void *ClientData)
 {
     if (fd >= eventLoop->setsize) {
         errno = ERANGE;
@@ -156,9 +156,9 @@ int aeCreateFileEvent(aeLooper_t *eventLoop, int fd, int mask,
     if (aeApiAddEvent(eventLoop, fd, mask) == -1)
         return AE_ERR;
     fe->mask |= mask;
-    if (mask & AE_READABLE) fe->rfileProc = proc;
-    if (mask & AE_WRITABLE) fe->wfileProc = proc;
-    fe->clientData = clientData;
+    if (mask & AE_READABLE) fe->RfileProc = proc;
+    if (mask & AE_WRITABLE) fe->WfileProc = proc;
+    fe->ClientData = ClientData;
     if (fd > eventLoop->maxfd)
         eventLoop->maxfd = fd;
     return AE_OK;
@@ -213,7 +213,7 @@ static void aeAddMillisecondsToNow(long long milliseconds, long *sec, long *ms) 
 }
 
 long long aeCreateTimeEvent(aeLooper_t *eventLoop, long long milliseconds,
-        aeTimeProc *proc, void *clientData,
+        aeTimeProc *proc, void *ClientData,
         aeEventFinalizerProc *finalizerProc)
 {
     long long id = eventLoop->timeEventNextId++;
@@ -225,7 +225,7 @@ long long aeCreateTimeEvent(aeLooper_t *eventLoop, long long milliseconds,
     aeAddMillisecondsToNow(milliseconds,&te->whenSec,&te->whenMs);
     te->timeProc = proc;
     te->finalizerProc = finalizerProc;
-    te->clientData = clientData;
+    te->ClientData = ClientData;
     te->next = eventLoop->timeEventHead;
     eventLoop->timeEventHead = te;
     return id;
@@ -243,7 +243,7 @@ int aeDeleteTimeEvent(aeLooper_t *eventLoop, long long id)
             else
                 prev->next = te->next;
             if (te->finalizerProc)
-                te->finalizerProc(eventLoop, te->clientData);
+                te->finalizerProc(eventLoop, te->ClientData);
             zfree(te);
             return AE_OK;
         }
@@ -320,7 +320,7 @@ static int processTimeEvents(aeLooper_t *eventLoop) {
             int retval;
 
             id = te->id;
-            retval = te->timeProc(eventLoop, id, te->clientData);
+            retval = te->timeProc(eventLoop, id, te->ClientData);
             processed++;
             /* After an event is processed our time event list may
              * no longer be the same, so we restart from head.
@@ -421,11 +421,11 @@ int aeProcessEvents(aeLooper_t *eventLoop, int flags)
              * processed, so we check if the event is still valid. */
             if (fe->mask & mask & AE_READABLE) {
                 rfired = 1;
-                fe->rfileProc(eventLoop,fd,fe->clientData,mask);
+                fe->RfileProc(eventLoop,fd,fe->ClientData,mask);
             }
             if (fe->mask & mask & AE_WRITABLE) {
-                if (!rfired || fe->wfileProc != fe->rfileProc)
-                    fe->wfileProc(eventLoop,fd,fe->clientData,mask);
+                if (!rfired || fe->WfileProc != fe->RfileProc)
+                    fe->WfileProc(eventLoop,fd,fe->ClientData,mask);
             }
             processed++;
         }

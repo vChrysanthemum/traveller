@@ -32,7 +32,7 @@ static void ST_InitScriptLua(stScript_t *script) {
     luaopen_string(L);
     luaopen_math(L);
 
-    lua_pushstring(L, script->basedir);lua_setglobal(L, "g_basedir");
+    lua_pushstring(L, script->BaseDir);lua_setglobal(L, "g_basedir");
 
     lua_newtable(L);lua_setglobal(L, "core");
 
@@ -68,7 +68,7 @@ static void ST_InitScriptLua(stScript_t *script) {
 
     int errno;
 
-    sds filepath = sdscatprintf(sdsempty(), "%s/main.lua", script->basedir);
+    sds filepath = sdscatprintf(sdsempty(), "%s/main.lua", script->BaseDir);
     errno = luaL_loadfile(L, filepath);
     if (errno) {
         C_UtilExit(0, "%s", lua_tostring(L, -1));
@@ -87,13 +87,13 @@ static void ST_InitScriptLua(stScript_t *script) {
 
     IniOption *iniOption;
     dictEntry *de;
-    dictIterator *di = dictGetIterator(script->iniSection->options);
+    dictIterator *di = dictGetIterator(script->IniSection->Options);
     lua_newtable(L);
     while ((de = dictNext(di)) != 0) {
         iniOption = (IniOption*)dictGetVal(de);
 
-        lua_pushstring(L, iniOption->key);
-        lua_pushstring(L, iniOption->value);
+        lua_pushstring(L, iniOption->Key);
+        lua_pushstring(L, iniOption->Value);
         lua_settable(L, -3);
     }
     dictReleaseIterator(di);
@@ -109,17 +109,17 @@ stScript_t* ST_NewScript(IniSection *iniSection) {
     stScript_t *script = (stScript_t*)zmalloc(sizeof(stScript_t));
     memset(script, 0, sizeof(stScript_t));
     
-    script->iniSection = iniSection;
+    script->IniSection = iniSection;
 
     sds value;
     sds dir = sdsempty();
 
-    value = IniGet(g_conf, script->iniSection->key, "basedir");
+    value = IniGet(g_conf, script->IniSection->Key, "basedir");
     if (0 == value) {
-        C_UtilExit(0, "%s 缺失脚本路径", script->iniSection->key);
+        C_UtilExit(0, "%s 缺失脚本路径", script->IniSection->Key);
     }
     dir = sdscatprintf(dir, "%s/%s", g_scriptBaseDir, value);
-    script->basedir = sdsnew(dir);
+    script->BaseDir = sdsnew(dir);
 
     ST_InitScriptLua(script);
 
@@ -129,7 +129,7 @@ stScript_t* ST_NewScript(IniSection *iniSection) {
 
 void ST_FreeScript(void *_script) {
     stScript_t *script = _script;
-    sdsfree(script->basedir);
+    sdsfree(script->BaseDir);
     lua_close(script->L);
     zfree(script);
 }
@@ -149,14 +149,14 @@ int ST_Prepare() {
 
     IniSection *section;
     dictEntry *de;
-    dictIterator *di = dictGetIterator(g_conf->sections);
+    dictIterator *di = dictGetIterator(g_conf->Sections);
     while ((de = dictNext(di)) != 0) {
         section = (IniSection*)dictGetVal(de);
-        if (sdslen(section->key) < headerLen) {
+        if (sdslen(section->Key) < headerLen) {
             continue;
         }
 
-        if (0 != memcmp(section->key, header, headerLen)) {
+        if (0 != memcmp(section->Key, header, headerLen)) {
             continue;
         }
 
@@ -164,7 +164,7 @@ int ST_Prepare() {
 
         g_scripts = listAddNodeTail(g_scripts, script);
 
-        value = IniGet(g_conf, section->key, "is_subscribe_net");
+        value = IniGet(g_conf, section->Key, "is_subscribe_net");
         if (0 != value && 0 == sdscmpstr(value, "1")) {
             NTRespSV_SubscribeScriptService(script);
         }

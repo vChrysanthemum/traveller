@@ -36,7 +36,7 @@
 typedef struct listNode {
     struct listNode *prev;
     struct listNode *next;
-    void *value;
+    void *Value;
 } listNode;
 
 typedef struct listIter {
@@ -59,7 +59,7 @@ typedef struct list {
 #define listLast(l) ((l)->tail)
 #define listPrevNode(n) ((n)->prev)
 #define listNextNode(n) ((n)->next)
-#define listNodeValue(n) ((n)->value)
+#define listNodeValue(n) ((n)->Value)
 
 #define listSetDupMethod(l,m) ((l)->dup = (m))
 #define listSetFreeMethod(l,m) ((l)->free = (m))

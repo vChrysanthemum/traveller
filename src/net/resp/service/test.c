@@ -28,7 +28,7 @@ void NTRespSV_Test(ntRespSnode_t *sn) {
 void NTRespSV_Msg(ntRespSnode_t *sn) {
     if (SNODE_RECV_STAT_PARSING_FINISHED != sn->recvParsingStat) return;
 
-    C_UtilLogD("recv msg [%d]:%s", sn->fd, sn->argv[1]);
+    C_UtilLogD("recv msg [%d]:%s", sn->fd, sn->Argv[1]);
     NTResp_SnodeServiceSetFinishedFlag(sn);
 }
 
