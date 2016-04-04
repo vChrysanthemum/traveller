@@ -22,16 +22,23 @@ static dict *UIHtmlSpecialStringTable;
 static dict *uiHtmlDomInfoDict;
 static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
     {"undefined",UIHTML_DOM_TYPE_UNDEFINED,0,0,0},
-    {"html",UIHTML_DOM_TYPE_HTML,0,0,0},
     {"head",UIHTML_DOM_TYPE_HEAD,0,0,0},
     {"title",UIHTML_DOM_TYPE_TITLE,0,0,UI_RenderHtmlDomTitle},
     {"script",UIHTML_DOM_TYPE_SCRIPT,0,0,0},
     {"style",UIHTML_DOM_TYPE_STYLE,0,0,0},
 
     {
+        "html",
+        UIHTML_DOM_TYPE_HTML,
+        HTML_CSS_STYLE_DISPLAY_BLOCK,
+        HTML_CSS_STYLE_POSITION_STATIC,
+        0
+    },
+
+    {
         "text",
         UIHTML_DOM_TYPE_TEXT,
-        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_DISPLAY_BLOCK,
         HTML_CSS_STYLE_POSITION_STATIC,
         UI_RenderHtmlDomText
     },
@@ -39,7 +46,7 @@ static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
     {
         "body",
         UIHTML_DOM_TYPE_BODY,
-        HTML_CSS_STYLE_DISPLAY_NONE,
+        HTML_CSS_STYLE_DISPLAY_BLOCK,
         HTML_CSS_STYLE_POSITION_STATIC,
         UI_RenderHtmlDomBody
     },
@@ -55,7 +62,7 @@ static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
     {
         "table",
         UIHTML_DOM_TYPE_TABLE,
-        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_DISPLAY_BLOCK,
         HTML_CSS_STYLE_POSITION_RELATIVE,
         UI_RenderHtmlDomTable
     },
@@ -63,7 +70,7 @@ static uiHtmlDomInfo_t uiHtmlDomInfoTable[] = {
     {
         "tr",
         UIHTML_DOM_TYPE_TR,
-        HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK,
+        HTML_CSS_STYLE_DISPLAY_BLOCK,
         HTML_CSS_STYLE_POSITION_STATIC,
         UI_RenderHtmlDomTr
     },

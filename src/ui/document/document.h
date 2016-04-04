@@ -41,13 +41,13 @@ typedef struct uiCssDeclarationInfo_s {
         UI_CSS_DECLARATION_TYPE_MARGIN_RIGHT,
         UI_CSS_DECLARATION_TYPE_DISPLAY,
         UI_CSS_DECLARATION_TYPE_TEXT_ALIGN,
-        UI_CSS_DECLARATION_TYPE_MIN_WIDTH,
-        UI_CSS_DECLARATION_TYPE_MAX_WIDTH,
         UI_CSS_DECLARATION_TYPE_WIDTH,
-        UI_CSS_DECLARATION_TYPE_MIN_HEIGHT,
-        UI_CSS_DECLARATION_TYPE_MAX_HEIGHT,
         UI_CSS_DECLARATION_TYPE_HEIGHT,
         UI_CSS_DECLARATION_TYPE_POSITION,
+        UI_CSS_DECLARATION_TYPE_LEFT,
+        UI_CSS_DECLARATION_TYPE_RIGHT,
+        UI_CSS_DECLARATION_TYPE_TOP,
+        UI_CSS_DECLARATION_TYPE_BOTTOM,
     } Type;
 } uiCssDeclarationInfo_t;
 
@@ -145,15 +145,12 @@ typedef struct uiHtmlDomStyle_s {
     unsigned int MarginRight;
     unsigned int BackgroundColor;
     unsigned int Color;
-    int          MinWidth;
-    int          MaxWidth;
+    int          IsWidthPercent;
+    int          WidthPercent;
     int          Width;
-    int          MinHeight;
-    int          MaxHeight;
     int          Height;
     int          PositionStartX;
     int          PositionStartY;
-    unsigned int IsHide;
     int          TextAlign;
     enum uiHtmlCssStyleDisplay_e {
         HTML_CSS_STYLE_DISPLAY_NONE,
@@ -166,6 +163,10 @@ typedef struct uiHtmlDomStyle_s {
         HTML_CSS_STYLE_POSITION_FIXED,
         HTML_CSS_STYLE_POSITION_STATIC,
     } Position;
+    int          Left;
+    int          Right;
+    int          Top;
+    int          Bottom;
 } uiHtmlDomStyle_t;
 
 typedef struct uiHtmlDomInfo_s {
@@ -191,6 +192,9 @@ typedef struct uiHtmlDomInfo_s {
 } uiHtmlDomInfo_t;
 
 typedef struct uiHtmlDom_s {
+    int                       layoutChildrenWidth;
+    int                       layoutCurrentRowHeight;
+    int                       layoutChildrenHeight;
     uiHtmlDom_t               *Parent;
     sds                       Title;
     list                      *Attributes;// list doubleString_t
@@ -224,10 +228,11 @@ list* UI_GetHtmlDomsByCssSelector(uiDocument_t* document, uiCssSelector_t *selec
 typedef struct uiLayoutDocumentEnvironment_s {
     int StartX;
     int StartY;
+    int Width;
 } uiLayoutDocumentEnvironment_t;
 void UI_ComputeHtmlDomTreeStyle(uiDocument_t *document);
-void UI_LayoutDocument(uiDocument_t *document);
-void UI_RenderDocument(uiDocument_t *document);
+void UI_LayoutDocument(uiDocument_t *document, int winWidth);
+void UI_RenderHtmlDomTree(uiDocument_t *document, uiHtmlDom_t *dom);
 
 /**
  * document 相关
@@ -259,7 +264,7 @@ typedef struct uiDocument_s {
 } uiDocument_t;
 uiDocument_t* UI_NewDocument();
 void UI_FreeDocument(uiDocument_t* document);
-uiDocument_t* UI_ParseDocumentWithoutRender(char *documentContent);
 uiDocument_t* UI_ParseDocument(char *documentContent);
+void UI_RenderDocument(uiDocument_t *document, int winWidth);
 
 #endif

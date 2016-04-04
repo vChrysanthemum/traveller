@@ -32,7 +32,7 @@ TEST_CASE("fail css scan leafHtmlDoms test")
                   div {} \
                   </style>\
                   ";
-    uiDocument_t *document = UI_ParseDocumentWithoutRender(html);
+    uiDocument_t *document = UI_ParseDocumentRender(html);
 
     list* leafHtmlDoms = UI_ScanLeafHtmlDoms(document->RootDom);
     uiHtmlDom_t *dom;
@@ -72,7 +72,7 @@ TEST_CASE("fail get dom by css selector test")
                   table .hello {} \
                   </style>\
                   ";
-    uiDocument_t *document = UI_ParseDocumentWithoutRender(html);
+    uiDocument_t *document = UI_ParseDocumentRender(html);
     uiCssRule_t *rule = (uiCssRule_t*)listNodeValue(document->CssStyleSheet->Rules->head);
     list *doms = UI_GetHtmlDomsByCssSelector(document, rule->Selector);
 

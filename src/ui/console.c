@@ -45,7 +45,6 @@ static void renderTabs() {
 
         wprintw(tabwin, " ");
         wprintw(tabwin, page->Title);
-        C_UtilLogI("%s", page->Title);
         wprintw(tabwin, " ");
 
         if (page == ui_activePage) {

@@ -35,8 +35,6 @@ uiDocument_t* UI_NewDocument() {
     document->CssStyleSheet = UI_NewCssStyleSheet();
     document->Script = sdsempty();
     document->Style = sdsempty();
-    document->layoutEnvironment.StartX = 0;
-    document->layoutEnvironment.StartY = 0;
     return document;
 }
 
@@ -48,7 +46,7 @@ void UI_FreeDocument(uiDocument_t* document) {
     if (0 != document->Style) sdsfree(document->Style);
 }
 
-uiDocument_t* UI_ParseDocumentWithoutRender(char *documentContent) {
+uiDocument_t* UI_ParseDocument(char *documentContent) {
     uiDocument_t *document = UI_NewDocument();
     document->Content = documentContent;
     UI_ParseHtml(document);
@@ -57,9 +55,7 @@ uiDocument_t* UI_ParseDocumentWithoutRender(char *documentContent) {
     return document;
 }
 
-uiDocument_t* UI_ParseDocument(char *documentContent) {
-    uiDocument_t *document = UI_ParseDocumentWithoutRender(documentContent);
-    UI_LayoutDocument(document);
-    UI_RenderDocument(document);
-    return document;
+void UI_RenderDocument(uiDocument_t *document, int winWidth) {
+    UI_LayoutDocument(document, winWidth);
+    UI_RenderHtmlDomTree(document, document->RootDom);
 }

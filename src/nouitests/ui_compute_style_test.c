@@ -38,7 +38,7 @@ TEST_CASE("fail compute style test")
                   .hello table td.active { background:black;padding-left:10; }\
                   </style>\
                   ";
-    uiDocument_t *document = UI_ParseDocumentWithoutRender(html);
+    uiDocument_t *document = UI_ParseDocumentRender(html);
     uiCssSelector_t *selector = 0;
     UI_CompileCssSelector(&selector, "div.hello table td.active");
 

@@ -15,18 +15,14 @@ static void RenderHtmlDom(uiDocument_t *document, uiHtmlDom_t *dom) {
     }
 }
 
-static void RenderHtmlDomTree(uiDocument_t *document, uiHtmlDom_t *dom) {
+void UI_RenderHtmlDomTree(uiDocument_t *document, uiHtmlDom_t *dom) {
     RenderHtmlDom(document, dom);
 
     listIter *li;
     listNode *ln;
     li = listGetIterator(dom->Children, AL_START_HEAD);
     while (0 != (ln = listNext(li))) {
-        RenderHtmlDomTree(document, (uiHtmlDom_t*)listNodeValue(ln));
+        UI_RenderHtmlDomTree(document, (uiHtmlDom_t*)listNodeValue(ln));
     }
     listReleaseIterator(li);
-}
-
-void UI_RenderDocument(uiDocument_t *document) {
-    RenderHtmlDomTree(document, document->RootDom);
 }

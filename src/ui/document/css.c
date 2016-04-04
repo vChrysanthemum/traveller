@@ -28,13 +28,13 @@ static uiCssDeclarationInfo_t uiCssDeclarationInfoTable[] = {
     {"margin-right",     UI_CSS_DECLARATION_TYPE_MARGIN_RIGHT},
     {"display",          UI_CSS_DECLARATION_TYPE_DISPLAY},
     {"text-align",       UI_CSS_DECLARATION_TYPE_TEXT_ALIGN},
-    {"min-width",        UI_CSS_DECLARATION_TYPE_MIN_WIDTH},
-    {"max-width",        UI_CSS_DECLARATION_TYPE_MAX_WIDTH},
     {"width",            UI_CSS_DECLARATION_TYPE_WIDTH},
-    {"min-height",       UI_CSS_DECLARATION_TYPE_MIN_HEIGHT},
-    {"max-height",       UI_CSS_DECLARATION_TYPE_MAX_HEIGHT},
     {"height",           UI_CSS_DECLARATION_TYPE_HEIGHT},
     {"position",         UI_CSS_DECLARATION_TYPE_POSITION},
+    {"left",             UI_CSS_DECLARATION_TYPE_LEFT},
+    {"right",            UI_CSS_DECLARATION_TYPE_RIGHT},
+    {"top",              UI_CSS_DECLARATION_TYPE_TOP},
+    {"bottom",           UI_CSS_DECLARATION_TYPE_BOTTOM},
     {0,0},
 };
 

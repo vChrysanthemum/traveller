@@ -35,6 +35,7 @@ void* UI_LoadPageActor(etActor_t *actor, int args, void **argv) {
 
     page->UIWin = UI_createWindow(20, ui_width, 0, 0);
     page->document = document = UI_ParseDocument(page->Content);
+    UI_RenderDocument(page->document, page->UIWin->Width);
 
     if (0 != document->Title) {
         sdsclear(page->Title);

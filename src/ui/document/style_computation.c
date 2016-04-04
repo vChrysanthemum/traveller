@@ -96,7 +96,11 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
 
         case UI_CSS_DECLARATION_TYPE_DISPLAY:
             if (0 == stringcmp("none", cssDeclaration->Value)) {
-                dom->Style.IsHide = 1;
+                dom->Style.Display = HTML_CSS_STYLE_DISPLAY_NONE;
+            } else if (0 == stringcmp("block", cssDeclaration->Value)) {
+                dom->Style.Display = HTML_CSS_STYLE_DISPLAY_BLOCK;
+            } else if (0 == stringcmp("inline-block", cssDeclaration->Value)) {
+                dom->Style.Display = HTML_CSS_STYLE_DISPLAY_INLINE_BLOCK;
             }
             break;
 
@@ -110,24 +114,15 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
             }
             break;
 
-        case UI_CSS_DECLARATION_TYPE_MIN_WIDTH:
-            dom->Style.MinWidth = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
-            break;
-
-        case UI_CSS_DECLARATION_TYPE_MAX_WIDTH:
-            dom->Style.MaxWidth = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
-            break;
-
         case UI_CSS_DECLARATION_TYPE_WIDTH:
-            dom->Style.Width = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
-            break;
-
-        case UI_CSS_DECLARATION_TYPE_MIN_HEIGHT:
-            dom->Style.MinHeight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
-            break;
-
-        case UI_CSS_DECLARATION_TYPE_MAX_HEIGHT:
-            dom->Style.MaxHeight = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            if ('%' == cssDeclaration->Value[sdslen(cssDeclaration->Value)-1]) {
+                dom->Style.IsWidthPercent = 1;
+                sdsrange(cssDeclaration->Value, 0, -2);
+                dom->Style.WidthPercent = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            } else {
+                dom->Style.IsWidthPercent = 0;
+                dom->Style.Width = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            }
             break;
 
         case UI_CSS_DECLARATION_TYPE_HEIGHT:
@@ -136,14 +131,30 @@ static inline void ComputeHtmlDomStyleByCssDeclaration(uiDocument_t *document, u
 
         case UI_CSS_DECLARATION_TYPE_POSITION:
             if (0 == stringcmp("relative", cssDeclaration->Value)) {
-                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_RELATIVE;
+                dom->Style.Position = HTML_CSS_STYLE_POSITION_RELATIVE;
             } else if (0 == stringcmp("absolute", cssDeclaration->Value)) {
-                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_ABSOLUTE;
+                dom->Style.Position = HTML_CSS_STYLE_POSITION_ABSOLUTE;
             } else if (0 == stringcmp("fixed", cssDeclaration->Value)) {
-                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_FIXED;
+                dom->Style.Position = HTML_CSS_STYLE_POSITION_FIXED;
             } else if (0 == stringcmp("static", cssDeclaration->Value)) {
-                dom->Style.TextAlign = HTML_CSS_STYLE_POSITION_STATIC;
+                dom->Style.Position = HTML_CSS_STYLE_POSITION_STATIC;
             }
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_LEFT:
+            dom->Style.Left = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_RIGHT:
+            dom->Style.Right = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_TOP:
+            dom->Style.Top = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
+            break;
+
+        case UI_CSS_DECLARATION_TYPE_BOTTOM:
+            dom->Style.Bottom = ConvertCssDeclarationValueToUnsignedInt(cssDeclaration->Value);
             break;
     }
 }
