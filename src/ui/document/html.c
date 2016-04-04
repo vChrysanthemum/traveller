@@ -237,6 +237,12 @@ GET_TOKEN_SUCCESS:
 static void InitialHtmlDomStyleByHtmlDomInfo(uiHtmlDom_t *dom) {
     dom->style.display = dom->info->InitialStyleDisplay;
     dom->style.position = dom->info->InitialStylePosition;
+
+    if (0 != dom->parent) {
+        dom->style.textAlign = dom->parent.style.textAlign;
+    } else {
+        dom->style.textAlign = LEFT;
+    }
 }
 
 uiHtmlDom_t* UI_NewHtmlDom(uiHtmlDom_t *parentDom) {

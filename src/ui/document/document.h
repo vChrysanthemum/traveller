@@ -177,7 +177,7 @@ typedef struct uiHtmlDomInfo_s {
         UIHTML_DOM_TYPE_STYLE,
         UIHTML_DOM_TYPE_INPUT,
     } type;
-    enum uiHtmlCssStyleDisplay_e InitialStyleDisplay;
+    enum uiHtmlCssStyleDisplay_e  InitialStyleDisplay;
     enum uiHtmlCssStylePosition_e InitialStylePosition;
     UI_RenderHtmlDom render;
 } uiHtmlDomInfo_t;
