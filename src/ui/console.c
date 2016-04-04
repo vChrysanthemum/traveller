@@ -6,6 +6,8 @@
 #include "core/sds.h"
 #include "core/adlist.h"
 #include "core/dict.h"
+#include "core/util.h"
+#include "core/extern.h"
 
 #include "event/event.h"
 #include "ui/ui.h"
@@ -43,6 +45,7 @@ static void renderTabs() {
 
         wprintw(tabwin, " ");
         wprintw(tabwin, page->Title);
+        C_UtilLogI("%s", page->Title);
         wprintw(tabwin, " ");
 
         if (page == ui_activePage) {
@@ -141,6 +144,8 @@ void UI_initConsole() {
 
     wrefresh(tabwin);
     wrefresh(win);
+
+    UI_reRenderConsole();
 }
 
 void UI_reRenderConsole() {

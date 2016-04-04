@@ -270,7 +270,7 @@ void UI_FreeHtmlDom(void *_dom) {
     if (0 != dom->Id) sdsfree(dom->Id);
     if (0 != dom->Classes) listRelease(dom->Classes);
     if (0 != dom->StyleCssDeclarations) listRelease(dom->StyleCssDeclarations);
-     listRelease(dom->CssDeclarations);
+    listRelease(dom->CssDeclarations);
     if (0 != dom->Content) sdsfree(dom->Content);
     listRelease(dom->Children);
 }

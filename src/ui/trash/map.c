@@ -11,7 +11,7 @@
 
 #include "event/event.h"
 #include "ui/ui.h"
-#include "ui/map.h"
+#include "ui/trash/map.h"
 #include "g_extern.h"
 #include "ui/extern.h"
 

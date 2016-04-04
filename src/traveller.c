@@ -21,7 +21,6 @@
 #include "event/event.h"
 #include "script/script.h"
 #include "ui/ui.h"
-#include "ui/map.h"
 
 #include "net/extern.h"
 

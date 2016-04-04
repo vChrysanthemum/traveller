@@ -114,7 +114,6 @@ int UI_Init() {
     UI_PrepareColor();
 
     UI_initConsole();
-    //UI_InitMap();
 
     top_panel(ui_console->UIWin->Panel);
     update_panels();

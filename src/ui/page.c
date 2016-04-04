@@ -31,12 +31,24 @@ void UI_FreePage(uiPage_t *page) {
 
 void* UI_LoadPageActor(etActor_t *actor, int args, void **argv) {
     uiPage_t *page = (uiPage_t*)argv[0];
+    uiDocument_t *document;
 
     page->UIWin = UI_createWindow(20, ui_width, 0, 0);
-    page->document = UI_ParseDocument(page->Content);
+    page->document = document = UI_ParseDocument(page->Content);
+
+    if (0 != document->Title) {
+        sdsclear(page->Title);
+        page->Title = sdscatlen(page->Title, document->Title, sdslen(document->Title));
+    }
+    C_UtilLogI("%s", page->Title);
 
     wprintw(page->UIWin->Win, page->Content);
     wrefresh(page->UIWin->Win);
+
+    ui_pages = listAddNodeTail(ui_pages, page);
+    ui_activePage = page;
+
+    UI_reRenderConsole();
 
     return 0;
 }

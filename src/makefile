@@ -8,7 +8,7 @@ baseobjects := ../deps/sqlite/sqlite3.o \
 				   ./net/anet.o ./net/ae.o \
 				   ./net/networking.o ./net/resp/resp.o\
 				   ./net/resp/service/service.o ./net/resp/service/test.o ./net/resp/service/script.o \
-				   ./ui/ui.o ./ui/window.o ./ui/color.o ./ui/map.o ./ui/console.o ./ui/page.o \
+				   ./ui/ui.o ./ui/window.o ./ui/color.o ./ui/console.o ./ui/page.o ./ui/trash/map.o \
 				   ./ui/document/document.o ./ui/document/error.o ./ui/document/html.o ./ui/document/css.o \
 				   ./ui/document/select.o ./ui/document/style_computation.o \
 				   ./ui/document/layout.o ./ui/document/render.o \

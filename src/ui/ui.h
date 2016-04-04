@@ -5,7 +5,7 @@
 #include <panel.h>
 
 #include "ui/document/document.h"
-#include "ui/map.h"
+#include "ui/trash/map.h"
 
 //ColorPair
 #define CP_CONSOLE_TAB              1
